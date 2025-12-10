@@ -4,9 +4,9 @@
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:pentapol/pentoscope/models/pentominos.dart';
-import 'package:pentapol/pentoscope/models/plateau.dart';
-import 'package:pentapol/pentoscope/models/point.dart';
+import 'package:pentapol/models/pentominos.dart';
+import 'package:pentapol/models/plateau.dart';
+import 'package:pentapol/models/point.dart';
 import 'package:pentapol/services/isometry_transforms.dart';
 import 'package:pentapol/services/shape_recognizer.dart';
 import 'pentoscope_generator.dart';

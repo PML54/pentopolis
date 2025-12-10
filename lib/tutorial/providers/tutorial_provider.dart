@@ -6,7 +6,7 @@ import 'package:pentapol/tutorial/models/tutorial_state.dart';
 import 'package:pentapol/tutorial/models/tutorial_script.dart';
 import 'package:pentapol/tutorial/models/tutorial_context.dart';
 import 'package:pentapol/tutorial/interpreter/scratch_interpreter.dart';
-import 'package:pentapol/tutorial/providers/pentomino_game_provider.dart';
+import 'package:pentapol/providers/pentomino_game_provider.dart';
 
 /// Provider pour l'état du tutoriel
 final tutorialProvider = NotifierProvider<TutorialNotifier, TutorialState>(() {

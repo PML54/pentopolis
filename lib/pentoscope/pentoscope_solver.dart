@@ -2,7 +2,7 @@
 // Solver paramétré pour mini-plateaux (3×5, 4×5, 5×5)
 // Copie adaptée de pentomino_solver.dart - AUCUN impact sur le mode 6×10
 
-import 'package:pentapol/pentoscope/models/pentominos.dart';
+import 'package:pentapol/models/pentominos.dart';
 
 /// Résultat d'un placement de pièce
 class PentoscopePlacement {
