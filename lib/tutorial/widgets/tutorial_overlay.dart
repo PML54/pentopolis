@@ -3,7 +3,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../providers/tutorial_provider.dart';
+import 'package:pentapol/tutorial/providers/tutorial_provider.dart';
 
 /// Overlay qui s'affiche par-dessus le jeu pendant les tutoriels
 class TutorialOverlay extends ConsumerWidget {

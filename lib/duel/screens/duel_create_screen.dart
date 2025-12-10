@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:pentapol/providers/settings_provider.dart';
-import '../providers/duel_provider.dart';
+import 'package:pentapol/duel/providers/duel_provider.dart';
 import 'duel_waiting_screen.dart';
 
 class DuelCreateScreen extends ConsumerStatefulWidget {

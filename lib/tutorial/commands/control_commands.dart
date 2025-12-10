@@ -1,8 +1,8 @@
 // lib/tutorial/commands/control_commands.dart
 // Commandes de contrôle (WAIT, REPEAT)
 
-import '../models/scratch_command.dart';
-import '../models/tutorial_context.dart';
+import 'package:pentapol/tutorial/models/scratch_command.dart';
+import 'package:pentapol/tutorial/models/tutorial_context.dart';
 
 /// Commande WAIT - Attend un certain temps
 class WaitCommand extends ScratchCommand {

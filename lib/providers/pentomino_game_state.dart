@@ -3,9 +3,9 @@
 // État du jeu de pentominos (mode libre + mode tutoriel)
 
 import 'package:flutter/material.dart';
-import '../models/pentominos.dart';
-import '../models/plateau.dart';
-import '../models/point.dart';
+import 'package:pentapol/models/pentominos.dart';
+import 'package:pentapol/models/plateau.dart';
+import 'package:pentapol/models/point.dart';
 
 /// Représente une pièce placée sur le plateau
 class PlacedPiece

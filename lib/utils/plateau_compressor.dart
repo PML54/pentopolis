@@ -9,7 +9,7 @@
 /// - Détecter les doublons
 library;
 
-import '../models/plateau.dart';
+import 'package:pentapol/models/plateau.dart';
 
 /// Compresseur de plateau avec détection de forme canonique.
 class PlateauCompressor {

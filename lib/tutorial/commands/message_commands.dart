@@ -1,8 +1,8 @@
 // lib/tutorial/commands/message_commands.dart
 // Commandes de gestion des messages
 
-import '../models/scratch_command.dart';
-import '../models/tutorial_context.dart';
+import 'package:pentapol/tutorial/models/scratch_command.dart';
+import 'package:pentapol/tutorial/models/tutorial_context.dart';
 
 
 /// Commande SHOW_MESSAGE - Affiche un message avec timeout optionnel

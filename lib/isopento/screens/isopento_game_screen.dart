@@ -9,10 +9,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pentapol/models/pentominos.dart';
 import 'package:pentapol/providers/settings_provider.dart';
 import 'package:pentapol/config/game_icons_config.dart';
-import '../isopento_provider.dart';
-import '../isopento_config.dart';
-import '../widgets/isopento_board.dart';
-import '../widgets/isopento_piece_slider.dart';
+import 'package:pentapol/isopento/isopento_provider.dart';
+import 'package:pentapol/isopento/isopento_config.dart';
+import 'package:pentapol/isopento/widgets/isopento_board.dart';
+import 'package:pentapol/isopento/widgets/isopento_piece_slider.dart';
 
 class IsopentoGameScreen extends ConsumerWidget {
   const IsopentoGameScreen({super.key});

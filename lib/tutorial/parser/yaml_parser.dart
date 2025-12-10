@@ -3,19 +3,19 @@
 
 import 'package:yaml/yaml.dart';
 
-import '../commands/board_selection_commands.dart';
-import '../commands/control_commands.dart';
-import '../commands/highlight_commands.dart';
-import '../commands/highlight_isometry_icon.dart';
-import '../commands/message_commands.dart';
-import '../commands/placement_commands.dart';
-import '../commands/selection_commands.dart';
-import '../commands/transform_commands.dart';
+import 'package:pentapol/tutorial/commands/board_selection_commands.dart';
+import 'package:pentapol/tutorial/commands/control_commands.dart';
+import 'package:pentapol/tutorial/commands/highlight_commands.dart';
+import 'package:pentapol/tutorial/commands/highlight_isometry_icon.dart';
+import 'package:pentapol/tutorial/commands/message_commands.dart';
+import 'package:pentapol/tutorial/commands/placement_commands.dart';
+import 'package:pentapol/tutorial/commands/selection_commands.dart';
+import 'package:pentapol/tutorial/commands/transform_commands.dart';
 // Import
-import '../commands/translate_command.dart';
-import '../commands/tutorial_mode_commands.dart';
-import '../models/scratch_command.dart';
-import '../models/tutorial_script.dart';
+import 'package:pentapol/tutorial/commands/translate_command.dart';
+import 'package:pentapol/tutorial/commands/tutorial_mode_commands.dart';
+import 'package:pentapol/tutorial/models/scratch_command.dart';
+import 'package:pentapol/tutorial/models/tutorial_script.dart';
 
 /// Parser de scripts YAML
 class YamlScriptParser {

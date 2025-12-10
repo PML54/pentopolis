@@ -2,11 +2,11 @@
 // Provider Riverpod pour la gestion des tutoriels
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../models/tutorial_state.dart';
-import '../models/tutorial_script.dart';
-import '../models/tutorial_context.dart';
-import '../interpreter/scratch_interpreter.dart';
-import '../../providers/pentomino_game_provider.dart';
+import 'package:pentapol/tutorial/models/tutorial_state.dart';
+import 'package:pentapol/tutorial/models/tutorial_script.dart';
+import 'package:pentapol/tutorial/models/tutorial_context.dart';
+import 'package:pentapol/tutorial/interpreter/scratch_interpreter.dart';
+import 'package:pentapol/tutorial/providers/pentomino_game_provider.dart';
 
 /// Provider pour l'état du tutoriel
 final tutorialProvider = NotifierProvider<TutorialNotifier, TutorialState>(() {

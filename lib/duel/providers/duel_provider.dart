@@ -5,9 +5,9 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
-import '../models/duel_state.dart';
-import '../models/duel_messages.dart';
-import '../services/websocket_service.dart';
+import 'package:pentapol/duel/models/duel_state.dart';
+import 'package:pentapol/duel/models/duel_messages.dart';
+import 'package:pentapol/duel/services/websocket_service.dart';
 
 /// Configuration du serveur
 const String kDuelServerBaseUrl = 'https://pentapol-duel.pentapml.workers.dev';

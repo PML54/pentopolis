@@ -1,8 +1,8 @@
 // lib/tutorial/commands/translate_command.dart
 // Commande de translation (déplacement) de pièces
 
-import '../models/scratch_command.dart';
-import '../models/tutorial_context.dart';
+import 'package:pentapol/tutorial/models/scratch_command.dart';
+import 'package:pentapol/tutorial/models/tutorial_context.dart';
 
 /// TRANSLATE - Translate une pièce vers une nouvelle position
 ///

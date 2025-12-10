@@ -5,7 +5,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import '../../models/pentominos.dart';
+import 'package:pentapol/models/pentominos.dart';
 
 /// Widget qui enveloppe un slider et permet de retirer des pièces en les draguant dessus
 ///

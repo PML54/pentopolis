@@ -3,7 +3,7 @@
 // Adaptateur pour collecter les solutions du solver et les exporter
 
 import 'solution_exporter.dart';
-import '../services/pentomino_solver.dart'; // Ajuste le chemin selon ton projet
+import 'package:pentapol/services/pentomino_solver.dart'; // Ajuste le chemin selon ton projet
 
 /// Collecteur qui capture les solutions du solver et les exporte
 class SolutionCollector {

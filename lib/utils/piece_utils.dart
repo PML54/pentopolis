@@ -3,7 +3,7 @@
 // Utilitaires communs pour les pièces de pentominos
 
 import 'package:flutter/material.dart';
-import '../models/pentominos.dart';
+import 'package:pentapol/models/pentominos.dart';
 
 /// Noms des pièces selon leur ID (nomenclature standard des pentominos)
 const Map<int, String> pieceNames = {

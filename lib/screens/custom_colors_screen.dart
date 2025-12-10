@@ -4,9 +4,9 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../providers/settings_provider.dart';
-import '../models/pentominos.dart';
-import '../utils/piece_utils.dart';
+import 'package:pentapol/providers/settings_provider.dart';
+import 'package:pentapol/models/pentominos.dart';
+import 'package:pentapol/utils/piece_utils.dart';
 
 class CustomColorsScreen extends ConsumerStatefulWidget {
   const CustomColorsScreen({super.key});

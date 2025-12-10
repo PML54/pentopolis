@@ -4,7 +4,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:web_socket_channel/web_socket_channel.dart';
-import '../models/duel_messages.dart';
+import 'package:pentapol/duel/models/duel_messages.dart';
 
 /// Service de connexion WebSocket
 class WebSocketService {

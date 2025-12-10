@@ -1,8 +1,8 @@
 // lib/tutorial/commands/tutorial_mode_commands.dart
 // Commandes de gestion du mode tutoriel
 
-import '../models/scratch_command.dart';
-import '../models/tutorial_context.dart';
+import 'package:pentapol/tutorial/models/scratch_command.dart';
+import 'package:pentapol/tutorial/models/tutorial_context.dart';
 
 /// Commande ENTER_TUTORIAL_MODE - Entre en mode tutoriel
 class EnterTutorialModeCommand extends ScratchCommand {

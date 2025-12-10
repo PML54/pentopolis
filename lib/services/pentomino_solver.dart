@@ -1,10 +1,10 @@
 // Modified: 2025-11-15 06:45:00
 // lib/services/pentomino_solver.dart
 
-import '../models/game_piece.dart';
-import '../models/pentominos.dart';
-import '../models/plateau.dart';
-import '../models/point.dart';
+import 'package:pentapol/models/game_piece.dart';
+import 'package:pentapol/models/pentominos.dart';
+import 'package:pentapol/models/plateau.dart';
+import 'package:pentapol/models/point.dart';
 
 // Retourne la solution si elle existe, null sinon
 List<PlacementInfo>? findSolution(Plateau plateau, List<Pento> pieces) {

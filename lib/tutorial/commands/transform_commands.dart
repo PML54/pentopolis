@@ -1,8 +1,8 @@
 // lib/tutorial/commands/transform_commands.dart
 // Commandes de transformation de pièces
 
-import '../models/scratch_command.dart';
-import '../models/tutorial_context.dart';
+import 'package:pentapol/tutorial/models/scratch_command.dart';
+import 'package:pentapol/tutorial/models/tutorial_context.dart';
 
 /// ROTATE_AROUND_MASTER
 /// Fait pivoter une pièce autour de sa mastercase

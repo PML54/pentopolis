@@ -4,9 +4,9 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../data/solution_database.dart';
-import '../utils/plateau_compressor.dart';
-import '../providers/settings_provider.dart';
+import 'package:pentapol/data/solution_database.dart';
+import 'package:pentapol/utils/plateau_compressor.dart';
+import 'package:pentapol/providers/settings_provider.dart';
 
 class SolutionsViewerScreen extends ConsumerStatefulWidget {
   const SolutionsViewerScreen({super.key});

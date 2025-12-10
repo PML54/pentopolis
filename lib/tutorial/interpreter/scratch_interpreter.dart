@@ -1,9 +1,9 @@
 // lib/tutorial/interpreter/scratch_interpreter.dart
 // Interpréteur qui exécute les scripts de tutoriel
 
-import '../models/scratch_command.dart';
-import '../models/tutorial_script.dart';
-import '../models/tutorial_context.dart';
+import 'package:pentapol/tutorial/models/scratch_command.dart';
+import 'package:pentapol/tutorial/models/tutorial_script.dart';
+import 'package:pentapol/tutorial/models/tutorial_context.dart';
 
 /// Interpréteur de scripts Scratch-Pentapol
 class ScratchInterpreter {

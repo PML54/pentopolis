@@ -4,11 +4,11 @@
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../models/pentominos.dart';
-import '../models/plateau.dart';
-import '../models/point.dart';
-import '../services/isometry_transforms.dart';
-import '../services/shape_recognizer.dart';
+import 'package:pentapol/pentoscope/models/pentominos.dart';
+import 'package:pentapol/pentoscope/models/plateau.dart';
+import 'package:pentapol/pentoscope/models/point.dart';
+import 'package:pentapol/services/isometry_transforms.dart';
+import 'package:pentapol/services/shape_recognizer.dart';
 import 'pentoscope_generator.dart';
 
 // ============================================================================

@@ -1,8 +1,8 @@
 // lib/tutorial/commands/board_selection_commands.dart
 // Commandes de sélection sur le plateau
 
-import '../models/scratch_command.dart';
-import '../models/tutorial_context.dart';
+import 'package:pentapol/tutorial/models/scratch_command.dart';
+import 'package:pentapol/tutorial/models/tutorial_context.dart';
 
 /// SELECT_PIECE_ON_BOARD_AT
 class SelectPieceOnBoardAtCommand extends ScratchCommand {

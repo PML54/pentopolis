@@ -9,9 +9,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pentapol/models/pentominos.dart';
 import 'package:pentapol/providers/settings_provider.dart';
 import 'package:pentapol/config/game_icons_config.dart';
-import '../pentoscope_provider.dart';
-import '../widgets/pentoscope_board.dart';
-import '../widgets/pentoscope_piece_slider.dart';
+import 'package:pentapol/pentoscope/pentoscope_provider.dart';
+import 'package:pentapol/pentoscope/widgets/pentoscope_board.dart';
+import 'package:pentapol/pentoscope/widgets/pentoscope_piece_slider.dart';
 
 class PentoscopeGameScreen extends ConsumerWidget {
   const PentoscopeGameScreen({super.key});

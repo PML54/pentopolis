@@ -1,8 +1,8 @@
 // lib/tutorial/commands/placement_commands.dart
 // Commandes de placement de pièces
 
-import '../models/scratch_command.dart';
-import '../models/tutorial_context.dart';
+import 'package:pentapol/tutorial/models/scratch_command.dart';
+import 'package:pentapol/tutorial/models/tutorial_context.dart';
 
 /// PLACE_SELECTED_PIECE_AT
 class PlaceSelectedPieceAtCommand extends ScratchCommand {

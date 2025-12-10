@@ -6,7 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:pentapol/providers/settings_provider.dart';
-import '../providers/duel_provider.dart';
+import 'package:pentapol/duel/providers/duel_provider.dart';
 import 'duel_game_screen.dart';
 
 class DuelJoinScreen extends ConsumerStatefulWidget {

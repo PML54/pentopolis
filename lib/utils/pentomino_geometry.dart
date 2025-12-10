@@ -2,7 +2,7 @@
 // Utilitaires géométriques pour les pentominos
 
 import 'dart:ui';
-import '../models/pentominos.dart';
+import 'package:pentapol/models/pentominos.dart';
 
 /// Représente un point avec coordonnées flottantes
 class Point2D {

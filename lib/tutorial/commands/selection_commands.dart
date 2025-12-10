@@ -1,8 +1,8 @@
 // lib/tutorial/commands/selection_commands.dart
 // Commandes de sélection dans le slider
 
-import '../models/scratch_command.dart';
-import '../models/tutorial_context.dart';
+import 'package:pentapol/tutorial/models/scratch_command.dart';
+import 'package:pentapol/tutorial/models/tutorial_context.dart';
 
 /// SELECT_PIECE_FROM_SLIDER
 class SelectPieceFromSliderCommand extends ScratchCommand {

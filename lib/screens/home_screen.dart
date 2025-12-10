@@ -5,8 +5,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../duel/screens/duel_home_screen.dart';
-import '../pentoscope/screens/pentoscope_menu_screen.dart';
+import 'package:pentapol/duel/screens/duel_home_screen.dart';
+import 'package:pentapol/pentoscope/screens/pentoscope_menu_screen.dart';
 import 'pentomino_game_screen.dart';
 import 'settings_screen.dart';
 import 'solutions_browser_screen.dart';

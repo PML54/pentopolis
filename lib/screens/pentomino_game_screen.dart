@@ -20,7 +20,7 @@ import 'package:pentapol/screens/pentomino_game/widgets/shared/action_slider.dar
 import 'package:pentapol/screens/pentomino_game/widgets/shared/game_board.dart';
 import 'package:pentapol/screens/pentomino_game/widgets/game_mode/piece_slider.dart';
 
-import '../tutorial/widgets/highlighted_icon_button.dart';
+import 'package:pentapol/tutorial/widgets/highlighted_icon_button.dart';
 
 // Tutorial
 import 'package:pentapol/tutorial/tutorial.dart';

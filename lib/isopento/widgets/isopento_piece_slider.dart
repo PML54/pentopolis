@@ -10,7 +10,7 @@ import 'package:pentapol/models/pentominos.dart';
 import 'package:pentapol/providers/settings_provider.dart';
 import 'package:pentapol/screens/pentomino_game/widgets/shared/draggable_piece_widget.dart';
 import 'package:pentapol/screens/pentomino_game/widgets/shared/piece_renderer.dart';
-import '../isopento_provider.dart';
+import 'package:pentapol/isopento/isopento_provider.dart';
 
 class IsopentoPieceSlider extends ConsumerWidget {
   final bool isLandscape;

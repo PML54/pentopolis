@@ -7,8 +7,8 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../database/settings_database.dart';
-import '../models/app_settings.dart';
+import 'package:pentapol/database/settings_database.dart';
+import 'package:pentapol/models/app_settings.dart';
 
 /// Provider pour la base de données des paramètres
 final settingsDatabaseProvider = Provider<SettingsDatabase>((ref) {

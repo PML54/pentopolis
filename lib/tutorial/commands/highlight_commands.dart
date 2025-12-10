@@ -2,9 +2,9 @@
 // Commandes de surlignage de cases
 
 import 'package:flutter/material.dart';
-import '../models/scratch_command.dart';
-import '../models/tutorial_context.dart';
-import '../../models/point.dart'; // ← AJOUTER cette ligne
+import 'package:pentapol/tutorial/models/scratch_command.dart';
+import 'package:pentapol/tutorial/models/tutorial_context.dart';
+import 'package:pentapol/tutorial/models/point.dart'; // ← AJOUTER cette ligne
 
 /// HIGHLIGHT_CELL
 class HighlightCellCommand extends ScratchCommand {

@@ -5,8 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
-import '../providers/duel_provider.dart';
-import '../models/duel_state.dart';
+import 'package:pentapol/duel/providers/duel_provider.dart';
+import 'package:pentapol/duel/models/duel_state.dart';
 import 'duel_game_screen.dart';
 
 class DuelWaitingScreen extends ConsumerWidget {

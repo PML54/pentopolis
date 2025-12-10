@@ -1,8 +1,8 @@
 // lib/tutorial/commands/highlight_isometry_icon.dart
 // Commande pour surligner une icône d'isométrie (rotation, symétrie)
 
-import '../models/scratch_command.dart';
-import '../models/tutorial_context.dart';
+import 'package:pentapol/tutorial/models/scratch_command.dart';
+import 'package:pentapol/tutorial/models/tutorial_context.dart';
 
 /// Commande : Surligne une icône d'isométrie
 ///

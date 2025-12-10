@@ -3,8 +3,8 @@
 
 import 'tutorial_script.dart';
 import 'tutorial_context.dart';
-import '../interpreter/scratch_interpreter.dart';
-import '../../providers/pentomino_game_state.dart';
+import 'package:pentapol/tutorial/interpreter/scratch_interpreter.dart';
+import 'package:pentapol/tutorial/providers/pentomino_game_state.dart';
 
 /// État d'un tutoriel
 class TutorialState {
