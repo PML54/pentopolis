@@ -9,7 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pentapol/classical/pentomino_game_provider.dart';
 import 'package:pentapol/providers/settings_provider.dart';
 import 'package:pentapol/screens/solutions_browser_screen.dart';
-import 'package:pentapol/screens/settings_screen.dart';
+
 
 import 'package:pentapol/config/game_icons_config.dart';
 import 'package:pentapol/common/pentominos.dart';
@@ -27,10 +27,10 @@ import 'package:pentapol/tutorial/tutorial.dart';
 import 'package:flutter/services.dart' show rootBundle;
 
 // Duel
-import 'package:pentapol/duel/screens/duel_home_screen.dart';
+
 
 // Pentoscope
-import 'package:pentapol/pentoscope/screens/pentoscope_menu_screen.dart';
+
 
 class PentominoGameScreen extends ConsumerStatefulWidget {
   const PentominoGameScreen({super.key});

@@ -2,7 +2,7 @@
 // Service de connexion WebSocket pour le mode duel
 
 import 'dart:async';
-import 'dart:convert';
+
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:pentapol/duel/models/duel_messages.dart';
 
