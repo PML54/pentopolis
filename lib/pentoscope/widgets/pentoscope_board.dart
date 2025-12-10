@@ -5,20 +5,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import 'package:pentapol/common/pentominos.dart';
+import 'package:pentapol/pentoscope/pentoscope_provider.dart';
 import 'package:pentapol/providers/settings_provider.dart';
 import 'package:pentapol/screens/pentomino_game/widgets/shared/piece_border_calculator.dart';
 import 'package:pentapol/screens/pentomino_game/widgets/shared/piece_renderer.dart';
-import 'package:pentapol/pentoscope/pentoscope_provider.dart';
 
 class PentoscopeBoard extends ConsumerWidget {
   final bool isLandscape;
 
-  const PentoscopeBoard({
-    super.key,
-    required this.isLandscape,
-  });
+  const PentoscopeBoard({super.key, required this.isLandscape});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -65,14 +61,22 @@ class PentoscopeBoard extends ConsumerWidget {
             final plateauY = localOffset.dy - offsetY;
 
             // Hors du plateau ?
-            if (plateauX < 0 || plateauX >= gridWidth ||
-                plateauY < 0 || plateauY >= gridHeight) {
+            if (plateauX < 0 ||
+                plateauX >= gridWidth ||
+                plateauY < 0 ||
+                plateauY >= gridHeight) {
               notifier.clearPreview();
               return;
             }
 
-            final visualX = (plateauX / cellSize).floor().clamp(0, visualCols - 1);
-            final visualY = (plateauY / cellSize).floor().clamp(0, visualRows - 1);
+            final visualX = (plateauX / cellSize).floor().clamp(
+              0,
+              visualCols - 1,
+            );
+            final visualY = (plateauY / cellSize).floor().clamp(
+              0,
+              visualRows - 1,
+            );
 
             int logicalX, logicalY;
             if (isLandscape) {
@@ -99,14 +103,22 @@ class PentoscopeBoard extends ConsumerWidget {
             final plateauX = localOffset.dx - offsetX;
             final plateauY = localOffset.dy - offsetY;
 
-            if (plateauX < 0 || plateauX >= gridWidth ||
-                plateauY < 0 || plateauY >= gridHeight) {
+            if (plateauX < 0 ||
+                plateauX >= gridWidth ||
+                plateauY < 0 ||
+                plateauY >= gridHeight) {
               notifier.clearPreview();
               return;
             }
 
-            final visualX = (plateauX / cellSize).floor().clamp(0, visualCols - 1);
-            final visualY = (plateauY / cellSize).floor().clamp(0, visualRows - 1);
+            final visualX = (plateauX / cellSize).floor().clamp(
+              0,
+              visualCols - 1,
+            );
+            final visualY = (plateauY / cellSize).floor().clamp(
+              0,
+              visualRows - 1,
+            );
 
             int logicalX, logicalY;
             if (isLandscape) {
@@ -140,10 +152,7 @@ class PentoscopeBoard extends ConsumerWidget {
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
-                    colors: [
-                      Colors.grey.shade50,
-                      Colors.grey.shade100,
-                    ],
+                    colors: [Colors.grey.shade50, Colors.grey.shade100],
                   ),
                   boxShadow: [
                     BoxShadow(
@@ -200,15 +209,15 @@ class PentoscopeBoard extends ConsumerWidget {
   }
 
   Widget _buildCell(
-      BuildContext context,
-      WidgetRef ref,
-      PentoscopeState state,
-      PentoscopeNotifier notifier,
-      settings,
-      int logicalX,
-      int logicalY,
-      bool isLandscape,
-      ) {
+    BuildContext context,
+    WidgetRef ref,
+    PentoscopeState state,
+    PentoscopeNotifier notifier,
+    settings,
+    int logicalX,
+    int logicalY,
+    bool isLandscape,
+  ) {
     final cellValue = state.plateau.getCell(logicalX, logicalY);
 
     Color cellColor;
@@ -233,7 +242,8 @@ class PentoscopeBoard extends ConsumerWidget {
     // Pièce placée sélectionnée
     if (state.selectedPlacedPiece != null) {
       final selectedPiece = state.selectedPlacedPiece!;
-      final position = selectedPiece.piece.positions[state.selectedPositionIndex];
+      final position =
+          selectedPiece.piece.positions[state.selectedPositionIndex];
 
       // Calculer la normalisation
       final minOffset = _getMinOffset(position);
@@ -248,7 +258,8 @@ class PentoscopeBoard extends ConsumerWidget {
           isSelected = true;
 
           if (state.selectedCellInPiece != null) {
-            isReferenceCell = (localX == state.selectedCellInPiece!.x &&
+            isReferenceCell =
+                (localX == state.selectedCellInPiece!.x &&
                 localY == state.selectedCellInPiece!.y);
           }
 
@@ -287,10 +298,14 @@ class PentoscopeBoard extends ConsumerWidget {
             // Couleur légèrement différente pour le snap
             if (isSnappedPreview) {
               // Snap actif : vert plus lumineux avec effet "magnétique"
-              cellColor = settings.ui.getPieceColor(piece.id).withValues(alpha: 0.6);
+              cellColor = settings.ui
+                  .getPieceColor(piece.id)
+                  .withValues(alpha: 0.6);
             } else {
               // Position exacte
-              cellColor = settings.ui.getPieceColor(piece.id).withValues(alpha: 0.4);
+              cellColor = settings.ui
+                  .getPieceColor(piece.id)
+                  .withValues(alpha: 0.4);
             }
           } else {
             cellColor = Colors.red.withValues(alpha: 0.3);
@@ -322,7 +337,11 @@ class PentoscopeBoard extends ConsumerWidget {
     } else {
       // Utiliser PieceBorderCalculator pour les bordures fusionnées
       border = PieceBorderCalculator.calculate(
-          logicalX, logicalY, state.plateau, isLandscape);
+        logicalX,
+        logicalY,
+        state.plateau,
+        isLandscape,
+      );
     }
 
     Widget cellWidget = Container(
@@ -332,12 +351,12 @@ class PentoscopeBoard extends ConsumerWidget {
         // Effet de glow subtil pour le snap
         boxShadow: isSnappedPreview && state.isPreviewValid
             ? [
-          BoxShadow(
-            color: Colors.cyan.withValues(alpha: 0.3),
-            blurRadius: 4,
-            spreadRadius: 1,
-          ),
-        ]
+                BoxShadow(
+                  color: Colors.cyan.withValues(alpha: 0.3),
+                  blurRadius: 4,
+                  spreadRadius: 1,
+                ),
+              ]
             : null,
       ),
       child: Center(
@@ -346,10 +365,14 @@ class PentoscopeBoard extends ConsumerWidget {
           style: TextStyle(
             color: isPreview
                 ? (state.isPreviewValid
-                ? (isSnappedPreview ? Colors.cyan.shade900 : Colors.green.shade900)
-                : Colors.red.shade900)
+                      ? (isSnappedPreview
+                            ? Colors.cyan.shade900
+                            : Colors.green.shade900)
+                      : Colors.red.shade900)
                 : Colors.white,
-            fontWeight: (isSelected || isPreview) ? FontWeight.w900 : FontWeight.bold,
+            fontWeight: (isSelected || isPreview)
+                ? FontWeight.w900
+                : FontWeight.bold,
             fontSize: (isSelected || isPreview) ? 16 : 14,
           ),
         ),
@@ -364,19 +387,24 @@ class PentoscopeBoard extends ConsumerWidget {
           color: Colors.transparent,
           child: PieceRenderer(
             piece: state.selectedPiece!,
-            positionIndex: state.selectedPositionIndex,
+            positionIndex: _getDisplayPositionIndex(
+              state.selectedPositionIndex,
+              state.selectedPiece!,
+              isLandscape,
+            ),
             isDragging: true,
             getPieceColor: (pieceId) => settings.ui.getPieceColor(pieceId),
           ),
         ),
-        childWhenDragging: Opacity(
-          opacity: 0.3,
-          child: cellWidget,
-        ),
+        childWhenDragging: Opacity(opacity: 0.3, child: cellWidget),
         child: GestureDetector(
           onTap: () {
             HapticFeedback.selectionClick();
-            notifier.selectPlacedPiece(state.selectedPlacedPiece!, logicalX, logicalY);
+            notifier.selectPlacedPiece(
+              state.selectedPlacedPiece!,
+              logicalX,
+              logicalY,
+            );
           },
           onDoubleTap: () {
             HapticFeedback.selectionClick();
@@ -408,6 +436,17 @@ class PentoscopeBoard extends ConsumerWidget {
     }
 
     return cellWidget;
+  }
+
+  int _getDisplayPositionIndex(
+    int positionIndex,
+    Pento piece,
+    bool isLandscape,
+  ) {
+    if (isLandscape) {
+      return (positionIndex - 1 + piece.numPositions) % piece.numPositions;
+    }
+    return positionIndex;
   }
 
   /// Calcule le décalage minimum pour normaliser une forme
@@ -447,16 +486,25 @@ class PentoscopeBoard extends ConsumerWidget {
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.emoji_events, color: Colors.amber, size: 24),
+                      const Icon(
+                        Icons.emoji_events,
+                        color: Colors.amber,
+                        size: 24,
+                      ),
                       const SizedBox(width: 8),
                       Text(
                         'Bravo ! ${state.puzzle?.size.label}',
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
                       ),
                     ],
                   ),
                   const SizedBox(height: 8),
-                  Text('Isométries: ${state.isometryCount}  Translations: ${state.translationCount}'),
+                  Text(
+                    'Isométries: ${state.isometryCount}  Translations: ${state.translationCount}',
+                  ),
                   const SizedBox(height: 12),
                   Row(
                     mainAxisSize: MainAxisSize.min,

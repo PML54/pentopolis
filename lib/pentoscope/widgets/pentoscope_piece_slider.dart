@@ -55,6 +55,7 @@ class PentoscopePieceSlider extends ConsumerWidget {
     if (isLandscape) {
       // Appliquer rotation inverse de -90° pour compenser le pivot du plateau
       return (positionIndex - 1 + piece.numPositions) % piece.numPositions;
+
     }
     return positionIndex;
   }

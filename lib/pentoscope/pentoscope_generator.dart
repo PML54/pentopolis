@@ -2,53 +2,10 @@
 // Générateur de puzzles Pentoscope utilisant les données pré-calculées
 
 import 'dart:math';
+
 import 'pentoscope_data.dart';
 
 // Remplacer dans pentoscope_generator.dart
-
-/// Tailles de plateau disponibles
-enum PentoscopeSize {
-  size3x5(0, 5, 3, 3, '3×5'),
-  size4x5(1, 5, 4, 4, '4×5'),
-  size5x5(2, 5, 5, 5, '5×5');
-
-  final int dataIndex;  // ← renommé
-  final int width;
-  final int height;
-  final int numPieces;
-  final String label;
-
-  const PentoscopeSize(this.dataIndex, this.width, this.height, this.numPieces, this.label);
-
-  int get area => width * height;
-}
-/// Configuration d'un puzzle Pentoscope
-class PentoscopePuzzle {
-  final PentoscopeSize size;
-  final int bitmask;
-  final List<int> pieceIds;
-  final int solutionCount;
-
-  const PentoscopePuzzle({
-    required this.size,
-    required this.bitmask,
-    required this.pieceIds,
-    required this.solutionCount,
-  });
-
-  /// Noms des pièces (F, I, L, N, P, T, U, V, W, X, Y, Z)
-  static const _pieceNames = ['F', 'I', 'L', 'N', 'P', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'];
-
-  /// Retourne les noms des pièces du puzzle
-  List<String> get pieceNames => pieceIds.map((id) => _pieceNames[id - 1]).toList();
-
-  /// Description lisible
-  String get description =>
-      '${size.label} avec ${pieceNames.join(", ")} ($solutionCount solution${solutionCount > 1 ? "s" : ""})';
-
-  @override
-  String toString() => 'PentoscopePuzzle($description)';
-}
 
 /// Générateur de puzzles Pentoscope
 class PentoscopeGenerator {
@@ -135,12 +92,14 @@ class PentoscopeGenerator {
   List<PentoscopePuzzle> getAllForSize(PentoscopeSize size) {
     final entries = pentoscopeData[size.dataIndex] ?? [];
     return entries
-        .map((e) => PentoscopePuzzle(
-      size: size,
-      bitmask: e.$1,
-      pieceIds: _bitmaskToIds(e.$1),
-      solutionCount: e.$2,
-    ))
+        .map(
+          (e) => PentoscopePuzzle(
+            size: size,
+            bitmask: e.$1,
+            pieceIds: _bitmaskToIds(e.$1),
+            solutionCount: e.$2,
+          ),
+        )
         .toList();
   }
 
@@ -148,8 +107,12 @@ class PentoscopeGenerator {
   PentoscopeStats getStats(PentoscopeSize size) {
     final entries = pentoscopeData[size.dataIndex] ?? [];
     final totalSolutions = entries.fold<int>(0, (sum, e) => sum + e.$2);
-    final minSolutions = entries.isEmpty ? 0 : entries.map((e) => e.$2).reduce(min);
-    final maxSolutions = entries.isEmpty ? 0 : entries.map((e) => e.$2).reduce(max);
+    final minSolutions = entries.isEmpty
+        ? 0
+        : entries.map((e) => e.$2).reduce(min);
+    final maxSolutions = entries.isEmpty
+        ? 0
+        : entries.map((e) => e.$2).reduce(max);
 
     return PentoscopeStats(
       size: size,
@@ -172,6 +135,71 @@ class PentoscopeGenerator {
   }
 }
 
+/// Configuration d'un puzzle Pentoscope
+class PentoscopePuzzle {
+  /// Noms des pièces (F, I, L, N, P, T, U, V, W, X, Y, Z)
+  static const _pieceNames = [
+    'F',
+    'I',
+    'L',
+    'N',
+    'P',
+    'T',
+    'U',
+    'V',
+    'W',
+    'X',
+    'Y',
+    'Z',
+  ];
+  final PentoscopeSize size;
+  final int bitmask;
+  final List<int> pieceIds;
+
+  final int solutionCount;
+
+  const PentoscopePuzzle({
+    required this.size,
+    required this.bitmask,
+    required this.pieceIds,
+    required this.solutionCount,
+  });
+
+  /// Description lisible
+  String get description =>
+      '${size.label} avec ${pieceNames.join(", ")} ($solutionCount solution${solutionCount > 1 ? "s" : ""})';
+
+  /// Retourne les noms des pièces du puzzle
+  List<String> get pieceNames =>
+      pieceIds.map((id) => _pieceNames[id - 1]).toList();
+
+  @override
+  String toString() => 'PentoscopePuzzle($description)';
+}
+
+/// Tailles de plateau disponibles
+enum PentoscopeSize {
+  size3x5(0, 5, 3, 3, '3×5'),
+  size4x5(1, 5, 4, 4, '4×5'),
+  size5x5(2, 5, 5, 5, '5×5');
+
+  final int dataIndex; // ← renommé
+  final int width;
+  final int height;
+  final int numPieces;
+  final String label;
+
+  const PentoscopeSize(
+    this.dataIndex,
+    this.width,
+    this.height,
+    this.numPieces,
+    this.label,
+  );
+
+  int get area => width * height;
+}
+
 /// Statistiques pour une taille de plateau
 class PentoscopeStats {
   final PentoscopeSize size;
@@ -191,6 +219,7 @@ class PentoscopeStats {
   double get avgSolutions => configCount > 0 ? totalSolutions / configCount : 0;
 
   @override
-  String toString() => '${size.label}: $configCount configs, '
+  String toString() =>
+      '${size.label}: $configCount configs, '
       '$totalSolutions solutions (min=$minSolutions, max=$maxSolutions, avg=${avgSolutions.toStringAsFixed(1)})';
 }
