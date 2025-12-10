@@ -7,9 +7,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:pentapol/config/game_icons_config.dart';
-import 'package:pentapol/models/plateau.dart';  // ✅ AJOUT
-import 'package:pentapol/providers/pentomino_game_provider.dart';
-import 'package:pentapol/providers/pentomino_game_state.dart';
+import 'package:pentapol/common/plateau.dart';  // ✅ AJOUT
+import 'package:pentapol/classical/pentomino_game_provider.dart';
+import 'package:pentapol/classical/pentomino_game_state.dart';
 import 'package:pentapol/providers/settings_provider.dart';
 import 'package:pentapol/screens/solutions_browser_screen.dart';
 import 'package:pentapol/screens/settings_screen.dart';

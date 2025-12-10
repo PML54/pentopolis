@@ -5,7 +5,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pentapol/providers/settings_provider.dart';
-import 'package:pentapol/models/pentominos.dart';
+import 'package:pentapol/common/pentominos.dart';
 import 'package:pentapol/utils/piece_utils.dart';
 
 class CustomColorsScreen extends ConsumerStatefulWidget {

@@ -2,7 +2,7 @@
 // Validation des placements contre une solution spécifique
 // CORRIGÉ : conversion bit6 → pieceId, sans late
 
-import 'package:pentapol/models/pentominos.dart';
+import 'package:pentapol/common/pentominos.dart';
 
 /// Résultat de validation d'un placement
 class PlacementValidation {

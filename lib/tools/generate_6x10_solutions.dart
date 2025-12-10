@@ -6,8 +6,8 @@
 
 import 'dart:io';
 import 'dart:typed_data';
-import 'package:pentapol/models/plateau.dart';
-import 'package:pentapol/models/pentominos.dart';
+import 'package:pentapol/common/plateau.dart';
+import 'package:pentapol/common/pentominos.dart';
 import 'package:pentapol/services/pentomino_solver.dart';
 
 const int _boardWidth = 6;

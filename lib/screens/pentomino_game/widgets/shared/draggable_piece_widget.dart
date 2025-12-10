@@ -3,7 +3,7 @@
 
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:pentapol/models/pentominos.dart';
+import 'package:pentapol/common/pentominos.dart';
 
 /// Widget pour gérer proprement le double-tap sans propagation
 /// 

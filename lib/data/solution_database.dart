@@ -8,7 +8,7 @@ library;
 
 import 'dart:typed_data';
 import 'package:flutter/services.dart' show rootBundle;
-import 'package:pentapol/models/plateau.dart';
+import 'package:pentapol/common/plateau.dart';
 import 'package:pentapol/utils/plateau_compressor.dart';
 
 /// Base de données en mémoire des solutions pentomino.

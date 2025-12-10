@@ -1,7 +1,7 @@
 // lib/services/shape_recognizer.dart
 // Modified: 2512092105
 
-import 'package:pentapol/models/pentominos.dart';
+import 'package:pentapol/common/pentominos.dart';
 
 /// Résultat de la reconnaissance d'une forme
 class ShapeMatch {

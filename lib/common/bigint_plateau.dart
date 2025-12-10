@@ -1,7 +1,7 @@
 // Modified: 2025-11-15 06:45:00
 // lib/models/bigint_plateau.dart
 
-import 'package:pentapol/models/pentominos.dart';
+import 'package:pentapol/common/pentominos.dart';
 
 class BigIntPlateau {
   final BigInt pieces; // 360 bits: codes bit6 (0 si vide)

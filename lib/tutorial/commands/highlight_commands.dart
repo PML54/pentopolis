@@ -4,7 +4,7 @@
 import 'package:flutter/material.dart';
 import 'package:pentapol/tutorial/models/scratch_command.dart';
 import 'package:pentapol/tutorial/models/tutorial_context.dart';
-import 'package:pentapol/models/point.dart'; // ← AJOUTER cette ligne
+import 'package:pentapol/common/point.dart'; // ← AJOUTER cette ligne
 
 /// HIGHLIGHT_CELL
 class HighlightCellCommand extends ScratchCommand {

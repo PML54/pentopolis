@@ -2,7 +2,7 @@
 // Contexte d'exécution d'un tutoriel
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:pentapol/providers/pentomino_game_provider.dart';
+import 'package:pentapol/classical/pentomino_game_provider.dart';
 
 /// Contexte d'exécution d'un tutoriel
 class TutorialContext {

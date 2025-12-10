@@ -6,13 +6,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:pentapol/providers/pentomino_game_provider.dart';
+import 'package:pentapol/classical/pentomino_game_provider.dart';
 import 'package:pentapol/providers/settings_provider.dart';
 import 'package:pentapol/screens/solutions_browser_screen.dart';
 import 'package:pentapol/screens/settings_screen.dart';
 
 import 'package:pentapol/config/game_icons_config.dart';
-import 'package:pentapol/models/pentominos.dart';
+import 'package:pentapol/common/pentominos.dart';
 
 // Widgets extraits
 import 'package:pentapol/screens/pentomino_game/widgets/shared/action_slider.dart'

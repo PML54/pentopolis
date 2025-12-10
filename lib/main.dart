@@ -8,7 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'isopento/screens/isopento_game_screen.dart';
 import 'isopento/screens/isopento_menu_screen.dart';
 import 'screens/home_screen.dart';
-import 'screens/pentomino_game_screen.dart';
+import 'package:pentapol/classical/pentomino_game_screen.dart';
 import 'services/pentapol_solutions_loader.dart';
 import 'services/solution_matcher.dart';
 

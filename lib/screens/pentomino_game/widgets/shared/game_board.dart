@@ -6,12 +6,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:pentapol/models/pentominos.dart';
-import 'package:pentapol/providers/pentomino_game_provider.dart';
+import 'package:pentapol/common/pentominos.dart';
+import 'package:pentapol/classical/pentomino_game_provider.dart';
 import 'package:pentapol/providers/settings_provider.dart';
 import 'package:pentapol/screens/pentomino_game/widgets/shared/piece_border_calculator.dart';
 import 'package:pentapol/screens/pentomino_game/widgets/shared/piece_renderer.dart';
-import 'package:pentapol/models/point.dart';
+import 'package:pentapol/common/point.dart';
 
 /// Plateau de jeu 6×10
 ///

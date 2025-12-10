@@ -5,12 +5,12 @@
 import 'package:flutter/material.dart' show Color;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:pentapol/models/pentominos.dart';
-import 'package:pentapol/models/plateau.dart';
-import 'package:pentapol/models/point.dart';
-import 'package:pentapol/services/isometry_transforms.dart';
+import 'package:pentapol/common/pentominos.dart';
+import 'package:pentapol/common/plateau.dart';
+import 'package:pentapol/common/point.dart';
+import 'package:pentapol/common/isometry_transforms.dart';
 import 'package:pentapol/services/plateau_solution_counter.dart' show PlateauSolutionCounter;
-import 'package:pentapol/services/shape_recognizer.dart';
+import 'package:pentapol/common/shape_recognizer.dart';
 import 'pentomino_game_state.dart';
 
 final pentominoGameProvider =

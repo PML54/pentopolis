@@ -1,8 +1,8 @@
 // Modified: 2025-11-15 06:45:00
 // lib/services/plateau_solution_counter.dart
 
-import 'package:pentapol/models/plateau.dart';
-import 'package:pentapol/models/pentominos.dart';
+import 'package:pentapol/common/plateau.dart';
+import 'package:pentapol/common/pentominos.dart';
 import 'solution_matcher.dart';
 
 class _PlateauBigIntMask {
