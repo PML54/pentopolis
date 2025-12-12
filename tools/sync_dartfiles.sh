@@ -149,6 +149,63 @@ EOSQL
 ORPHAN_COUNT=$(sqlite3 "$DB_FILE" "SELECT COUNT(*) FROM orphanfiles;")
 printf "${GREEN}✓ Import orphanfiles: $ORPHAN_COUNT fichier(s)${NC}\n\n"
 
+# Étape 8: Vérifier les fichiers sans dépendances internes
+printf "${YELLOW}8. Vérification des fichiers sans dépendances internes...${NC}\n"
+dart tools/check_end_files.dart
+
+# Importer le CSV endfiles
+printf "${YELLOW}9. Import du CSV endfiles...${NC}\n"
+
+sqlite3 "$DB_FILE" <<'EOSQL'
+CREATE TEMP TABLE temp_endfiles (
+  dart_id INTEGER,
+  relative_path VARCHAR(500),
+  first_dir VARCHAR(50),
+  filename VARCHAR(255)
+);
+
+.mode csv
+.import tools/csv/pentapol_end_files.csv temp_endfiles
+
+DELETE FROM temp_endfiles WHERE dart_id = 'dart_id';
+
+INSERT INTO endfiles (dart_id, relative_path, first_dir, filename)
+SELECT dart_id, relative_path, first_dir, filename
+FROM temp_endfiles;
+EOSQL
+
+END_COUNT=$(sqlite3 "$DB_FILE" "SELECT COUNT(*) FROM endfiles;")
+printf "${GREEN}✓ Import endfiles: $END_COUNT fichier(s)${NC}\n\n"
+
+# Étape 10: Extraire les fonctions publiques
+printf "${YELLOW}10. Extraction des fonctions publiques...${NC}\n"
+dart tools/check_public_functions.dart
+
+# Importer le CSV functions
+printf "${YELLOW}11. Import des fonctions publiques...${NC}\n"
+
+sqlite3 "$DB_FILE" <<'EOSQL'
+CREATE TEMP TABLE temp_functions (
+  relative_path VARCHAR(500),
+  function_name VARCHAR(255)
+);
+
+.mode csv
+.import tools/csv/pentapol_functions.csv temp_functions
+
+DELETE FROM temp_functions WHERE relative_path = 'relative_path';
+
+INSERT INTO functions (dart_id, function_name)
+SELECT
+  df.dart_id,
+  tf.function_name
+FROM temp_functions tf
+JOIN dartfiles df ON tf.relative_path = df.relative_path;
+EOSQL
+
+FUNC_COUNT=$(sqlite3 "$DB_FILE" "SELECT COUNT(*) FROM functions;")
+printf "${GREEN}✓ Import functions: $FUNC_COUNT fonction(s)${NC}\n\n"
+
 # Insérer le scan dans scans
 SCAN_DATE=$(date +%y%m%d)
 SCAN_TIME=$(date +%H%M%S)
@@ -163,4 +220,6 @@ printf "DB: ${BOLD}$DB_FILE${NC}\n"
 printf "Fichiers: ${BOLD}$COUNT${NC}\n"
 printf "Imports: ${BOLD}$IMPORT_COUNT${NC}\n"
 printf "Fichiers orphelins: ${BOLD}$ORPHAN_COUNT${NC}\n"
+printf "Fichiers sans dépendances: ${BOLD}$END_COUNT${NC}\n"
+printf "Fonctions publiques: ${BOLD}$FUNC_COUNT${NC}\n"
 printf "Taille: ${BOLD}$(sqlite3 $DB_FILE "SELECT printf('%.2f MB', SUM(size_bytes) / 1024.0 / 1024.0) FROM dartfiles;")${NC}\n"

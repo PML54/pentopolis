@@ -5,7 +5,9 @@
 
 -- Détruire toutes les tables (dans le bon ordre)
 DROP TABLE IF EXISTS violations;
+DROP TABLE IF EXISTS functions;
 DROP TABLE IF EXISTS orphanfiles;
+DROP TABLE IF EXISTS endfiles;
 DROP TABLE IF EXISTS imports;
 DROP TABLE IF EXISTS dartfiles;
 DROP TABLE IF EXISTS scans;
@@ -66,6 +68,34 @@ CREATE TABLE orphanfiles (
 
 CREATE INDEX idx_orphanfiles_dart_id ON orphanfiles(dart_id);
 CREATE INDEX idx_orphanfiles_first_dir ON orphanfiles(first_dir);
+
+-- Table: endfiles
+-- Fichiers .dart qui n'importent AUCUN dart du package pentapol
+-- Ce sont les "feuilles" de l'arbre de dépendances
+CREATE TABLE endfiles (
+  dart_id INTEGER NOT NULL,
+  relative_path VARCHAR(500) NOT NULL,
+  first_dir VARCHAR(50) NOT NULL,
+  filename VARCHAR(255) NOT NULL,
+  FOREIGN KEY (dart_id) REFERENCES dartfiles(dart_id),
+  UNIQUE(dart_id)
+);
+
+CREATE INDEX idx_endfiles_dart_id ON endfiles(dart_id);
+CREATE INDEX idx_endfiles_first_dir ON endfiles(first_dir);
+
+-- Table: functions
+-- Fonctions publiques de chaque fichier .dart
+CREATE TABLE functions (
+  function_id INTEGER PRIMARY KEY AUTOINCREMENT,
+  dart_id INTEGER NOT NULL,
+  function_name VARCHAR(255) NOT NULL,
+  FOREIGN KEY (dart_id) REFERENCES dartfiles(dart_id),
+  UNIQUE(dart_id, function_name)
+);
+
+CREATE INDEX idx_functions_dart_id ON functions(dart_id);
+CREATE INDEX idx_functions_name ON functions(function_name);
 
 -- Table: violations
 -- Violations détectées (isolation, imports relatifs, etc.)
