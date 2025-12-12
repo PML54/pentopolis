@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pentapol/pentoscope/pentoscope_generator.dart';
 import 'package:pentapol/pentoscope/pentoscope_provider.dart';
-import 'pentoscope_game_screen.dart';
+import 'package:pentapol/pentoscope/screens/pentoscope_game_screen.dart';  // ← Absolu
 
 class PentoscopeMenuScreen extends ConsumerStatefulWidget {
   const PentoscopeMenuScreen({super.key});

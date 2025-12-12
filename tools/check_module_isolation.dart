@@ -48,6 +48,7 @@ class ModuleChecker {
     print('Règles:');
     print('  • Chaque module ne peut importer que lui-même + lib/common/');
     print('  • Pas d\'import croisé (ex: isopento → duel interdit)');
+    print('  • Tous les imports relatifs au projet en package:pentapol/ (adressage absolu)\n');
 
     for (final module in modules) {
       await checkModule(module);

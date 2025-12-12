@@ -1,116 +1,124 @@
 #!/usr/bin/env dart
 
 // tools/extract_imports.dart
-// Extrait tous les imports de chaque fichier .dart
-// Génère un CSV avec: relative_path,import_path
+// Extrait les imports package:X de chaque fichier .dart
+// Utilise config.dart pour la configuration centralisée
 
 import 'dart:io';
-
-const String libPath = 'lib';
-
-// ANSI colors
-const String green = '\x1B[32m';
-const String yellow = '\x1B[33m';
-const String bold = '\x1B[1m';
-const String reset = '\x1B[0m';
+import 'config.dart';
 
 class ImportsExtractor {
-  final List<Map<String, String>> imports = [];
+  final Map<String, List<String>> importsByFile = {};
+  int totalImports = 0;
 
   Future<void> run() async {
-    printf('${bold}=== Extraction des imports ===${reset}\n');
+    printf('${COLOR_BOLD}=== Extraction des imports ===${COLOR_RESET}\n\n');
 
-    final libDir = Directory(libPath);
+    final libDir = Directory(LIB_PATH);
     if (!libDir.existsSync()) {
-      printf('${yellow}Répertoire lib/ non trouvé${reset}\n');
+      printf('${COLOR_RED}✗ Répertoire $LIB_PATH/ non trouvé${COLOR_RESET}\n');
       exit(1);
     }
 
-    // Scanner tous les fichiers .dart
-    final dartFiles = libDir
+    printf('${COLOR_YELLOW}Scanning des imports...${COLOR_RESET}\n');
+
+    final allFiles = libDir
         .listSync(recursive: true, followLinks: false)
         .whereType<File>()
         .where((f) => f.path.endsWith('.dart'));
 
-    printf('Traitement de ${dartFiles.length} fichier(s)...\n\n');
-
-    for (final dartFile in dartFiles) {
-      await extractImportsFromFile(dartFile);
+    for (final file in allFiles) {
+      await extractImportsFromFile(file);
     }
 
-    await exportCsv();
-    printf('${green}✓ ${imports.length} imports extraits${reset}\n');
+    printf('${COLOR_GREEN}✓ ${importsByFile.length} fichiers avec imports${COLOR_RESET}\n');
+    printf('${COLOR_GREEN}✓ ${totalImports} imports trouvés${COLOR_RESET}\n\n');
+
+    _printSummary();
+    await _exportCsv();
   }
 
   Future<void> extractImportsFromFile(File file) async {
     final content = await file.readAsString();
     final lines = content.split('\n');
-    final fullPath = file.path;
-    final relativePath = fullPath.replaceFirst('lib/', '');
+
+    final imports = <String>{};
+    final relativePath = file.path.replaceFirst('$LIB_PATH/', '');
 
     for (final line in lines) {
-      // Sauter commentaires
-      if (line.trim().startsWith('//') || line.trim().isEmpty) {
-        continue;
+      final trimmed = line.trim();
+
+      // Chercher les imports package:X/Y/Z
+      if (trimmed.startsWith('import ') || trimmed.startsWith("import '")) {
+        final importPattern = RegExp(r"""import\s+['"]package:([^'"]+)['"]""");
+        final match = importPattern.firstMatch(trimmed);
+
+        if (match != null) {
+          final importPath = 'package:${match.group(1)}';
+          // Garder uniquement les imports du package courant
+          if (importPath.startsWith('package:$PACKAGE_NAME/')) {
+            imports.add(importPath);
+          }
+        }
       }
+    }
 
-      // Extraire imports
-      final importMatch = RegExp(
-          "^\\s*import\\s+['\"]([^'\"]+)['\"]"
-      ).firstMatch(line);
-
-      if (importMatch == null) continue;
-
-      final importPath = importMatch.group(1)!;
-
-      // Garder seulement les imports package:pentapol/
-      if (importPath.startsWith('package:pentapol/')) {
-        imports.add({
-          'relative_path': relativePath,
-          'import_path': importPath,
-        });
-      }
+    if (imports.isNotEmpty) {
+      importsByFile[relativePath] = imports.toList()..sort();
+      totalImports += imports.length;
     }
   }
 
-  Future<void> exportCsv() async {
-    // Créer le répertoire tools/csv/ s'il n'existe pas
-    final csvDir = Directory('tools/csv');
-    if (!csvDir.existsSync()) {
-      csvDir.createSync(recursive: true);
+  void _printSummary() {
+    printf('${COLOR_BOLD}=== Top 10 des fichiers les plus importants ===${COLOR_RESET}\n\n');
+
+    final sorted = importsByFile.entries.toList()
+      ..sort((a, b) => b.value.length.compareTo(a.value.length));
+
+    int count = 0;
+    for (final entry in sorted) {
+      if (count >= 10) break;
+      printf('${COLOR_YELLOW}${entry.key}${COLOR_RESET} (${entry.value.length} imports)\n');
+      for (final imp in entry.value.take(3)) {
+        printf('  → $imp\n');
+      }
+      if (entry.value.length > 3) {
+        printf('  → ... +${entry.value.length - 3} autres\n');
+      }
+      printf('\n');
+      count++;
     }
 
-    final csvFile = File('tools/csv/pentapol_imports.csv');
-    final buffer = StringBuffer();
+    printf('${COLOR_BOLD}=== Total ===${COLOR_RESET}\n');
+    printf('Fichiers: ${COLOR_BOLD}${importsByFile.length}${COLOR_RESET}\n');
+    printf('Imports: ${COLOR_BOLD}$totalImports${COLOR_RESET}\n');
+    printf('Moyenne: ${COLOR_BOLD}${(totalImports / importsByFile.length).toStringAsFixed(1)}${COLOR_RESET}\n\n');
+  }
 
-    // Header CSV
+  Future<void> _exportCsv() async {
+    Directory(CSV_PATH).createSync(recursive: true);
+
+    final buffer = StringBuffer();
     buffer.writeln('relative_path,import_path');
 
-    // Données
-    for (final imp in imports) {
-      final relativePath = imp['relative_path']!;
-      final importPath = imp['import_path']!;
-
-      buffer.writeln('"$relativePath","$importPath"');
+    for (final entry in importsByFile.entries) {
+      for (final importPath in entry.value) {
+        buffer.writeln('"${entry.key}","$importPath"');
+      }
     }
 
-    await csvFile.writeAsString(buffer.toString());
-    printf('${green}✓ Export CSV: ${bold}${csvFile.path}${reset}\n');
+    await File(CSV_IMPORTS).writeAsString(buffer.toString());
+    printf('${COLOR_GREEN}✓ Export CSV: ${COLOR_BOLD}$CSV_IMPORTS${COLOR_RESET}\n');
   }
 }
 
-void printf(String msg) {
-  stdout.write(msg);
-}
+void printf(String msg) => stdout.write(msg);
 
 Future<void> main(List<String> args) async {
   try {
-    final extractor = ImportsExtractor();
-    await extractor.run();
+    await ImportsExtractor().run();
   } catch (e) {
-    printf('${red}✗ Erreur: $e${reset}\n');
+    printf('${COLOR_RED}✗ Erreur: $e${COLOR_RESET}\n');
     exit(1);
   }
 }
-
-const String red = '\x1B[31m';

@@ -1,142 +1,93 @@
 #!/usr/bin/env dart
 
 // tools/scan_dart_files.dart
-// Liste tous les fichiers .dart du projet Pentapol avec:
-// - Nom du fichier
-// - Premier répertoire dans lib/
-// - Chemin complet à partir de lib/
-// - Taille (bytes)
-// - Date de dernière modification
+// Scanne tous les fichiers .dart et génère un CSV
+// Utilise config.dart pour la configuration centralisée
 
 import 'dart:io';
+import 'config.dart';
 
-const String libPath = 'lib';
-
-// ANSI colors
-const String green = '\x1B[32m';
-const String yellow = '\x1B[33m';
-const String bold = '\x1B[1m';
-const String reset = '\x1B[0m';
-
-class DartFileScanner {
-  final List<Map<String, dynamic>> dartFiles = [];
+class DartFilesScanner {
+  final List<Map<String, String>> dartFiles = [];
 
   Future<void> run() async {
-    print('$bold=== Scan fichiers .dart Pentapol ===$reset\n');
+    printf('${COLOR_BOLD}=== Scanner des fichiers .dart ===${COLOR_RESET}\n\n');
 
-    final libDir = Directory(libPath);
+    final libDir = Directory(LIB_PATH);
     if (!libDir.existsSync()) {
-      print('Répertoire lib/ non trouvé');
+      printf('${COLOR_RED}✗ Répertoire $LIB_PATH/ non trouvé${COLOR_RESET}\n');
       exit(1);
     }
 
-    // Scanner tous les fichiers .dart
-    final files = libDir
+    printf('${COLOR_YELLOW}Scanning...${COLOR_RESET}\n');
+
+    final allFiles = libDir
         .listSync(recursive: true, followLinks: false)
         .whereType<File>()
         .where((f) => f.path.endsWith('.dart'));
 
-    print('Traitement de ${files.length} fichier(s)...\n');
+    for (final file in allFiles) {
+      final stat = file.statSync();
+      final relativePath = file.path.replaceFirst('$LIB_PATH/', '');
+      final parts = relativePath.split('/');
+      final firstDir = parts.isNotEmpty ? parts.first : '';
+      final filename = parts.isNotEmpty ? parts.last : '';
 
-    for (final file in files) {
-      final stat = await file.stat();
-
-      // Extraire infos
-      final fullPath = file.path;
-      final filename = file.uri.pathSegments.last;
-      final relativeFromLib = fullPath.replaceFirst('lib/', '');
-      final firstDir = relativeFromLib.split('/').first;
-      final sizeBytes = stat.size;
-      final lastModified = stat.modified;
-
-      // Scinder date et heure
-      final dateStr = _formatDate(lastModified);  // YYMMDD
-      final timeStr = _formatTime(lastModified);  // HHMMSS
+      final modTime = stat.modified;
+      final modDate = '${modTime.year % 100}${modTime.month.toString().padLeft(2, '0')}${modTime.day.toString().padLeft(2, '0')}';
+      final modHour = '${modTime.hour.toString().padLeft(2, '0')}${modTime.minute.toString().padLeft(2, '0')}${modTime.second.toString().padLeft(2, '0')}';
 
       dartFiles.add({
         'filename': filename,
         'firstDir': firstDir,
-        'relativePath': relativeFromLib,
-        'sizeBytes': sizeBytes,
-        'modDate': dateStr,
-        'modTime': timeStr,
+        'relativePath': relativePath,
+        'sizeBytes': stat.size.toString(),
+        'modDate': modDate,
+        'modTime': modHour,
       });
     }
 
-    // Trier par répertoire puis par filename
-    dartFiles.sort((a, b) {
-      final dirCmp = a['firstDir'].compareTo(b['firstDir']);
-      if (dirCmp != 0) return dirCmp;
-      return a['filename'].compareTo(b['filename']);
-    });
+    printf('${COLOR_GREEN}✓ ${dartFiles.length} fichiers trouvés${COLOR_RESET}\n\n');
 
-    printConsole();
-    await exportCsv();
+    _printSummary();
+    await _exportCsv();
   }
 
-  void printConsole() {
-    print('$bold=== Résumé ===$reset\n');
+  void _printSummary() {
+    printf('${COLOR_BOLD}=== Résumé par répertoire ===${COLOR_RESET}\n\n');
 
-    // Grouper par répertoire
-    final byDir = <String, List<Map<String, dynamic>>>{};
+    final byDir = <String, List<Map<String, String>>>{};
+    int totalSize = 0;
+
     for (final file in dartFiles) {
-      final dir = file['firstDir'] as String;
+      final dir = file['firstDir']!;
       byDir.putIfAbsent(dir, () => []).add(file);
+      totalSize += int.parse(file['sizeBytes']!);
     }
 
-    int totalSize = 0;
     for (final dir in byDir.keys.toList()..sort()) {
       final files = byDir[dir]!;
-      final dirSize = files.fold<int>(0, (sum, f) => sum + (f['sizeBytes'] as int));
-      totalSize += dirSize;
-
-      print('$yellow$dir/$reset (${files.length} fichiers, ${_formatSize(dirSize)})');
-      for (final file in files) {
-        final path = file['relativePath'] as String;
-        final size = file['sizeBytes'] as int;
-        final modDate = file['modDate'] as String;
-        final modTime = file['modTime'] as String;
-        print('  • $path (${_formatSize(size)}) - $modDate $modTime');
-      }
-      print('');
+      final dirSize = files.fold<int>(0, (sum, f) => sum + int.parse(f['sizeBytes']!));
+      printf('${COLOR_YELLOW}$dir${COLOR_RESET}: ${files.length} fichiers (${_formatSize(dirSize)})\n');
     }
 
-    print('$bold=== Total ===$reset');
-    print('Fichiers: ${dartFiles.length}');
-    print('Taille: ${_formatSize(totalSize)}');
+    printf('\n${COLOR_BOLD}=== Total ===${COLOR_RESET}\n');
+    printf('Fichiers: ${COLOR_BOLD}${dartFiles.length}${COLOR_RESET}\n');
+    printf('Taille: ${COLOR_BOLD}${_formatSize(totalSize)}${COLOR_RESET}\n\n');
   }
 
-  Future<void> exportCsv() async {
-    // Créer le répertoire tools/csv/ s'il n'existe pas
-    final csvDir = Directory('tools/csv');
-    if (!csvDir.existsSync()) {
-      csvDir.createSync(recursive: true);
-    }
+  Future<void> _exportCsv() async {
+    Directory(CSV_PATH).createSync(recursive: true);
 
-    final csvFile = File('tools/csv/pentapol_dart_files.csv');
     final buffer = StringBuffer();
-
-    // Header CSV
     buffer.writeln('filename,firstDir,relativePath,sizeBytes,modDate,modTime');
 
-    // Données
     for (final file in dartFiles) {
-      final filename = file['filename'] as String;
-      final firstDir = file['firstDir'] as String;
-      final relativePath = file['relativePath'] as String;
-      final sizeBytes = file['sizeBytes'] as int;
-      final modDate = file['modDate'] as String;
-      final modTime = file['modTime'] as String;
-
-      // Échapper les guillemets pour CSV
-      buffer.writeln(
-          '"$filename","$firstDir","$relativePath",$sizeBytes,"$modDate","$modTime"'
-      );
+      buffer.writeln('"${file['filename']}","${file['firstDir']}","${file['relativePath']}",${file['sizeBytes']},"${file['modDate']}","${file['modTime']}"');
     }
 
-    await csvFile.writeAsString(buffer.toString());
-    print('$green✓ Export CSV: $bold${csvFile.path}$reset');
-    print('  (Prêt pour import SQL Studio)');
+    await File(CSV_DARTFILES).writeAsString(buffer.toString());
+    printf('${COLOR_GREEN}✓ Export CSV: ${COLOR_BOLD}$CSV_DARTFILES${COLOR_RESET}\n');
   }
 
   String _formatSize(int bytes) {
@@ -144,30 +95,15 @@ class DartFileScanner {
     if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)} KB';
     return '${(bytes / (1024 * 1024)).toStringAsFixed(2)} MB';
   }
-
-  String _formatDate(DateTime dt) {
-    // YYMMDD
-    final year = dt.year.toString().padLeft(4, '0').substring(2);
-    final month = dt.month.toString().padLeft(2, '0');
-    final day = dt.day.toString().padLeft(2, '0');
-    return '$year$month$day';
-  }
-
-  String _formatTime(DateTime dt) {
-    // HHMMSS
-    final hour = dt.hour.toString().padLeft(2, '0');
-    final minute = dt.minute.toString().padLeft(2, '0');
-    final second = dt.second.toString().padLeft(2, '0');
-    return '$hour$minute$second';
-  }
 }
+
+void printf(String msg) => stdout.write(msg);
 
 Future<void> main(List<String> args) async {
   try {
-    final scanner = DartFileScanner();
-    await scanner.run();
+    await DartFilesScanner().run();
   } catch (e) {
-    print('✗ Erreur: $e');
+    printf('${COLOR_RED}✗ Erreur: $e${COLOR_RESET}\n');
     exit(1);
   }
 }

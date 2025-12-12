@@ -3,8 +3,8 @@
 
 import 'dart:math';
 
-import 'pentoscope_data.dart';
 
+import 'package:pentapol/pentoscope/pentoscope_data.dart';
 // Remplacer dans pentoscope_generator.dart
 
 /// Générateur de puzzles Pentoscope

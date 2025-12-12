@@ -206,6 +206,11 @@ EOSQL
 FUNC_COUNT=$(sqlite3 "$DB_FILE" "SELECT COUNT(*) FROM functions;")
 printf "${GREEN}✓ Import functions: $FUNC_COUNT fonction(s)${NC}\n\n"
 
+# Étape 12: Générer la documentation
+printf "${YELLOW}12. Génération de la documentation...${NC}\n"
+dart tools/generate_dart_documentation.dart
+printf "\n"
+
 # Insérer le scan dans scans
 SCAN_DATE=$(date +%y%m%d)
 SCAN_TIME=$(date +%H%M%S)
@@ -222,4 +227,5 @@ printf "Imports: ${BOLD}$IMPORT_COUNT${NC}\n"
 printf "Fichiers orphelins: ${BOLD}$ORPHAN_COUNT${NC}\n"
 printf "Fichiers sans dépendances: ${BOLD}$END_COUNT${NC}\n"
 printf "Fonctions publiques: ${BOLD}$FUNC_COUNT${NC}\n"
+printf "Documentation: ${BOLD}tools/docs/${NC}\n"
 printf "Taille: ${BOLD}$(sqlite3 $DB_FILE "SELECT printf('%.2f MB', SUM(size_bytes) / 1024.0 / 1024.0) FROM dartfiles;")${NC}\n"
