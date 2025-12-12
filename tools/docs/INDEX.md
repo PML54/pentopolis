@@ -13,7 +13,7 @@
 - **isopento** (8 fichiers)
 - **main.dart** (1 fichiers)
 - **models** (1 fichiers)
-- **pentoscope** (7 fichiers)
+- **pentoscope** (6 fichiers)
 - **providers** (1 fichiers)
 - **screens** (12 fichiers)
 - **services** (4 fichiers)
@@ -764,21 +764,6 @@
 - `PentoscopeState()`
 - `getPiecePositionIndex()`
 
-### pentoscope/pentoscope_solver.dart
-
-**Fonctions :**
-
-- `toString()`
-- `isInBounds()`
-- `getCell()`
-- `setCell()`
-- `isFree()`
-- `copy()`
-- `cellIndex()`
-- `hasSolution()`
-- `countAllSolutions()`
-- `stopCounting()`
-
 ### pentoscope/screens/pentoscope_game_screen.dart
 
 **Fonctions :**
@@ -1503,7 +1488,6 @@
 - `onSolutionFound()`
 - `finalize()`
 - `collectAllSolutions()`
-- `exportAllSolutions()`
 
 ### utils/solution_exporter.dart
 

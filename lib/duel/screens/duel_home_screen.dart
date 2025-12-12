@@ -3,8 +3,9 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'duel_create_screen.dart';
-import 'duel_join_screen.dart';
+import 'package:pentapol/duel/screens/duel_create_screen.dart';
+import 'package:pentapol/duel/screens/duel_join_screen.dart';
+
 
 class DuelHomeScreen extends ConsumerWidget {
   const DuelHomeScreen({super.key});

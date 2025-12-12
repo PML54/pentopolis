@@ -8,8 +8,7 @@ import 'package:pentapol/common/pentominos.dart';
 import 'package:pentapol/common/plateau.dart';
 import 'package:pentapol/common/point.dart';
 import 'package:pentapol/common/shape_recognizer.dart';
-
-import 'pentoscope_generator.dart';
+import 'package:pentapol/pentoscope/pentoscope_generator.dart';
 
 // ============================================================================
 // ÉTAT

@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pentapol/isopento/isopento_generator.dart';
 import 'package:pentapol/isopento/isopento_provider.dart';
-import 'isopento_game_screen.dart';
+import  'package:pentapol/isopento/screens/isopento_game_screen.dart';
 
 class IsopentoMenuScreen extends ConsumerStatefulWidget {
   const IsopentoMenuScreen({super.key});

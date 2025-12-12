@@ -6,10 +6,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:pentapol/providers/settings_provider.dart';
-// Import du nouveau DuelSettings (à mettre dans app_settings.dart)
-// import 'package:pentapol/models/app_settings.dart';
 
-// === ENUMS (à déplacer dans app_settings.dart) ===
+
+
 
 /// Durée de partie prédéfinie
 enum DuelDuration {

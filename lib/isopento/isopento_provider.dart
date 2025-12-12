@@ -9,8 +9,10 @@ import 'package:pentapol/common/plateau.dart';
 import 'package:pentapol/common/point.dart';
 import 'package:pentapol/common/isometry_transforms.dart';
 import 'package:pentapol/common/shape_recognizer.dart';
-import 'isopento_generator.dart';
-import 'isopento_solver.dart';
+import 'package:pentapol/isopento/isopento_generator.dart';
+import 'package:pentapol/isopento/isopento_solver.dart';
+
+
 
 // ============================================================================
 // ÉTAT

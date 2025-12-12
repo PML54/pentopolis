@@ -1,7 +1,7 @@
 // lib/tutorial/models/tutorial_script.dart
 // Définition d'un script de tutoriel complet
 
-import 'scratch_command.dart';
+import 'package:pentapol/tutorial/models/scratch_command.dart';
 
 /// Script de tutoriel complet
 class TutorialScript {

@@ -26,6 +26,9 @@ const TutorialState({
 ### copyWith
 
 État initial
+Le tutoriel est-il terminé ?
+Calcule le progrès (0.0 à 1.0)
+Nombre total d'étapes
 Copie avec modifications
 
 

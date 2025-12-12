@@ -33,9 +33,3 @@ Lance le comptage et la collecte des solutions de manière isolée
 Future<void> collectAllSolutions({
 ```
 
-### exportAllSolutions
-
-```dart
-Future<void> exportAllSolutions() async {
-```
-

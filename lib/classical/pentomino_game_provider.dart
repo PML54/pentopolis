@@ -11,7 +11,8 @@ import 'package:pentapol/common/point.dart';
 import 'package:pentapol/common/isometry_transforms.dart';
 import 'package:pentapol/services/plateau_solution_counter.dart' show PlateauSolutionCounter;
 import 'package:pentapol/common/shape_recognizer.dart';
-import 'pentomino_game_state.dart';
+import 'package:pentapol/classical/pentomino_game_state.dart';
+
 
 final pentominoGameProvider =
 NotifierProvider<PentominoGameNotifier, PentominoGameState>(

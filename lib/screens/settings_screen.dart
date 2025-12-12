@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pentapol/models/app_settings.dart';
 import 'package:pentapol/providers/settings_provider.dart';
-import 'custom_colors_screen.dart';
+import 'package:pentapol/screens/custom_colors_screen.dart';
 import 'package:pentapol/config/build_info.dart';
 
 class SettingsScreen extends ConsumerWidget {

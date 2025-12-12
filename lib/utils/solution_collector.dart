@@ -2,7 +2,7 @@
 // lib/utils/solution_collector.dart
 // Adaptateur pour collecter les solutions du solver et les exporter
 
-import 'solution_exporter.dart';
+import 'package:pentapol/utils/solution_exporter.dart';
 import 'package:pentapol/services/pentomino_solver.dart'; // Ajuste le chemin selon ton projet
 
 /// Collecteur qui capture les solutions du solver et les exporte
@@ -89,37 +89,3 @@ Future<void> collectAllSolutions({
   print('    Voir exemple d\'intégration ci-dessous');
 }
 
-/*
-EXEMPLE D'INTÉGRATION DANS TON CODE EXISTANT:
-
-import 'solution_collector.dart';
-
-Future<void> exportAllSolutions() async {
-  final plateau = Plateau.allVisible(6, 10);
-  final pieces = pentominos.take(12).toList();
-
-  final collector = SolutionCollector(
-    outputPath: '/path/to/pentomino_solutions.txt'
-  );
-
-  final solver = PentominoSolver(
-    plateau: plateau,
-    pieces: pieces,
-  );
-
-  print('Démarrage de la collecte...');
-  final startTime = DateTime.now();
-
-  await solver.countAllSolutions(
-    onProgress: (count, elapsed) {
-      print('[$elapsed s] $count solutions trouvées...');
-    },
-    onSolutionFound: collector.onSolutionFound,
-  );
-
-  final duration = DateTime.now().difference(startTime);
-  print('Collecte terminée en ${duration.inMinutes}m ${duration.inSeconds % 60}s');
-
-  await collector.finalize();
-}
-*/

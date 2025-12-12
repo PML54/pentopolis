@@ -3,7 +3,8 @@
 // Générateur de puzzles Isopento utilisant les données pré-calculées
 
 import 'dart:math';
-import 'isopento_data.dart';
+
+import 'package:pentapol/isopento/isopento_data.dart';
 
 /// Tailles de plateau disponibles
 enum IsopentoSize {
