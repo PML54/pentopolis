@@ -91,13 +91,15 @@ CREATE INDEX idx_endfiles_first_dir ON endfiles(first_dir);
 CREATE TABLE functions (
   function_id INTEGER PRIMARY KEY AUTOINCREMENT,
   dart_id INTEGER NOT NULL,
+  return_type VARCHAR(100),            -- Ex: 'void', 'int', 'String', 'Future<bool>', etc.
   function_name VARCHAR(255) NOT NULL,
   FOREIGN KEY (dart_id) REFERENCES dartfiles(dart_id),
-  UNIQUE(dart_id, function_name)
+  UNIQUE(dart_id, return_type, function_name)
 );
 
 CREATE INDEX idx_functions_dart_id ON functions(dart_id);
 CREATE INDEX idx_functions_name ON functions(function_name);
+CREATE INDEX idx_functions_return_type ON functions(return_type);
 
 -- Table: duplicate_functions
 -- Fonctions qui apparaissent dans plusieurs fichiers .dart

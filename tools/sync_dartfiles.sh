@@ -187,6 +187,7 @@ printf "${YELLOW}11. Import des fonctions publiques...${NC}\n"
 sqlite3 "$DB_FILE" <<'EOSQL'
 CREATE TEMP TABLE temp_functions (
   relative_path VARCHAR(500),
+  return_type VARCHAR(100),
   function_name VARCHAR(255)
 );
 
@@ -195,12 +196,30 @@ CREATE TEMP TABLE temp_functions (
 
 DELETE FROM temp_functions WHERE relative_path = 'relative_path';
 
-INSERT INTO functions (dart_id, function_name)
+-- Dédupliquer: garder une seule ligne par (relative_path, return_type, function_name)
+-- ✅ IMPORTANT: Ignorer les entrées avec return_type vide/nul (faux positifs)
+CREATE TEMP TABLE temp_functions_dedup AS
+SELECT DISTINCT
+  relative_path,
+  return_type,
+  function_name
+FROM temp_functions
+WHERE return_type IS NOT NULL
+  AND return_type != ''
+  AND TRIM(return_type) != '';
+
+DROP TABLE temp_functions;
+
+INSERT INTO functions (dart_id, return_type, function_name)
 SELECT
   df.dart_id,
-  tf.function_name
-FROM temp_functions tf
-JOIN dartfiles df ON tf.relative_path = df.relative_path;
+  td.return_type,
+  td.function_name
+FROM temp_functions_dedup td
+JOIN dartfiles df ON td.relative_path = df.relative_path
+WHERE td.return_type IS NOT NULL
+  AND td.return_type != ''
+ON CONFLICT(dart_id, return_type, function_name) DO NOTHING;
 EOSQL
 
 FUNC_COUNT=$(sqlite3 "$DB_FILE" "SELECT COUNT(*) FROM functions;")

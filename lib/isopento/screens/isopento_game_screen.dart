@@ -146,7 +146,7 @@ class IsopentoGameScreen extends ConsumerWidget {
           if (settings.game.enableHaptics) {
             HapticFeedback.selectionClick();
           }
-          notifier.applyIsometryRotation();
+          notifier.applyIsometryRotationTW();
         },
         tooltip: GameIcons.isometryRotation.tooltip,
         color: GameIcons.isometryRotation.color,

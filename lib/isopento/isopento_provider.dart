@@ -3,11 +3,10 @@
 // MODIFIÉ: Ajout de solutionPlateau pour afficher la solution en semi-transparent
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
+import 'package:pentapol/common/isometry_transforms.dart';
 import 'package:pentapol/common/pentominos.dart';
 import 'package:pentapol/common/plateau.dart';
 import 'package:pentapol/common/point.dart';
-import 'package:pentapol/common/isometry_transforms.dart';
 import 'package:pentapol/common/shape_recognizer.dart';
 import 'package:pentapol/isopento/isopento_generator.dart';
 import 'package:pentapol/isopento/isopento_solver.dart';
@@ -31,23 +30,23 @@ enum IsopentoDifficulty { easy, random, hard }
 class IsopentoNotifier extends Notifier<IsopentoState> {
   late final IsopentoGenerator _generator;
 
-  // ==========================================================================
-// ISOMÉTRIES (fonctionne sur pièce slider ET pièce placée)
-// ==========================================================================
-
-  void applyIsometryRotation() {
-    if (state.selectedPlacedPiece != null) {
-      _applyPlacedPieceIsometry((coords, cx, cy) => rotateAroundPoint(coords, cx, cy, 1));
-    } else if (state.selectedPiece != null) {
-      _applySliderPieceIsometry((coords, cx, cy) => rotateAroundPoint(coords, cx, cy, 1));
-    }
-  }
-
-void applyIsometryRotationCW() {
+  void applyIsometryRotationCW() {
     if (state.selectedPlacedPiece != null) {
       _applyPlacedPieceIsometry((coords, cx, cy) => rotateAroundPoint(coords, cx, cy, 3));
     } else if (state.selectedPiece != null) {
       _applySliderPieceIsometry((coords, cx, cy) => rotateAroundPoint(coords, cx, cy, 3));
+    }
+  }
+
+// ==========================================================================
+// ISOMÉTRIES (fonctionne sur pièce slider ET pièce placée)
+// ==========================================================================
+
+  void applyIsometryRotationTW() {
+    if (state.selectedPlacedPiece != null) {
+      _applyPlacedPieceIsometry((coords, cx, cy) => rotateAroundPoint(coords, cx, cy, 1));
+    } else if (state.selectedPiece != null) {
+      _applySliderPieceIsometry((coords, cx, cy) => rotateAroundPoint(coords, cx, cy, 1));
     }
   }
 

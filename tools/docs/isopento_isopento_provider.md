@@ -4,16 +4,16 @@
 
 ## Fonctions
 
-### applyIsometryRotation
-
-```dart
-void applyIsometryRotation() {
-```
-
 ### applyIsometryRotationCW
 
 ```dart
 void applyIsometryRotationCW() {
+```
+
+### applyIsometryRotationTW
+
+```dart
+void applyIsometryRotationTW() {
 ```
 
 ### applyIsometrySymmetryH

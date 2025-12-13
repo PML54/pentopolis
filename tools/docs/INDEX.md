@@ -561,8 +561,8 @@
 
 **Fonctions :**
 
-- `applyIsometryRotation()`
 - `applyIsometryRotationCW()`
+- `applyIsometryRotationTW()`
 - `applyIsometrySymmetryH()`
 - `applyIsometrySymmetryV()`
 - `build()`
