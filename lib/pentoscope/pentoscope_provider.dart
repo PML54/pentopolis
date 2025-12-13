@@ -32,7 +32,7 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
   // ISOMÉTRIES (fonctionne sur pièce slider ET pièce placée)
   // ==========================================================================
 
-  void applyIsometryRotation() {
+  void applyIsometryRotationTW() {
     if (state.selectedPlacedPiece != null) {
       _applyPlacedPieceIsometry(
         (coords, cx, cy) => rotateAroundPoint(coords, cx, cy, 1),

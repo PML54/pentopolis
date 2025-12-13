@@ -33,7 +33,7 @@ class RotateAroundMasterCommand extends ScratchCommand {
     for (int i = 0; i < turns; i++) {
       if (direction.toLowerCase() == 'ccw') {
         // Anti-horaire (Counter-ClockWise)
-        context.gameNotifier.applyIsometryRotation();
+        context.gameNotifier.applyIsometryRotationTW();
       } else {
         // Horaire (ClockWise) - par défaut
         context.gameNotifier.applyIsometryRotationCW();

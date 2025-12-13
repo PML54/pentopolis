@@ -28,7 +28,7 @@
 
 **Fonctions :**
 
-- `applyIsometryRotation()`
+- `applyIsometryRotationTW()`
 - `applyIsometryRotationCW()`
 - `applyIsometrySymmetryH()`
 - `applyIsometrySymmetryV()`
@@ -737,7 +737,7 @@
 
 **Fonctions :**
 
-- `applyIsometryRotation()`
+- `applyIsometryRotationTW()`
 - `applyIsometryRotationCW()`
 - `applyIsometrySymmetryH()`
 - `applyIsometrySymmetryV()`

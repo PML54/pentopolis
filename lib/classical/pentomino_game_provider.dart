@@ -28,7 +28,7 @@ class PentominoGameNotifier extends Notifier<PentominoGameState> {
   /// Applique une rotation 90° anti-horaire à la pièce sélectionnée
   /// Fonctionne en mode jeu normal ET en mode isométries
   /// Rotation géométrique autour du point de référence (cellule rouge / mastercase)
-  void applyIsometryRotation() {
+  void applyIsometryRotationTW() {
     // Transformer une pièce placée avec rotation géométrique (mode game ET isométries)
     if (state.selectedPlacedPiece != null) {
       final selectedPiece = state.selectedPlacedPiece!;
