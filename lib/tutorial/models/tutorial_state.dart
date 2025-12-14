@@ -1,10 +1,10 @@
 // lib/tutorial/models/tutorial_state.dart
 // État d'un tutoriel en cours d'exécution
 
-import 'tutorial_script.dart';
-import 'tutorial_context.dart';
-import 'package:pentapol/tutorial/interpreter/scratch_interpreter.dart';
 import 'package:pentapol/classical/pentomino_game_state.dart';
+import 'package:pentapol/tutorial/interpreter/scratch_interpreter.dart';
+import 'package:pentapol/tutorial/models/tutorial_context.dart';
+import 'package:pentapol/tutorial/models/tutorial_script.dart';
 
 /// État d'un tutoriel
 class TutorialState {
@@ -56,6 +56,20 @@ class TutorialState {
     return const TutorialState();
   }
 
+  /// Le tutoriel est-il terminé ?
+  bool get isCompleted => currentStep >= totalSteps && totalSteps > 0;
+
+  /// Calcule le progrès (0.0 à 1.0)
+  double get progress {
+    if (currentScript == null || currentScript!.steps.isEmpty) {
+      return 0.0;
+    }
+    return currentStep / currentScript!.steps.length;
+  }
+
+  /// Nombre total d'étapes
+  int get totalSteps => currentScript?.steps.length ?? 0;
+
   /// Copie avec modifications
   TutorialState copyWith({
     TutorialScript? currentScript,
@@ -94,18 +108,4 @@ class TutorialState {
           : (savedGameState ?? this.savedGameState),
     );
   }
-
-  /// Calcule le progrès (0.0 à 1.0)
-  double get progress {
-    if (currentScript == null || currentScript!.steps.isEmpty) {
-      return 0.0;
-    }
-    return currentStep / currentScript!.steps.length;
-  }
-
-  /// Nombre total d'étapes
-  int get totalSteps => currentScript?.steps.length ?? 0;
-
-  /// Le tutoriel est-il terminé ?
-  bool get isCompleted => currentStep >= totalSteps && totalSteps > 0;
 }

@@ -5,6 +5,8 @@
 
 -- Détruire toutes les tables (dans le bon ordre)
 DROP TABLE IF EXISTS violations;
+DROP TABLE IF EXISTS duplicate_functions;
+DROP TABLE IF EXISTS importbad;
 DROP TABLE IF EXISTS functions;
 DROP TABLE IF EXISTS orphanfiles;
 DROP TABLE IF EXISTS endfiles;
@@ -89,13 +91,44 @@ CREATE INDEX idx_endfiles_first_dir ON endfiles(first_dir);
 CREATE TABLE functions (
   function_id INTEGER PRIMARY KEY AUTOINCREMENT,
   dart_id INTEGER NOT NULL,
+  return_type VARCHAR(100),            -- Ex: 'void', 'int', 'String', 'Future<bool>', etc.
   function_name VARCHAR(255) NOT NULL,
   FOREIGN KEY (dart_id) REFERENCES dartfiles(dart_id),
-  UNIQUE(dart_id, function_name)
+  UNIQUE(dart_id, return_type, function_name)
 );
 
 CREATE INDEX idx_functions_dart_id ON functions(dart_id);
 CREATE INDEX idx_functions_name ON functions(function_name);
+CREATE INDEX idx_functions_return_type ON functions(return_type);
+
+-- Table: duplicate_functions
+-- Fonctions qui apparaissent dans plusieurs fichiers .dart
+CREATE TABLE duplicate_functions (
+  duplicate_id INTEGER PRIMARY KEY AUTOINCREMENT,
+  function_name VARCHAR(255) NOT NULL,
+  dart_id INTEGER NOT NULL,
+  relative_path VARCHAR(500) NOT NULL,
+  first_dir VARCHAR(50) NOT NULL,
+  occurrence_count INTEGER NOT NULL,
+  FOREIGN KEY (dart_id) REFERENCES dartfiles(dart_id)
+);
+
+CREATE INDEX idx_duplicate_functions_name ON duplicate_functions(function_name);
+CREATE INDEX idx_duplicate_functions_dart_id ON duplicate_functions(dart_id);
+
+-- Table: importbad
+-- Imports relatifs (non absolus) détectés
+CREATE TABLE importbad (
+  importbad_id INTEGER PRIMARY KEY AUTOINCREMENT,
+  dart_id INTEGER NOT NULL,
+  relative_path VARCHAR(500) NOT NULL,
+  line_number INTEGER NOT NULL,
+  import_path VARCHAR(500) NOT NULL,
+  FOREIGN KEY (dart_id) REFERENCES dartfiles(dart_id)
+);
+
+CREATE INDEX idx_importbad_dart_id ON importbad(dart_id);
+CREATE INDEX idx_importbad_path ON importbad(relative_path);
 
 -- Table: violations
 -- Violations détectées (isolation, imports relatifs, etc.)

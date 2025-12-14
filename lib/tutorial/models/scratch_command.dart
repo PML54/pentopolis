@@ -1,7 +1,7 @@
 // lib/tutorial/models/scratch_command.dart
 // Classe abstraite de base pour toutes les commandes Scratch-Pentapol
 
-import 'tutorial_context.dart';
+import  'package:pentapol/tutorial/models/tutorial_context.dart';
 
 /// Classe abstraite pour toutes les commandes Scratch
 abstract class ScratchCommand {

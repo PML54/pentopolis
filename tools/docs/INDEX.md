@@ -13,7 +13,7 @@
 - **isopento** (8 fichiers)
 - **main.dart** (1 fichiers)
 - **models** (1 fichiers)
-- **pentoscope** (7 fichiers)
+- **pentoscope** (6 fichiers)
 - **providers** (1 fichiers)
 - **screens** (12 fichiers)
 - **services** (4 fichiers)
@@ -28,7 +28,7 @@
 
 **Fonctions :**
 
-- `applyIsometryRotation()`
+- `applyIsometryRotationTW()`
 - `applyIsometryRotationCW()`
 - `applyIsometrySymmetryH()`
 - `applyIsometrySymmetryV()`
@@ -561,8 +561,8 @@
 
 **Fonctions :**
 
-- `applyIsometryRotation()`
 - `applyIsometryRotationCW()`
+- `applyIsometryRotationTW()`
 - `applyIsometrySymmetryH()`
 - `applyIsometrySymmetryV()`
 - `build()`
@@ -737,7 +737,7 @@
 
 **Fonctions :**
 
-- `applyIsometryRotation()`
+- `applyIsometryRotationTW()`
 - `applyIsometryRotationCW()`
 - `applyIsometrySymmetryH()`
 - `applyIsometrySymmetryV()`
@@ -763,21 +763,6 @@
 - `copyWith()`
 - `PentoscopeState()`
 - `getPiecePositionIndex()`
-
-### pentoscope/pentoscope_solver.dart
-
-**Fonctions :**
-
-- `toString()`
-- `isInBounds()`
-- `getCell()`
-- `setCell()`
-- `isFree()`
-- `copy()`
-- `cellIndex()`
-- `hasSolution()`
-- `countAllSolutions()`
-- `stopCounting()`
 
 ### pentoscope/screens/pentoscope_game_screen.dart
 
@@ -1503,7 +1488,6 @@
 - `onSolutionFound()`
 - `finalize()`
 - `collectAllSolutions()`
-- `exportAllSolutions()`
 
 ### utils/solution_exporter.dart
 

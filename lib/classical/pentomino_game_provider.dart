@@ -11,7 +11,8 @@ import 'package:pentapol/common/point.dart';
 import 'package:pentapol/common/isometry_transforms.dart';
 import 'package:pentapol/services/plateau_solution_counter.dart' show PlateauSolutionCounter;
 import 'package:pentapol/common/shape_recognizer.dart';
-import 'pentomino_game_state.dart';
+import 'package:pentapol/classical/pentomino_game_state.dart';
+
 
 final pentominoGameProvider =
 NotifierProvider<PentominoGameNotifier, PentominoGameState>(
@@ -27,7 +28,7 @@ class PentominoGameNotifier extends Notifier<PentominoGameState> {
   /// Applique une rotation 90° anti-horaire à la pièce sélectionnée
   /// Fonctionne en mode jeu normal ET en mode isométries
   /// Rotation géométrique autour du point de référence (cellule rouge / mastercase)
-  void applyIsometryRotation() {
+  void applyIsometryRotationTW() {
     // Transformer une pièce placée avec rotation géométrique (mode game ET isométries)
     if (state.selectedPlacedPiece != null) {
       final selectedPiece = state.selectedPlacedPiece!;

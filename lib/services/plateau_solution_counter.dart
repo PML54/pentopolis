@@ -3,7 +3,7 @@
 
 import 'package:pentapol/common/plateau.dart';
 import 'package:pentapol/common/pentominos.dart';
-import 'solution_matcher.dart';
+import 'package:pentapol/services/solution_matcher.dart';
 
 class _PlateauBigIntMask {
   final BigInt pieces;

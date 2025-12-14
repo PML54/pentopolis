@@ -4,7 +4,7 @@
 
 ## Fonctions
 
-### applyIsometryRotation
+### applyIsometryRotationTW
 
 Applique une rotation 90° anti-horaire à la pièce sélectionnée
 Fonctionne en mode jeu normal ET en mode isométries
@@ -12,7 +12,7 @@ Rotation géométrique autour du point de référence (cellule rouge / mastercas
 
 
 ```dart
-void applyIsometryRotation() {
+void applyIsometryRotationTW() {
 ```
 
 ### applyIsometryRotationCW

@@ -1,18 +1,25 @@
 #!/usr/bin/env dart
 
 // tools/check_public_functions.dart
-// Extrait les fonctions publiques de chaque fichier
+// Extrait les fonctions publiques avec leur TYPE DE RETOUR
 // Utilise config.dart pour la configuration centralisée
 
 import 'dart:io';
 import 'config.dart';
 
 class PublicFunctionsExtractor {
-  final Map<String, List<String>> functionsByFile = {};
+  final List<Map<String, String>> functions = [];
   int totalFunctions = 0;
 
   Future<void> run() async {
     printf('${COLOR_BOLD}=== Extraction des fonctions publiques ===${COLOR_RESET}\n\n');
+
+    if (!File(DB_FULL_PATH).existsSync()) {
+      printf('${COLOR_RED}✗ Base de données non trouvée: $DB_FULL_PATH${COLOR_RESET}\n');
+      exit(1);
+    }
+
+    printf('${COLOR_YELLOW}Scanning des fichiers .dart...${COLOR_RESET}\n');
 
     final libDir = Directory(LIB_PATH);
     if (!libDir.existsSync()) {
@@ -20,19 +27,16 @@ class PublicFunctionsExtractor {
       exit(1);
     }
 
-    printf('${COLOR_YELLOW}Scanning des fichiers .dart...${COLOR_RESET}\n');
-
-    final dartFiles = libDir
+    final allFiles = libDir
         .listSync(recursive: true, followLinks: false)
         .whereType<File>()
         .where((f) => f.path.endsWith('.dart'));
 
-    for (final dartFile in dartFiles) {
-      await extractFunctionsFromFile(dartFile);
+    for (final file in allFiles) {
+      await extractFunctionsFromFile(file);
     }
 
-    printf('${COLOR_GREEN}✓ ${functionsByFile.length} fichiers traités${COLOR_RESET}\n');
-    printf('${COLOR_GREEN}✓ ${totalFunctions} fonctions publiques trouvées${COLOR_RESET}\n\n');
+    printf('${COLOR_GREEN}✓ ${functions.length} fonction(s) trouvée(s)${COLOR_RESET}\n\n');
 
     _printSummary();
     await _exportCsv();
@@ -42,97 +46,146 @@ class PublicFunctionsExtractor {
     final content = await file.readAsString();
     final lines = content.split('\n');
 
-    final functions = <String>{};
+    final relativePath = file.path.replaceFirst('$LIB_PATH/', '');
 
-    for (int i = 0; i < lines.length; i++) {
-      final line = lines[i].trim();
+    // Regex pour capturer: [type_retour] [nom_fonction]([params])
+    // Exemples:
+    // - void methodName()
+    // - int getValue()
+    // - String getText()
+    // - Future<bool> async()
+    // - List<String> getList()
+    // - @override
+    //   Widget build(BuildContext context)
+    final functionPattern = RegExp(
+      r'^\s*(?:@override\s+)?'
+      r'([\w<>?\s]+?)\s+'          // Type de retour: void, int, String, Future<T>, etc.
+      r'(\w+)\s*\(',               // Nom de fonction + ouverture parenthèse
+    );
 
-      if (line.startsWith('//') || line.isEmpty) continue;
+    for (final line in lines) {
+      final trimmed = line.trim();
 
-      final functionPattern = RegExp(
-        r'^\s*(static\s+)?(async\s+)?(\w+(<[^>]+>)?)\s+([a-zA-Z][a-zA-Z0-9_]*)\s*\(',
-      );
-
-      final getterSetterPattern = RegExp(
-        r'^\s*(static\s+)?(async\s+)?(get|set)\s+([a-zA-Z][a-zA-Z0-9_]*)',
-      );
-
-      final constructorPattern = RegExp(
-        r'^\s*\w+\.([a-zA-Z][a-zA-Z0-9_]*)\s*\(',
-      );
-
-      final funcMatch = functionPattern.firstMatch(line);
-      if (funcMatch != null) {
-        final funcName = funcMatch.group(5);
-        if (funcName != null && !funcName.startsWith('_')) {
-          functions.add(funcName);
-        }
+      // Ignorer les lignes de commentaires et vides
+      if (trimmed.isEmpty || trimmed.startsWith('//') || trimmed.startsWith('/*')) {
+        continue;
       }
 
-      final getterMatch = getterSetterPattern.firstMatch(line);
-      if (getterMatch != null) {
-        final funcName = getterMatch.group(4);
-        if (funcName != null && !funcName.startsWith('_')) {
-          functions.add(funcName);
-        }
+      // Ignorer les constructeurs privés et les méthodes privées
+      if (trimmed.startsWith('_')) {
+        continue;
       }
 
-      final constructorMatch = constructorPattern.firstMatch(line);
-      if (constructorMatch != null) {
-        final funcName = constructorMatch.group(1);
-        if (funcName != null && !funcName.startsWith('_')) {
-          functions.add('${funcName}()');
-        }
-      }
-    }
+      final match = functionPattern.firstMatch(line);
+      if (match != null) {
+        final returnType = match.group(1)!.trim();
+        final functionName = match.group(2)!.trim();
 
-    if (functions.isNotEmpty) {
-      final relativePath = file.path.replaceFirst('$LIB_PATH/', '');
-      functionsByFile[relativePath] = functions.toList()..sort();
-      totalFunctions += functions.length;
+        // Ignorer les mots-clés du langage (class, if, for, etc.)
+        if (_isKeyword(returnType)) {
+          continue;
+        }
+
+        functions.add({
+          'relative_path': relativePath,
+          'return_type': returnType,
+          'function_name': functionName,
+        });
+
+        totalFunctions++;
+      }
     }
   }
 
-  void _printSummary() {
-    printf('${COLOR_BOLD}=== Top 10 des fichiers les plus documentés ===${COLOR_RESET}\n\n');
+  bool _isKeyword(String word) {
+    const keywords = {
+      'class', 'enum', 'mixin', 'interface',
+      'if', 'else', 'for', 'while', 'do', 'switch', 'case',
+      'try', 'catch', 'finally', 'throw',
+      'return', 'break', 'continue',
+      'const', 'final', 'static', 'abstract', 'override',
+      'import', 'export', 'part', 'library',
+    };
+    return keywords.contains(word.toLowerCase());
+  }
 
-    final sorted = functionsByFile.entries.toList()
-      ..sort((a, b) => b.value.length.compareTo(a.value.length));
+  void _printSummary() {
+    printf('${COLOR_BOLD}=== Top 15 des fonctions les plus communes ===${COLOR_RESET}\n\n');
+
+    final grouped = <String, int>{};
+    for (final func in functions) {
+      final key = '${func['return_type']} ${func['function_name']}';
+      grouped[key] = (grouped[key] ?? 0) + 1;
+    }
+
+    final sorted = grouped.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
 
     int count = 0;
     for (final entry in sorted) {
-      if (count >= 10) break;
-      printf('${COLOR_YELLOW}${entry.key}${COLOR_RESET} (${entry.value.length} fonctions)\n');
-      for (final func in entry.value.take(5)) {
-        printf('  • $func\n');
-      }
-      if (entry.value.length > 5) {
-        printf('  • ... +${entry.value.length - 5} autres\n');
-      }
-      printf('\n');
+      if (count >= 15) break;
+      printf('${COLOR_YELLOW}${entry.key}${COLOR_RESET} (${entry.value} fichiers)\n');
       count++;
     }
 
-    printf('${COLOR_BOLD}=== Total ===${COLOR_RESET}\n');
-    printf('Fichiers: ${COLOR_BOLD}${functionsByFile.length}${COLOR_RESET}\n');
-    printf('Fonctions: ${COLOR_BOLD}$totalFunctions${COLOR_RESET}\n');
-    printf('Moyenne: ${COLOR_BOLD}${(totalFunctions / functionsByFile.length).toStringAsFixed(1)}${COLOR_RESET}\n\n');
+    printf('\n${COLOR_BOLD}=== Statistiques ===${COLOR_RESET}\n');
+    printf('Fonctions trouvées: ${COLOR_BOLD}$totalFunctions${COLOR_RESET}\n');
+    printf('Fonctions uniques: ${COLOR_BOLD}${grouped.length}${COLOR_RESET}\n\n');
   }
 
   Future<void> _exportCsv() async {
     Directory(CSV_PATH).createSync(recursive: true);
 
-    final buffer = StringBuffer();
-    buffer.writeln('relative_path,function_name');
+    // ✅ Filtrer et dédupliquer:
+    // - Ignorer les return_type vides/nuls (faux positifs)
+    // - Garder une seule ligne par (relative_path, return_type, function_name)
+    final seen = <String>{};
+    final deduplicatedFunctions = <Map<String, String>>[];
 
-    for (final entry in functionsByFile.entries) {
-      for (final funcName in entry.value) {
-        buffer.writeln('"${entry.key}","$funcName"');
+    int nullReturnTypes = 0;
+    int duplicates = 0;
+
+    for (final func in functions) {
+      final returnType = func['return_type']?.trim() ?? '';
+
+      // Filtrer les return_type vides/nuls
+      if (returnType.isEmpty) {
+        nullReturnTypes++;
+        continue;
       }
+
+      final key = '${func['relative_path']}|$returnType|${func['function_name']}';
+      if (!seen.contains(key)) {
+        seen.add(key);
+        deduplicatedFunctions.add({
+          'relative_path': func['relative_path']!,
+          'return_type': returnType,
+          'function_name': func['function_name']!,
+        });
+      } else {
+        duplicates++;
+      }
+    }
+
+    // Afficher les statistiques
+    if (nullReturnTypes > 0) {
+      printf('${COLOR_YELLOW}⚠️  $nullReturnTypes entrée(s) sans return_type (ignorées)${COLOR_RESET}\n');
+    }
+    if (duplicates > 0) {
+      printf('${COLOR_YELLOW}⚠️  $duplicates doublon(s) supprimé(s)${COLOR_RESET}\n');
+    }
+
+    // Exporter le CSV
+    final buffer = StringBuffer();
+    buffer.writeln('relative_path,return_type,function_name');
+
+    for (final func in deduplicatedFunctions) {
+      buffer.writeln('"${func['relative_path']}","${func['return_type']}","${func['function_name']}"');
     }
 
     await File(CSV_FUNCTIONS).writeAsString(buffer.toString());
     printf('${COLOR_GREEN}✓ Export CSV: ${COLOR_BOLD}$CSV_FUNCTIONS${COLOR_RESET}\n');
+    printf('${COLOR_GREEN}✓ Fonctions valides exportées: ${COLOR_BOLD}${deduplicatedFunctions.length}${COLOR_RESET}\n');
   }
 }
 

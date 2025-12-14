@@ -187,6 +187,7 @@ printf "${YELLOW}11. Import des fonctions publiques...${NC}\n"
 sqlite3 "$DB_FILE" <<'EOSQL'
 CREATE TEMP TABLE temp_functions (
   relative_path VARCHAR(500),
+  return_type VARCHAR(100),
   function_name VARCHAR(255)
 );
 
@@ -195,19 +196,74 @@ CREATE TEMP TABLE temp_functions (
 
 DELETE FROM temp_functions WHERE relative_path = 'relative_path';
 
-INSERT INTO functions (dart_id, function_name)
+-- Dédupliquer: garder une seule ligne par (relative_path, return_type, function_name)
+-- ✅ IMPORTANT: Ignorer les entrées avec return_type vide/nul (faux positifs)
+CREATE TEMP TABLE temp_functions_dedup AS
+SELECT DISTINCT
+  relative_path,
+  return_type,
+  function_name
+FROM temp_functions
+WHERE return_type IS NOT NULL
+  AND return_type != ''
+  AND TRIM(return_type) != '';
+
+DROP TABLE temp_functions;
+
+INSERT INTO functions (dart_id, return_type, function_name)
 SELECT
   df.dart_id,
-  tf.function_name
-FROM temp_functions tf
-JOIN dartfiles df ON tf.relative_path = df.relative_path;
+  td.return_type,
+  td.function_name
+FROM temp_functions_dedup td
+JOIN dartfiles df ON td.relative_path = df.relative_path
+WHERE td.return_type IS NOT NULL
+  AND td.return_type != ''
+ON CONFLICT(dart_id, return_type, function_name) DO NOTHING;
 EOSQL
 
 FUNC_COUNT=$(sqlite3 "$DB_FILE" "SELECT COUNT(*) FROM functions;")
 printf "${GREEN}✓ Import functions: $FUNC_COUNT fonction(s)${NC}\n\n"
 
-# Étape 12: Générer la documentation
-printf "${YELLOW}12. Génération de la documentation...${NC}\n"
+# Étape 12: Vérifier les imports relatifs
+printf "${YELLOW}12. Vérification des imports relatifs...${NC}\n"
+dart tools/check_relative_imports.dart
+
+# Importer le CSV importbad
+printf "${YELLOW}13. Import du CSV importbad...${NC}\n"
+
+sqlite3 "$DB_FILE" <<'EOSQL'
+CREATE TEMP TABLE temp_importbad (
+  relative_path VARCHAR(500),
+  line_number INTEGER,
+  import_path VARCHAR(500)
+);
+
+.mode csv
+.import tools/csv/pentapol_relative_imports.csv temp_importbad
+
+DELETE FROM temp_importbad WHERE relative_path = 'relative_path';
+
+INSERT INTO importbad (dart_id, relative_path, line_number, import_path)
+SELECT
+  df.dart_id,
+  ti.relative_path,
+  ti.line_number,
+  ti.import_path
+FROM temp_importbad ti
+JOIN dartfiles df ON ti.relative_path = df.relative_path;
+EOSQL
+
+IMPORTBAD_COUNT=$(sqlite3 "$DB_FILE" "SELECT COUNT(*) FROM importbad;")
+printf "${GREEN}✓ Import importbad: $IMPORTBAD_COUNT import(s) relatif(s)${NC}\n\n"
+
+# Étape 14: Détecter les fonctions dupliquées
+printf "${YELLOW}14. Détection des fonctions dupliquées...${NC}\n"
+dart tools/check_duplicate_functions.dart
+printf "\n"
+
+# Étape 15: Générer la documentation
+printf "${YELLOW}15. Génération de la documentation...${NC}\n"
 dart tools/generate_dart_documentation.dart
 printf "\n"
 
@@ -227,5 +283,7 @@ printf "Imports: ${BOLD}$IMPORT_COUNT${NC}\n"
 printf "Fichiers orphelins: ${BOLD}$ORPHAN_COUNT${NC}\n"
 printf "Fichiers sans dépendances: ${BOLD}$END_COUNT${NC}\n"
 printf "Fonctions publiques: ${BOLD}$FUNC_COUNT${NC}\n"
+printf "Fonctions dupliquées: ${BOLD}$(sqlite3 "$DB_FILE" "SELECT COUNT(*) FROM duplicate_functions;")${NC}\n"
+printf "Imports relatifs: ${BOLD}$IMPORTBAD_COUNT${NC}\n"
 printf "Documentation: ${BOLD}tools/docs/${NC}\n"
 printf "Taille: ${BOLD}$(sqlite3 $DB_FILE "SELECT printf('%.2f MB', SUM(size_bytes) / 1024.0 / 1024.0) FROM dartfiles;")${NC}\n"

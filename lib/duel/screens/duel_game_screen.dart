@@ -15,7 +15,8 @@ import 'package:pentapol/duel/providers/duel_provider.dart';
 import 'package:pentapol/duel/models/duel_state.dart';
 import 'package:pentapol/duel/services/duel_validator.dart';
 import 'package:pentapol/duel/widgets/duel_countdown.dart';
-import 'duel_result_screen.dart';
+import 'package:pentapol/duel/screens/duel_result_screen.dart';
+
 
 /// Constantes pour le slider
 class DuelSliderConstants {

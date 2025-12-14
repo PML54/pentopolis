@@ -4,10 +4,10 @@
 
 ## Fonctions
 
-### applyIsometryRotation
+### applyIsometryRotationTW
 
 ```dart
-void applyIsometryRotation() {
+void applyIsometryRotationTW() {
 ```
 
 ### applyIsometryRotationCW

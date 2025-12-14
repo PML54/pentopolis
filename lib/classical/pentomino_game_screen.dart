@@ -161,7 +161,7 @@ class _PentominoGameScreenState extends ConsumerState<PentominoGameScreen> {
           icon: Icon(GameIcons.isometryRotation.icon, size: settings.ui.iconSize),
           onPressed: () {
             HapticFeedback.selectionClick();
-            notifier.applyIsometryRotation();
+            notifier.applyIsometryRotationTW();
           },
           tooltip: GameIcons.isometryRotation.tooltip,
           color: GameIcons.isometryRotation.color,

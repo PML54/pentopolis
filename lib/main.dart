@@ -4,13 +4,12 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-import 'isopento/screens/isopento_game_screen.dart';
-import 'isopento/screens/isopento_menu_screen.dart';
-import 'screens/home_screen.dart';
 import 'package:pentapol/classical/pentomino_game_screen.dart';
-import 'services/pentapol_solutions_loader.dart';
-import 'services/solution_matcher.dart';
+import 'package:pentapol/isopento/screens/isopento_game_screen.dart';
+import 'package:pentapol/isopento/screens/isopento_menu_screen.dart';
+import 'package:pentapol/screens/home_screen.dart';
+import 'package:pentapol/services/pentapol_solutions_loader.dart';
+import 'package:pentapol/services/solution_matcher.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
