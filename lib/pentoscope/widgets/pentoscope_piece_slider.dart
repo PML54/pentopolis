@@ -98,10 +98,9 @@ class PentoscopePieceSlider extends ConsumerWidget {
         ),
         child: DraggablePieceWidget(
           piece: piece,
-          positionIndex: positionIndex,
+          positionIndex: displayPositionIndex,
           isSelected: isSelected,
-          selectedPositionIndex: state.selectedPositionIndex,
-          longPressDuration: Duration(milliseconds: settings.game.longPressDuration),
+          selectedPositionIndex: isSelected ? displayPositionIndex : state.selectedPositionIndex,  longPressDuration: Duration(milliseconds: settings.game.longPressDuration),
           onSelect: () {
             if (settings.game.enableHaptics) {
               HapticFeedback.selectionClick();
