@@ -106,12 +106,6 @@ void updatePreview(int gridX, int gridY) {
 
 ### Point
 
-Helper pour trouver symétrie H
-Helper pour trouver symétrie V
-Génère un plateau avec une solution trouvée par le solver
-Helper : calcule la mastercase par défaut (première cellule normalisée)
-
-
 ```dart
 return Point(rawX - minX, rawY - minY);
 ```

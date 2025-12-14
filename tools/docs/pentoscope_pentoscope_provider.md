@@ -96,9 +96,6 @@ void updatePreview(int gridX, int gridY) {
 
 ### Point
 
-Helper : calcule la mastercase par défaut (première cellule normalisée)
-
-
 ```dart
 return Point(rawX - minX, rawY - minY);
 ```

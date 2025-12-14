@@ -5,7 +5,7 @@
 ## Modules
 
 - **classical** (3 fichiers)
-- **common** (8 fichiers)
+- **common** (9 fichiers)
 - **config** (1 fichiers)
 - **data** (1 fichiers)
 - **database** (2 fichiers)
@@ -144,6 +144,24 @@
 - `GamePiece()`
 - `unplace()`
 - `GamePiece()`
+
+### common/isometry_service.dart
+
+**Fonctions :**
+
+- `applyPlacedPieceTransform()`
+- `Function()`
+- `applySliderPieceTransform()`
+- `Function()`
+- `applyPlacedPieceSymmetryH()`
+- `Function()`
+- `applyPlacedPieceSymmetryV()`
+- `Function()`
+- `applySliderPieceSymmetryH()`
+- `Function()`
+- `applySliderPieceSymmetryV()`
+- `Function()`
+- `Point()`
 
 ### common/isometry_transformation_service.dart
 
