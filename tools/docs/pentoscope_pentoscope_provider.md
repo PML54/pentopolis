@@ -55,7 +55,7 @@ void cycleToNextOrientation() {
 ### removePlacedPiece
 
 ```dart
-void removePlacedPiece(PentoscopePlacedPiece placed) {
+void removePlacedPiece(PlacedPiece placed) {
 ```
 
 ### reset
@@ -73,7 +73,7 @@ void selectPiece(Pento piece) {
 ### selectPlacedPiece
 
 ```dart
-void selectPlacedPiece( PentoscopePlacedPiece placed, int absoluteX, int absoluteY, ) {
+void selectPlacedPiece( PlacedPiece placed, int absoluteX, int absoluteY, ) {
 ```
 
 ### startPuzzle
@@ -96,41 +96,11 @@ void updatePreview(int gridX, int gridY) {
 
 ### Point
 
-Helper: calcule la mastercase par défaut (première cellule normalisée)
+Helper : calcule la mastercase par défaut (première cellule normalisée)
 
 
 ```dart
 return Point(rawX - minX, rawY - minY);
-```
-
-### PentoscopePlacedPiece
-
-Pièce placée sur le plateau Pentoscope
-
-
-```dart
-const PentoscopePlacedPiece({
-```
-
-### Point
-
-Coordonnées absolues des cellules occupées (normalisées)
-
-
-```dart
-yield Point(gridX + localX, gridY + localY);
-```
-
-### copyWith
-
-```dart
-PentoscopePlacedPiece copyWith({
-```
-
-### PentoscopePlacedPiece
-
-```dart
-return PentoscopePlacedPiece( piece: piece ?? this.piece, positionIndex: positionIndex ?? this.positionIndex, gridX: gridX ?? this.gridX, gridY: gridY ?? this.gridY, );
 ```
 
 ### PentoscopeState

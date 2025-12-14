@@ -5,7 +5,7 @@
 ## Modules
 
 - **classical** (3 fichiers)
-- **common** (6 fichiers)
+- **common** (8 fichiers)
 - **config** (1 fichiers)
 - **data** (1 fichiers)
 - **database** (2 fichiers)
@@ -145,6 +145,17 @@
 - `unplace()`
 - `GamePiece()`
 
+### common/isometry_transformation_service.dart
+
+**Fonctions :**
+
+- `applyRotationTW()`
+- `applyRotationCW()`
+- `applySymmetryH()`
+- `applySymmetryV()`
+- `canPlacePiece()`
+- `UnimplementedError()`
+
 ### common/pentominos.dart
 
 **Fonctions :**
@@ -155,6 +166,16 @@
 - `findRotation90()`
 - `findSymmetryH()`
 - `findSymmetryV()`
+
+### common/placed_piece.dart
+
+**Fonctions :**
+
+- `PlacedPiece()`
+- `Point()`
+- `copyWith()`
+- `PlacedPiece()`
+- `toString()`
 
 ### common/plateau.dart
 
@@ -578,10 +599,6 @@
 - `tryPlacePiece()`
 - `updatePreview()`
 - `Point()`
-- `IsopentoPlacedPiece()`
-- `Point()`
-- `copyWith()`
-- `IsopentoPlacedPiece()`
 - `IsopentoState()`
 - `IsopentoState()`
 - `canPlacePiece()`
@@ -753,10 +770,6 @@
 - `tryPlacePiece()`
 - `updatePreview()`
 - `Point()`
-- `PentoscopePlacedPiece()`
-- `Point()`
-- `copyWith()`
-- `PentoscopePlacedPiece()`
 - `PentoscopeState()`
 - `PentoscopeState()`
 - `canPlacePiece()`
