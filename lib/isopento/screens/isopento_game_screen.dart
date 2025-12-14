@@ -146,7 +146,7 @@ class IsopentoGameScreen extends ConsumerWidget {
           if (settings.game.enableHaptics) {
             HapticFeedback.selectionClick();
           }
-          notifier.applyIsometryRotationTW();
+          notifier.delegateIsometryRotationTW();
         },
         tooltip: GameIcons.isometryRotation.tooltip,
         color: GameIcons.isometryRotation.color,
@@ -158,7 +158,7 @@ class IsopentoGameScreen extends ConsumerWidget {
           if (settings.game.enableHaptics) {
             HapticFeedback.selectionClick();
           }
-          notifier.applyIsometryRotationCW();
+          notifier.delegateIsometryRotationCW();
         },
         tooltip: GameIcons.isometryRotationCW.tooltip,
         color: GameIcons.isometryRotationCW.color,
@@ -171,9 +171,9 @@ class IsopentoGameScreen extends ConsumerWidget {
             HapticFeedback.selectionClick();
           }
           if (isLandscape) {
-            notifier.applyIsometrySymmetryV();
+            notifier.delegateIsometrySymmetryV();
           } else {
-            notifier.applyIsometrySymmetryH();
+            notifier.delegateIsometrySymmetryH();
           }
         },
         tooltip: GameIcons.isometrySymmetryH.tooltip,
@@ -187,9 +187,9 @@ class IsopentoGameScreen extends ConsumerWidget {
             HapticFeedback.selectionClick();
           }
           if (isLandscape) {
-            notifier.applyIsometrySymmetryH();
+            notifier.delegateIsometrySymmetryH();
           } else {
-            notifier.applyIsometrySymmetryV();
+            notifier.delegateIsometrySymmetryV();
           }
         },
         tooltip: GameIcons.isometrySymmetryV.tooltip,

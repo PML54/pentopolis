@@ -1,6 +1,6 @@
 // GÉNÉRÉ AUTOMATIQUEMENT par scripts/update_version.sh
 // NE PAS MODIFIER MANUELLEMENT
-// Dernière génération : 13/12/2025 à 22:42
+// Dernière génération : 14/12/2025 à 14:41
 
 /// Informations de build de l'application
 class BuildInfo {
@@ -8,10 +8,10 @@ class BuildInfo {
   static const String version = '1.0.1';
 
   /// Numéro de build (format YYYYMMDDHHMM)
-  static const int buildNumber = 202512132242;
+  static const int buildNumber = 202512141441;
 
   /// Date et heure du build (ISO 8601)
-  static const String buildDate = '2025-12-13T22:42:21';
+  static const String buildDate = '2025-12-14T14:41:53';
 
   /// Date formatée pour affichage
   static String get buildDateFormatted {

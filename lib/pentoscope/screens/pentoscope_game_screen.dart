@@ -79,7 +79,7 @@ class PentoscopeGameScreen extends ConsumerWidget {
         icon: Icon(GameIcons.isometryRotation.icon, size: settings.ui.iconSize),
         onPressed: () {
           HapticFeedback.selectionClick();
-          notifier.applyIsometryRotationTW();
+          notifier.delegateIsometryRotationTW();
         },
         tooltip: GameIcons.isometryRotation.tooltip,
         color: GameIcons.isometryRotation.color,
@@ -90,7 +90,7 @@ class PentoscopeGameScreen extends ConsumerWidget {
         icon: Icon(GameIcons.isometryRotationCW.icon, size: settings.ui.iconSize),
         onPressed: () {
           HapticFeedback.selectionClick();
-          notifier.applyIsometryRotationCW();
+          notifier.delegateIsometryRotationCW();
         },
         tooltip: GameIcons.isometryRotationCW.tooltip,
         color: GameIcons.isometryRotationCW.color,
@@ -101,7 +101,7 @@ class PentoscopeGameScreen extends ConsumerWidget {
         icon: Icon(GameIcons.isometrySymmetryH.icon, size: settings.ui.iconSize),
         onPressed: () {
           HapticFeedback.selectionClick();
-          notifier.applyIsometrySymmetryH();
+          notifier.delegateIsometrySymmetryH();
         },
         tooltip: GameIcons.isometrySymmetryH.tooltip,
         color: GameIcons.isometrySymmetryH.color,
@@ -112,7 +112,7 @@ class PentoscopeGameScreen extends ConsumerWidget {
         icon: Icon(GameIcons.isometrySymmetryV.icon, size: settings.ui.iconSize),
         onPressed: () {
           HapticFeedback.selectionClick();
-          notifier.applyIsometrySymmetryV();
+          notifier.delegateIsometrySymmetryV();
         },
         tooltip: GameIcons.isometrySymmetryV.tooltip,
         color: GameIcons.isometrySymmetryV.color,

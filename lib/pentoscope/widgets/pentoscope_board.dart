@@ -408,7 +408,7 @@ class PentoscopeBoard extends ConsumerWidget {
           },
           onDoubleTap: () {
             HapticFeedback.selectionClick();
-            notifier.applyIsometryRotationTW();
+            notifier.delegateIsometryRotationTW();
           },
           child: cellWidget,
         ),
