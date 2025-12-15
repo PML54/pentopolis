@@ -5,6 +5,8 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'dart:math' as math;
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:pentapol/common/pentominos.dart';
@@ -50,15 +52,10 @@ class PentoscopePieceSlider extends ConsumerWidget {
   }
 
   /// Convertit positionIndex interne en displayPositionIndex pour l'affichage
-  /// En paysage: applique rotation inverse de -90° pour compenser le pivot du plateau
   int _getDisplayPositionIndex(int positionIndex, Pento piece, bool isLandscape) {
-    if (isLandscape) {
-      // Appliquer rotation inverse de -90° pour compenser le pivot du plateau
-      return (positionIndex - 1 + piece.numPositions) % piece.numPositions;
-
-    }
-    return positionIndex;
+    return positionIndex; // ✅ plus de -1 / modulo
   }
+
 
   Widget _buildDraggablePiece(
       Pento piece,
@@ -96,36 +93,41 @@ class PentoscopePieceSlider extends ConsumerWidget {
           ]
               : null,
         ),
-        child: DraggablePieceWidget(
-          piece: piece,
-          positionIndex: displayPositionIndex,
-          isSelected: isSelected,
-          selectedPositionIndex: isSelected ? displayPositionIndex : state.selectedPositionIndex,  longPressDuration: Duration(milliseconds: settings.game.longPressDuration),
-          onSelect: () {
-            if (settings.game.enableHaptics) {
-              HapticFeedback.selectionClick();
-            }
-            notifier.selectPiece(piece);
-          },
-          onCycle: () {
-            if (settings.game.enableHaptics) {
-              HapticFeedback.selectionClick();
-            }
-            notifier.cycleToNextOrientation();
-          },
-          onCancel: () {
-            if (settings.game.enableHaptics) {
-              HapticFeedback.lightImpact();
-            }
-            notifier.cancelSelection();
-          },
-          childBuilder: (isDragging) => PieceRenderer(
+        child: Transform.rotate(
+          angle: isLandscape ? math.pi / 2 : 0.0, // ✅ rotation visuelle du slider en paysage
+          child: DraggablePieceWidget(
             piece: piece,
             positionIndex: displayPositionIndex,
-            isDragging: isDragging,
-            getPieceColor: (pieceId) => settings.ui.getPieceColor(pieceId),
+            isSelected: isSelected,
+            selectedPositionIndex: isSelected ? displayPositionIndex : state.selectedPositionIndex,
+            longPressDuration: Duration(milliseconds: settings.game.longPressDuration),
+            onSelect: () {
+              if (settings.game.enableHaptics) {
+                HapticFeedback.selectionClick();
+              }
+              notifier.selectPiece(piece);
+            },
+            onCycle: () {
+              if (settings.game.enableHaptics) {
+                HapticFeedback.selectionClick();
+              }
+              notifier.cycleToNextOrientation();
+            },
+            onCancel: () {
+              if (settings.game.enableHaptics) {
+                HapticFeedback.lightImpact();
+              }
+              notifier.cancelSelection();
+            },
+            childBuilder: (isDragging) => PieceRenderer(
+              piece: piece,
+              positionIndex: displayPositionIndex,
+              isDragging: isDragging,
+              getPieceColor: (pieceId) => settings.ui.getPieceColor(pieceId),
+            ),
           ),
         ),
+
       ),
     );
   }
