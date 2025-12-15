@@ -158,13 +158,13 @@ class _PentominoGameScreenState extends ConsumerState<PentominoGameScreen> {
       HighlightedIconButton(
         isHighlighted: state.highlightedIsometryIcon == 'rotation',
         child: IconButton(
-          icon: Icon(GameIcons.isometryRotation.icon, size: settings.ui.iconSize),
+          icon: Icon(GameIcons.isometryRotationTW.icon, size: settings.ui.iconSize),
           onPressed: () {
             HapticFeedback.selectionClick();
             notifier.applyIsometryRotationTW();
           },
-          tooltip: GameIcons.isometryRotation.tooltip,
-          color: GameIcons.isometryRotation.color,
+          tooltip: GameIcons.isometryRotationTW.tooltip,
+          color: GameIcons.isometryRotationTW.color,
         ),
       ),
 

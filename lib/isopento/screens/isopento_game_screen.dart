@@ -140,7 +140,7 @@ class IsopentoGameScreen extends ConsumerWidget {
       }) {
     return [
       IconButton(
-        icon: Icon(GameIcons.isometryRotation.icon,
+        icon: Icon(GameIcons.isometryRotationTW.icon,
             size: config.isometryIconSize),
         onPressed: () {
           if (settings.game.enableHaptics) {
@@ -148,8 +148,8 @@ class IsopentoGameScreen extends ConsumerWidget {
           }
           notifier.applyIsometryRotationTW();
         },
-        tooltip: GameIcons.isometryRotation.tooltip,
-        color: GameIcons.isometryRotation.color,
+        tooltip: GameIcons.isometryRotationTW.tooltip,
+        color: GameIcons.isometryRotationTW.color,
       ),
       IconButton(
         icon: Icon(GameIcons.isometryRotationCW.icon,

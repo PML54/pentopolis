@@ -346,8 +346,8 @@ class _DuelGameScreenState extends ConsumerState<DuelGameScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
                         _buildIsometryButton(
-                          icon: GameIcons.isometryRotation.icon,
-                          color: GameIcons.isometryRotation.color,
+                          icon: GameIcons.isometryRotationTW.icon,
+                          color: GameIcons.isometryRotationTW.color,
                           onPressed: _rotateCounterClockwise,
                           tooltip: 'Rotation ↺',
                         ),

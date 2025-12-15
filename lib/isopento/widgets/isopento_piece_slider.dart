@@ -100,9 +100,11 @@ class IsopentoPieceSlider extends ConsumerWidget {
             ),
             child: DraggablePieceWidget(
               piece: piece,
-              positionIndex: positionIndex,
+              positionIndex: displayPositionIndex,
               isSelected: isSelected,
-              selectedPositionIndex: state.selectedPositionIndex,
+              selectedPositionIndex: isSelected
+                  ? displayPositionIndex
+                  : state.selectedPositionIndex, // (voir note juste dessous)
               longPressDuration: Duration(milliseconds: settings.game.longPressDuration),
               onSelect: () {
                 if (settings.game.enableHaptics) {

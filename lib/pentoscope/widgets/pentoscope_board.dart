@@ -17,10 +17,19 @@ class PentoscopeBoard extends ConsumerWidget {
   const PentoscopeBoard({super.key, required this.isLandscape});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context, WidgetRef ref)
+  {
     final state = ref.watch(pentoscopeProvider);
     final notifier = ref.read(pentoscopeProvider.notifier);
     final settings = ref.read(settingsProvider);
+
+// Informe le provider APRÈS le build (sinon Riverpod assertion).
+    // ✅ Ne PAS modifier le provider pendant le build.
+    // On reporte l'info d'orientation après la frame.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      notifier.setViewOrientation(isLandscape);
+    });
+
 
     final puzzle = state.puzzle;
     if (puzzle == null) {
@@ -209,15 +218,16 @@ class PentoscopeBoard extends ConsumerWidget {
   }
 
   Widget _buildCell(
-    BuildContext context,
-    WidgetRef ref,
-    PentoscopeState state,
-    PentoscopeNotifier notifier,
-    settings,
-    int logicalX,
-    int logicalY,
-    bool isLandscape,
-  ) {
+      BuildContext context,
+      WidgetRef ref,
+      PentoscopeState state,
+      PentoscopeNotifier notifier,
+      settings,
+      int logicalX,
+      int logicalY,
+      bool isLandscape,
+      )
+  {
     final cellValue = state.plateau.getCell(logicalX, logicalY);
 
     Color cellColor;
@@ -243,7 +253,7 @@ class PentoscopeBoard extends ConsumerWidget {
     if (state.selectedPlacedPiece != null) {
       final selectedPiece = state.selectedPlacedPiece!;
       final position =
-          selectedPiece.piece.positions[state.selectedPositionIndex];
+      selectedPiece.piece.positions[state.selectedPositionIndex];
 
       // Calculer la normalisation
       final minOffset = _getMinOffset(position);
@@ -259,7 +269,7 @@ class PentoscopeBoard extends ConsumerWidget {
 
           if (state.selectedCellInPiece != null) {
             isReferenceCell =
-                (localX == state.selectedCellInPiece!.x &&
+            (localX == state.selectedCellInPiece!.x &&
                 localY == state.selectedCellInPiece!.y);
           }
 
@@ -351,12 +361,12 @@ class PentoscopeBoard extends ConsumerWidget {
         // Effet de glow subtil pour le snap
         boxShadow: isSnappedPreview && state.isPreviewValid
             ? [
-                BoxShadow(
-                  color: Colors.cyan.withValues(alpha: 0.3),
-                  blurRadius: 4,
-                  spreadRadius: 1,
-                ),
-              ]
+          BoxShadow(
+            color: Colors.cyan.withValues(alpha: 0.3),
+            blurRadius: 4,
+            spreadRadius: 1,
+          ),
+        ]
             : null,
       ),
       child: Center(
@@ -365,10 +375,10 @@ class PentoscopeBoard extends ConsumerWidget {
           style: TextStyle(
             color: isPreview
                 ? (state.isPreviewValid
-                      ? (isSnappedPreview
-                            ? Colors.cyan.shade900
-                            : Colors.green.shade900)
-                      : Colors.red.shade900)
+                ? (isSnappedPreview
+                ? Colors.cyan.shade900
+                : Colors.green.shade900)
+                : Colors.red.shade900)
                 : Colors.white,
             fontWeight: (isSelected || isPreview)
                 ? FontWeight.w900
@@ -439,10 +449,10 @@ class PentoscopeBoard extends ConsumerWidget {
   }
 
   int _getDisplayPositionIndex(
-    int positionIndex,
-    Pento piece,
-    bool isLandscape,
-  ) {
+      int positionIndex,
+      Pento piece,
+      bool isLandscape,
+      ) {
     if (isLandscape) {
       return (positionIndex - 1 + piece.numPositions) % piece.numPositions;
     }

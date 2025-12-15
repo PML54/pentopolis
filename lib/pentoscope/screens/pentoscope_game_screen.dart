@@ -44,7 +44,7 @@ class PentoscopeGameScreen extends ConsumerWidget {
           toolbarHeight: 56.0,
           backgroundColor: Colors.white,
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
+            icon: const Icon(Icons.logout),
             onPressed: () => Navigator.pop(context),
           ),
           title: null, // PAS DE TITRE
@@ -75,17 +75,18 @@ class PentoscopeGameScreen extends ConsumerWidget {
   List<Widget> _buildTransformActions(PentoscopeState state, PentoscopeNotifier notifier, settings) {
     return [
       // Rotation anti-horaire
+      // Rotation anti-horaire (TW)
       IconButton(
-        icon: Icon(GameIcons.isometryRotation.icon, size: settings.ui.iconSize),
+        icon: Icon(GameIcons.isometryRotationTW.icon, size: settings.ui.iconSize),
         onPressed: () {
           HapticFeedback.selectionClick();
           notifier.applyIsometryRotationTW();
         },
-        tooltip: GameIcons.isometryRotation.tooltip,
-        color: GameIcons.isometryRotation.color,
+        tooltip: GameIcons.isometryRotationTW.tooltip,
+        color: GameIcons.isometryRotationTW.color,
       ),
 
-      // Rotation horaire
+// Rotation horaire (CW)
       IconButton(
         icon: Icon(GameIcons.isometryRotationCW.icon, size: settings.ui.iconSize),
         onPressed: () {
@@ -106,7 +107,6 @@ class PentoscopeGameScreen extends ConsumerWidget {
         tooltip: GameIcons.isometrySymmetryH.tooltip,
         color: GameIcons.isometrySymmetryH.color,
       ),
-
       // Symétrie verticale
       IconButton(
         icon: Icon(GameIcons.isometrySymmetryV.icon, size: settings.ui.iconSize),
@@ -117,6 +117,9 @@ class PentoscopeGameScreen extends ConsumerWidget {
         tooltip: GameIcons.isometrySymmetryV.tooltip,
         color: GameIcons.isometrySymmetryV.color,
       ),
+
+
+
 
       // Supprimer (uniquement si pièce placée sélectionnée)
       if (state.selectedPlacedPiece != null)

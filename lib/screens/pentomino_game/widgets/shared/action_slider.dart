@@ -126,15 +126,15 @@ class ActionSlider extends ConsumerWidget {
 
         // Rotation anti-horaire
         IconButton(
-          icon: Icon(GameIcons.isometryRotation.icon, size: 28),
+          icon: Icon(GameIcons.isometryRotationTW.icon, size: 28),
           padding: const EdgeInsets.all(8),
           constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
           onPressed: () {
             HapticFeedback.selectionClick();
             notifier.applyIsometryRotationTW();
           },
-          tooltip: GameIcons.isometryRotation.tooltip,
-          color: GameIcons.isometryRotation.color,
+          tooltip: GameIcons.isometryRotationTW.tooltip,
+          color: GameIcons.isometryRotationTW.color,
         ),
         const SizedBox(height: 8),
 

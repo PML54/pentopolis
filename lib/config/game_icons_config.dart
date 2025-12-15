@@ -1,20 +1,22 @@
 // lib/config/game_icons_config.dart
-// Configuration centralisée des icônes de l'application
+// Convention isométries :
+// TW = rotation trigo (anti-horaire) = +90°
+// CW = rotation horaire              = -90°
+// H  = symétrie axe horizontal (haut/bas)
+// V  = symétrie axe vertical (gauche/droite)
 
 import 'package:flutter/material.dart';
 
-/// Modes de jeu
 enum GameMode {
-  normal,      // Mode jeu normal
-  isometries,  // Mode isométries
+  normal,
+  isometries,
 }
 
-/// Configuration d'une icône avec ses propriétés
 class GameIconConfig {
   final IconData icon;
   final String tooltip;
   final Color color;
-  final List<GameMode> visibleInModes; // Dans quels modes l'icône est visible
+  final List<GameMode> visibleInModes;
   final String description;
 
   const GameIconConfig({
@@ -25,80 +27,70 @@ class GameIconConfig {
     required this.description,
   });
 
-  /// Vérifie si l'icône est visible dans un mode donné
   bool isVisibleIn(GameMode mode) => visibleInModes.contains(mode);
 }
 
-/// Catalogue complet des icônes de l'application
 class GameIcons {
   // ==================== NAVIGATION ====================
 
-  /// Paramètres de l'application
   static const settings = GameIconConfig(
     icon: Icons.settings,
     tooltip: 'Paramètres',
     color: Colors.white,
     visibleInModes: [GameMode.normal, GameMode.isometries],
-    description: 'Ouvre l\'écran des paramètres',
+    description: "Ouvre l'écran des paramètres",
   );
 
-  /// Mode Isométries (depuis mode normal)
   static const enterIsometries = GameIconConfig(
     icon: Icons.school,
     tooltip: 'Mode Isométries',
-    color: Color(0xFFAB47BC), // Colors.purple[400]
+    color: Color(0xFFAB47BC),
     visibleInModes: [GameMode.normal],
-    description: 'Passe en mode isométries (sauvegarde l\'état actuel)',
+    description: "Passe en mode isométries (sauvegarde l'état actuel)",
   );
 
-  /// Retour au jeu (depuis mode isométries)
   static const exitIsometries = GameIconConfig(
-    icon: Icons.emoji_events, // 🏆 Coupe/Trophée pour "retour au jeu"
+    icon: Icons.emoji_events,
     tooltip: 'Retour au Jeu',
-    color: Color(0xFFAB47BC), // Colors.purple[400]
+    color: Color(0xFFAB47BC),
     visibleInModes: [GameMode.isometries],
-    description: 'Quitte le mode isométries et restaure l\'état du jeu',
+    description: "Quitte le mode isométries et restaure l'état du jeu",
   );
 
   // ==================== JEU NORMAL ====================
 
-  /// Voir les solutions possibles
   static const viewSolutions = GameIconConfig(
     icon: Icons.visibility,
-    tooltip: 'Voir les solutions possibles',
-    color: Color(0xFF42A5F5), // Colors.blue[400]
+    tooltip: 'Voir les solutions',
+    color: Color(0xFF42A5F5),
     visibleInModes: [GameMode.normal],
-    description: 'Affiche les solutions compatibles avec l\'état actuel',
+    description: "Affiche les solutions compatibles avec l'état actuel",
   );
 
-  /// Indicateur de solutions (coupe/trophée)
   static const solutionsCounter = GameIconConfig(
     icon: Icons.emoji_events,
     tooltip: 'Nombre de solutions',
-    color: Colors.green, // Dynamique selon le nombre
+    color: Colors.green,
     visibleInModes: [GameMode.normal],
     description: 'Affiche le nombre de solutions possibles',
   );
 
-  /// Rotation de pièce (en jeu normal)
   static const rotatePiece = GameIconConfig(
     icon: Icons.rotate_right,
     tooltip: 'Rotation',
-    color: Color(0xFF42A5F5), // Colors.blue[400]
+    color: Color(0xFF42A5F5),
     visibleInModes: [GameMode.normal],
-    description: 'Fait pivoter la pièce sélectionnée',
+    description: 'Fait pivoter la pièce sélectionnée (mode normal)',
   );
 
-  /// Retirer une pièce du plateau
   static const removePiece = GameIconConfig(
     icon: Icons.delete_outline,
     tooltip: 'Retirer',
-    color: Color(0xFFE53935), // Colors.red[600]
+    color: Color(0xFFE53935),
     visibleInModes: [GameMode.normal],
     description: 'Retire la pièce sélectionnée du plateau',
   );
 
-  /// Annuler le dernier placement
   static const undo = GameIconConfig(
     icon: Icons.undo,
     tooltip: 'Annuler',
@@ -108,81 +100,79 @@ class GameIcons {
   );
 
   // ==================== ISOMÉTRIES ====================
+  // Convention stable :
+  // - TW = anti-horaire = ↺
+  // - CW = horaire      = ↻
+  // - SymH = miroir axe horizontal (haut/bas)
+  // - SymV = miroir axe vertical   (gauche/droite)
 
-  /// Rotation 90° anti-horaire (transformation isométrique)
-  static const isometryRotation = GameIconConfig(
-    icon: Icons.rotate_right,
-    tooltip: 'Rotation 90° ↺',
-    color: Color(0xFF42A5F5), // Colors.blue[400] ✅ Changé
-    visibleInModes: [GameMode.normal, GameMode.isometries],
-    description: 'Applique une rotation de 90° anti-horaire à la pièce',
+  static const isometryRotationTW = GameIconConfig(
+    icon: Icons.rotate_left,            // (choix UI) ↺
+    tooltip: 'Rotation 90° ↺ (TW)',
+    color: Color(0xFF42A5F5),
+    visibleInModes: [GameMode.isometries],
+    description: "Rotation 90° anti-horaire (trigo)",
   );
 
-  /// Rotation 90° horaire (transformation isométrique)
   static const isometryRotationCW = GameIconConfig(
-    icon: Icons.rotate_left,
-    tooltip: 'Rotation 90° ↻',
-    color: Color(0xFF66BB6A), // Colors.green[400] ✅ Changé
-    visibleInModes: [GameMode.normal, GameMode.isometries],
-    description: 'Applique une rotation de 90° horaire à la pièce',
+    icon: Icons.rotate_right,           // (choix UI) ↻
+    tooltip: 'Rotation 90° ↻ (CW)',
+    color: Color(0xFF42A5F5),
+    visibleInModes: [GameMode.isometries],
+    description: "Rotation 90° horaire",
   );
 
-  /// Symétrie horizontale
   static const isometrySymmetryH = GameIconConfig(
-    icon: Icons.swap_horiz,
-    tooltip: 'Symétrie Horizontale',
-    color: Color(0xFF42A5F5), // Colors.blue[400]
-    visibleInModes: [GameMode.isometries],
-    description: 'Applique une symétrie selon l\'axe horizontal',
-  );
-
-  /// Symétrie verticale
-  static const isometrySymmetryV = GameIconConfig(
     icon: Icons.swap_vert,
-    tooltip: 'Symétrie Verticale',
-    color: Color(0xFF66BB6A), // Colors.green[400]
+    tooltip: 'Symétrie axe horizontal (SymH)',
+    color: Color(0xFF66BB6A),
     visibleInModes: [GameMode.isometries],
-    description: 'Applique une symétrie selon l\'axe vertical',
+    description: "Miroir haut ↔ bas (axe horizontal)",
   );
 
-  /// Retirer une pièce (en mode isométries)
+  static const isometrySymmetryV = GameIconConfig(
+    icon: Icons.swap_horiz,
+    tooltip: 'Symétrie axe vertical (SymV)',
+    color: Color(0xFF66BB6A),
+    visibleInModes: [GameMode.isometries],
+    description: "Miroir gauche ↔ droite (axe vertical)",
+  );
+
   static const isometryDelete = GameIconConfig(
     icon: Icons.delete_outline,
     tooltip: 'Retirer',
-    color: Color(0xFFE53935), // Colors.red[600]
+    color: Color(0xFFE53935),
     visibleInModes: [GameMode.isometries],
-    description: 'Retire la pièce sélectionnée du plateau',
+    description: 'Retire la pièce sélectionnée du plateau (mode isométries)',
   );
 
-  // ==================== HELPERS ====================
+  // ==================== LISTES ORDONNÉES PAR MODE ====================
 
-  /// Retourne toutes les icônes pour un mode donné
   static List<GameIconConfig> getIconsForMode(GameMode mode) {
-    return [
-      settings,
-      enterIsometries,
-      exitIsometries,
-      viewSolutions,
-      solutionsCounter,
-      rotatePiece,
-      removePiece,
-      undo,
-      isometryRotation,
-      isometryRotationCW,
-      isometrySymmetryH,
-      isometrySymmetryV,
-      isometryDelete,
-    ].where((icon) => icon.isVisibleIn(mode)).toList();
-  }
+    switch (mode) {
+      case GameMode.normal:
+        return [
+          settings,
+          enterIsometries,
+          viewSolutions,
+          solutionsCounter,
+          rotatePiece,
+          removePiece,
+          undo,
+        ];
 
-  /// Affiche la liste des icônes dans la console (debug)
-  static void printIconsForMode(GameMode mode) {
-    print('\n📋 Icônes visibles en mode ${mode.name}:');
-    print('─' * 60);
-    for (final icon in getIconsForMode(mode)) {
-      print('${icon.icon.codePoint.toRadixString(16).padLeft(4, '0')} '
-          '│ ${icon.tooltip.padRight(25)} │ ${icon.description}');
+      case GameMode.isometries:
+        return [
+          settings,
+          exitIsometries,
+
+          // Ordre UI stable (ex: bas→haut ou gauche→droite)
+          isometryRotationTW,
+          isometryRotationCW,
+          isometrySymmetryH,
+          isometrySymmetryV,
+          isometryDelete,
+        ];
     }
-    print('─' * 60);
   }
 }

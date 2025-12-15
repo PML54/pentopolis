@@ -1,15 +1,16 @@
 // lib/pentoscope/pentoscope_provider.dart
-// Modified: 251213HHMMSS
-// CHANGEMENTS: (1) Remplacer PentoscopePlacedPiece par PlacedPiece (classe commune), (2) Ajouter isometriesUsed: 0 dans créations, (3) Ajouter import placed_piece.dart, (4) Supprimer classe PentoscopePlacedPiece
+// Provider Pentoscope - calqué sur pentomino_game_provider
+// CORRIGÉ: Bug de disparition des pièces (sync plateau/placedPieces)
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pentapol/common/isometry_transforms.dart';
 import 'package:pentapol/common/pentominos.dart';
-import 'package:pentapol/common/placed_piece.dart';
 import 'package:pentapol/common/plateau.dart';
 import 'package:pentapol/common/point.dart';
 import 'package:pentapol/common/shape_recognizer.dart';
-import 'package:pentapol/pentoscope/pentoscope_generator.dart';
+
+import 'pentoscope_generator.dart';
 
 // ============================================================================
 // ÉTAT
@@ -29,47 +30,84 @@ enum PentoscopeDifficulty { easy, random, hard }
 class PentoscopeNotifier extends Notifier<PentoscopeState> {
   late final PentoscopeGenerator _generator;
 
-  // ==========================================================================
-  // ISOMÉTRIES (fonctionne sur pièce slider ET pièce placée)
-  // ==========================================================================
 
-  void applyIsometryRotationTW() {
-    if (state.selectedPlacedPiece != null) {
-      _applyPlacedPieceIsometry(
-            (coords, cx, cy) => rotateAroundPoint(coords, cx, cy, 1),
-      );
-    } else if (state.selectedPiece != null) {
-      _applySliderPieceIsometry(
-            (coords, cx, cy) => rotateAroundPoint(coords, cx, cy, 1),
+  // ========================================================================
+  // ORIENTATION "VUE" (repère écran)
+  // ========================================================================
+
+// ==========================================================================
+// ISOMÉTRIES (lookup robuste via Pento.cartesianCoords)
+// ==========================================================================
+
+  Point? _remapSelectedCell({
+    required Pento piece,
+    required int oldIndex,
+    required int newIndex,
+    required Point? oldCell,
+  }) {
+    if (oldCell == null) return null;
+
+    final oldCoords = piece.cartesianCoords[oldIndex];
+    final k = oldCoords.indexWhere((c) => c[0] == oldCell.x && c[1] == oldCell.y);
+    if (k < 0) return oldCell;
+
+    final newCoords = piece.cartesianCoords[newIndex];
+    return Point(newCoords[k][0], newCoords[k][1]);
+  }
+
+  void _applyIsoUsingLookup(int Function(Pento p, int idx) f) {
+    final piece = state.selectedPiece;
+    if (piece == null) return;
+
+    final oldIdx = state.selectedPositionIndex;
+    final newIdx = f(piece, oldIdx);
+
+    state = state.copyWith(
+      selectedPositionIndex: newIdx,
+      selectedCellInPiece: _remapSelectedCell(
+        piece: piece,
+        oldIndex: oldIdx,
+        newIndex: newIdx,
+        oldCell: state.selectedCellInPiece,
+      ),
+      clearPreview: true,
+    );
+
+    // Si on manipule une pièce déjà placée ("en main"), on met aussi à jour son orientation.
+    final sp = state.selectedPlacedPiece;
+    if (sp != null) {
+      state = state.copyWith(
+        selectedPlacedPiece: sp.copyWith(positionIndex: newIdx),
       );
     }
   }
-
   void applyIsometryRotationCW() {
-    if (state.selectedPlacedPiece != null) {
-      _applyPlacedPieceIsometry(
-            (coords, cx, cy) => rotateAroundPoint(coords, cx, cy, 3),
-      );
-    } else if (state.selectedPiece != null) {
-      _applySliderPieceIsometry(
-            (coords, cx, cy) => rotateAroundPoint(coords, cx, cy, 3),
-      );
-    }
+    debugPrint("ISO: RotCW (view=${state.viewOrientation}) idx=${state.selectedPositionIndex} piece=${state.selectedPiece?.id}");
+    _applyIsoUsingLookup((p, idx) => p.rotationCW(idx));
+  }
+
+  void applyIsometryRotationTW() {
+    debugPrint("ISO: RotTW (view=${state.viewOrientation}) idx=${state.selectedPositionIndex} piece=${state.selectedPiece?.id}");
+    _applyIsoUsingLookup((p, idx) => p.rotationTW(idx));
   }
 
   void applyIsometrySymmetryH() {
-    if (state.selectedPlacedPiece != null) {
-      _applyPlacedPieceSymmetryH();
-    } else if (state.selectedPiece != null) {
-      _applySliderPieceSymmetryH();
+    debugPrint("ISO: SymH (view=${state.viewOrientation}) idx=${state.selectedPositionIndex} piece=${state.selectedPiece?.id}");
+
+    if (state.viewOrientation == ViewOrientation.landscape) {
+      _applyIsoUsingLookup((p, idx) => p.symmetryV(idx));
+    } else {
+      _applyIsoUsingLookup((p, idx) => p.symmetryH(idx));
     }
   }
 
   void applyIsometrySymmetryV() {
-    if (state.selectedPlacedPiece != null) {
-      _applyPlacedPieceSymmetryV();
-    } else if (state.selectedPiece != null) {
-      _applySliderPieceSymmetryV();
+    debugPrint("ISO: SymV (view=${state.viewOrientation}) idx=${state.selectedPositionIndex} piece=${state.selectedPiece?.id}");
+
+    if (state.viewOrientation == ViewOrientation.landscape) {
+      _applyIsoUsingLookup((p, idx) => p.symmetryH(idx));
+    } else {
+      _applyIsoUsingLookup((p, idx) => p.symmetryV(idx));
     }
   }
 
@@ -135,7 +173,7 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
     );
   }
 
-  PlacedPiece? getPlacedPieceAt(int x, int y) {
+  PentoscopePlacedPiece? getPlacedPieceAt(int x, int y) {
     for (final placed in state.placedPieces) {
       for (final cell in placed.absoluteCells) {
         if (cell.x == x && cell.y == y) {
@@ -146,7 +184,7 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
     return null;
   }
 
-  void removePlacedPiece(PlacedPiece placed) {
+  void removePlacedPiece(PentoscopePlacedPiece placed) {
     final newPlateau = Plateau.allVisible(
       state.plateau.width,
       state.plateau.height,
@@ -211,7 +249,7 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
   void selectPiece(Pento piece) {
     final positionIndex = state.getPiecePositionIndex(piece.id);
     final defaultCell = _calculateDefaultCell(piece, positionIndex);
-
+    _cancelSelectedPlacedPieceIfAny();
     state = state.copyWith(
       selectedPiece: piece,
       selectedPositionIndex: positionIndex,
@@ -225,7 +263,7 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
   // ==========================================================================
 
   void selectPlacedPiece(
-      PlacedPiece placed,
+      PentoscopePlacedPiece placed,
       int absoluteX,
       int absoluteY,
       ) {
@@ -253,6 +291,15 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
       selectedCellInPiece: Point(localX, localY),
       clearPreview: true,
     );
+  }
+
+  /// À appeler depuis l'UI (board) quand l'orientation change.
+  /// Ne change aucune coordonnée: uniquement l'interprétation des actions
+  /// (ex: Sym H/V) en mode paysage.
+  void setViewOrientation(bool isLandscape) {
+    final next = isLandscape ? ViewOrientation.landscape : ViewOrientation.portrait;
+    if (state.viewOrientation == next) return;
+    state = state.copyWith(viewOrientation: next);
   }
 
   // ==========================================================================
@@ -292,87 +339,131 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
   // ==========================================================================
 
   bool tryPlacePiece(int gridX, int gridY) {
-    final selectedPiece = state.selectedPiece;
-    if (selectedPiece == null) return false;
+    if (state.selectedPiece == null) return false;
 
+    final piece = state.selectedPiece!;
     final positionIndex = state.selectedPositionIndex;
 
-    if (!state.canPlacePiece(selectedPiece, positionIndex, gridX, gridY)) {
+    int anchorX = gridX;
+    int anchorY = gridY;
+
+    if (state.selectedCellInPiece != null) {
+      anchorX = gridX - state.selectedCellInPiece!.x;
+      anchorY = gridY - state.selectedCellInPiece!.y;
+    }
+
+    if (!state.canPlacePiece(piece, positionIndex, anchorX, anchorY)) {
       return false;
     }
 
-    // Créer la pièce placée
-    final placed = PlacedPiece(
-      piece: selectedPiece,
-      positionIndex: positionIndex,
-      gridX: gridX,
-      gridY: gridY,
-      isometriesUsed: 0,
+    // Créer le nouveau plateau
+    final newPlateau = Plateau.allVisible(
+      state.plateau.width,
+      state.plateau.height,
     );
 
-    // Mettre à jour le plateau
-    final newPlateau = Plateau.allVisible(state.plateau.width, state.plateau.height);
-    for (final cell in placed.absoluteCells) {
-      newPlateau.setCell(cell.x, cell.y, selectedPiece.id);
-    }
+    // Copier les pièces existantes (sauf celle qu'on déplace si c'est une pièce placée)
     for (final p in state.placedPieces) {
+      if (state.selectedPlacedPiece != null &&
+          p.piece.id == state.selectedPlacedPiece!.piece.id) {
+        continue;
+      }
       for (final cell in p.absoluteCells) {
         newPlateau.setCell(cell.x, cell.y, p.piece.id);
       }
     }
 
-    // Retirer de availablePieces
-    final newAvailable = state.availablePieces
-        .where((p) => p.id != selectedPiece.id)
-        .toList();
+    // Placer la nouvelle pièce
+    final newPlaced = PentoscopePlacedPiece(
+      piece: piece,
+      positionIndex: positionIndex,
+      gridX: anchorX,
+      gridY: anchorY,
+    );
 
-    // Ajouter à placedPieces
-    final newPlaced = [...state.placedPieces, placed];
+    for (final cell in newPlaced.absoluteCells) {
+      newPlateau.setCell(cell.x, cell.y, piece.id);
+    }
 
-    // Vérifier si puzzle complété
-    final isComplete = newAvailable.isEmpty;
+    // Mettre à jour les listes
+    List<PentoscopePlacedPiece> newPlacedPieces;
+    List<Pento> newAvailable;
+
+    if (state.selectedPlacedPiece != null) {
+      // Déplacement d'une pièce existante
+      newPlacedPieces = state.placedPieces
+          .map((p) => p.piece.id == piece.id ? newPlaced : p)
+          .toList();
+      newAvailable = state.availablePieces;
+    } else {
+      // Nouvelle pièce
+      newPlacedPieces = [...state.placedPieces, newPlaced];
+      newAvailable = state.availablePieces
+          .where((p) => p.id != piece.id)
+          .toList();
+    }
+
+    final isComplete =
+        newPlacedPieces.length == (state.puzzle?.size.numPieces ?? 0);
+
+    // Compter les translations (déplacement d'une pièce déjà placée)
+    final newTranslationCount = state.selectedPlacedPiece != null
+        ? state.translationCount + 1
+        : state.translationCount;
 
     state = state.copyWith(
       plateau: newPlateau,
       availablePieces: newAvailable,
-      placedPieces: newPlaced,
+      placedPieces: newPlacedPieces,
       clearSelectedPiece: true,
       clearSelectedPlacedPiece: true,
       clearSelectedCellInPiece: true,
       clearPreview: true,
       isComplete: isComplete,
+      translationCount: newTranslationCount,
     );
 
     return true;
   }
 
+  // ==========================================================================
+  // PREVIEW
+  // ==========================================================================
+
   void updatePreview(int gridX, int gridY) {
-    final selectedPiece = state.selectedPiece;
-    final selectedPlaced = state.selectedPlacedPiece;
-
-    if (selectedPiece == null && selectedPlaced == null) {
-      state = state.copyWith(clearPreview: true);
+    if (state.selectedPiece == null) {
+      if (state.previewX != null || state.previewY != null) {
+        state = state.copyWith(clearPreview: true);
+      }
       return;
     }
 
-    if (selectedPlaced != null) {
-      // Pièce placée - ne pas faire de preview
-      state = state.copyWith(clearPreview: true);
-      return;
-    }
-
+    final piece = state.selectedPiece!;
     final positionIndex = state.selectedPositionIndex;
-    final isValid = state.canPlacePiece(selectedPiece!, positionIndex, gridX, gridY);
 
-    state = state.copyWith(
-      previewX: gridX,
-      previewY: gridY,
-      isPreviewValid: isValid,
-    );
+    int anchorX = gridX;
+    int anchorY = gridY;
+
+    if (state.selectedCellInPiece != null) {
+      anchorX = gridX - state.selectedCellInPiece!.x;
+      anchorY = gridY - state.selectedCellInPiece!.y;
+    }
+
+    final isValid = state.canPlacePiece(piece, positionIndex, anchorX, anchorY);
+
+    if (state.previewX != anchorX ||
+        state.previewY != anchorY ||
+        state.isPreviewValid != isValid) {
+      state = state.copyWith(
+        previewX: anchorX,
+        previewY: anchorY,
+        isPreviewValid: isValid,
+      );
+    }
   }
 
   // ==========================================================================
-  // ISOMÉTRIES PRIVÉES - APPLIQUÉES À UNE PIÈCE PLACÉE
+  // CORRECTION 2: _applyPlacedPieceIsometry - sync placedPieces
   // ==========================================================================
 
   void _applyPlacedPieceIsometry(
@@ -400,12 +491,11 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
     if (!_canPlacePieceAt(match, selectedPiece)) return;
 
     // 6. Créer la pièce transformée
-    final transformedPiece = PlacedPiece(
+    final transformedPiece = PentoscopePlacedPiece(
       piece: match.piece,
       positionIndex: match.positionIndex,
       gridX: match.gridX,
       gridY: match.gridY,
-      isometriesUsed: selectedPiece.isometriesUsed,
     );
 
     // 7. Nouvelle mastercase
@@ -426,6 +516,10 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
     );
   }
 
+  // ==========================================================================
+  // CORRECTION 3: _applyPlacedPieceSymmetryH - sync placedPieces
+  // ==========================================================================
+
   void _applyPlacedPieceSymmetryH() {
     final selectedPiece = state.selectedPlacedPiece!;
     final currentCoords = _extractAbsoluteCoords(selectedPiece);
@@ -439,12 +533,11 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
     if (match == null) return;
     if (!_canPlacePieceAt(match, selectedPiece)) return;
 
-    final transformedPiece = PlacedPiece(
+    final transformedPiece = PentoscopePlacedPiece(
       piece: match.piece,
       positionIndex: match.positionIndex,
       gridX: match.gridX,
       gridY: match.gridY,
-      isometriesUsed: selectedPiece.isometriesUsed,
     );
 
     final centerX = axisX;
@@ -465,6 +558,10 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
     );
   }
 
+  // ==========================================================================
+  // CORRECTION 4: _applyPlacedPieceSymmetryV - sync placedPieces
+  // ==========================================================================
+
   void _applyPlacedPieceSymmetryV() {
     final selectedPiece = state.selectedPlacedPiece!;
     final currentCoords = _extractAbsoluteCoords(selectedPiece);
@@ -478,18 +575,18 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
     if (match == null) return;
     if (!_canPlacePieceAt(match, selectedPiece)) return;
 
-    final transformedPiece = PlacedPiece(
+    final transformedPiece = PentoscopePlacedPiece(
       piece: match.piece,
       positionIndex: match.positionIndex,
       gridX: match.gridX,
       gridY: match.gridY,
-      isometriesUsed: selectedPiece.isometriesUsed,
     );
 
     final centerX = selectedPiece.gridX + refX;
     final centerY = axisY;
     final newSelectedCell = Point(centerX - match.gridX, centerY - match.gridY);
 
+    // CORRECTION: Mettre à jour placedPieces aussi !
     final newPlacedPieces = state.placedPieces
         .map((p) => p.piece.id == selectedPiece.piece.id ? transformedPiece : p)
         .toList();
@@ -502,10 +599,6 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
       isometryCount: state.isometryCount + 1,
     );
   }
-
-  // ==========================================================================
-  // ISOMÉTRIES PRIVÉES - APPLIQUÉES À UNE PIÈCE DU SLIDER
-  // ==========================================================================
 
   void _applySliderPieceIsometry(
       List<List<int>> Function(List<List<int>>, int, int) transform,
@@ -542,21 +635,22 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
     );
   }
 
+  // Symétrie H sur pièce slider
   void _applySliderPieceSymmetryH() {
     final piece = state.selectedPiece!;
     final currentIndex = state.selectedPositionIndex;
     final currentCoords = piece.cartesianCoords[currentIndex];
 
     final refX = (state.selectedCellInPiece?.x ?? 0);
-    final refY = (state.selectedCellInPiece?.y ?? 0);
-
     final flippedCoords = flipVertical(currentCoords, refX);
+
     final match = recognizeShape(flippedCoords);
     if (match == null || match.piece.id != piece.id) return;
 
     final newIndices = Map<int, int>.from(state.piecePositionIndices);
     newIndices[piece.id] = match.positionIndex;
 
+    // Recalculer la mastercase
     final newCell = _calculateDefaultCell(piece, match.positionIndex);
 
     state = state.copyWith(
@@ -567,21 +661,22 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
     );
   }
 
+  // Symétrie V sur pièce slider
   void _applySliderPieceSymmetryV() {
     final piece = state.selectedPiece!;
     final currentIndex = state.selectedPositionIndex;
     final currentCoords = piece.cartesianCoords[currentIndex];
 
-    final refX = (state.selectedCellInPiece?.x ?? 0);
     final refY = (state.selectedCellInPiece?.y ?? 0);
-
     final flippedCoords = flipHorizontal(currentCoords, refY);
+
     final match = recognizeShape(flippedCoords);
     if (match == null || match.piece.id != piece.id) return;
 
     final newIndices = Map<int, int>.from(state.piecePositionIndices);
     newIndices[piece.id] = match.positionIndex;
 
+    // Recalculer la mastercase
     final newCell = _calculateDefaultCell(piece, match.positionIndex);
 
     state = state.copyWith(
@@ -592,11 +687,7 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
     );
   }
 
-  // ==========================================================================
-  // HELPERS PRIVÉS
-  // ==========================================================================
-
-  /// Helper : calcule la mastercase par défaut (première cellule normalisée)
+  /// Helper: calcule la mastercase par défaut (première cellule normalisée)
   Point? _calculateDefaultCell(Pento piece, int positionIndex) {
     final position = piece.positions[positionIndex];
     if (position.isEmpty) return null;
@@ -614,7 +705,20 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
     return Point(rawX - minX, rawY - minY);
   }
 
-  bool _canPlacePieceAt(ShapeMatch match, PlacedPiece? excludePiece) {
+  /// Annule le mode "pièce placée en main" (sélection sur plateau) en
+  /// reconstruisant le plateau complet à partir des pièces placées.
+  /// À appeler avant de sélectionner une pièce du slider.
+  void _cancelSelectedPlacedPieceIfAny() {
+    if (state.selectedPlacedPiece == null) return;
+
+    state = state.copyWith(
+      plateau: _rebuildPlateauFromPlacedPieces(),
+      clearSelectedPlacedPiece: true,
+      clearPreview: true,
+    );
+  }
+
+  bool _canPlacePieceAt(ShapeMatch match, PentoscopePlacedPiece? excludePiece) {
     final position = match.piece.positions[match.positionIndex];
 
     // Normaliser les coordonnées
@@ -646,7 +750,7 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
     return true;
   }
 
-  List<List<int>> _extractAbsoluteCoords(PlacedPiece piece) {
+  List<List<int>> _extractAbsoluteCoords(PentoscopePlacedPiece piece) {
     final position = piece.piece.positions[piece.positionIndex];
 
     // Normaliser
@@ -664,14 +768,79 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
       return [piece.gridX + localX, piece.gridY + localY];
     }).toList();
   }
+
+  Plateau _rebuildPlateauFromPlacedPieces() {
+    final newPlateau = Plateau.allVisible(
+      state.plateau.width,
+      state.plateau.height,
+    );
+    for (final p in state.placedPieces) {
+      for (final cell in p.absoluteCells) {
+        newPlateau.setCell(cell.x, cell.y, p.piece.id);
+      }
+    }
+    return newPlateau;
+  }
+}
+
+/// Pièce placée sur le plateau Pentoscope
+class PentoscopePlacedPiece {
+  final Pento piece;
+  final int positionIndex;
+  final int gridX;
+  final int gridY;
+
+  const PentoscopePlacedPiece({
+    required this.piece,
+    required this.positionIndex,
+    required this.gridX,
+    required this.gridY,
+  });
+
+  /// Coordonnées absolues des cellules occupées (normalisées)
+  Iterable<Point> get absoluteCells sync* {
+    final position = piece.positions[positionIndex];
+
+    // Trouver le décalage minimum pour normaliser
+    int minLocalX = 5, minLocalY = 5;
+    for (final cellNum in position) {
+      final localX = (cellNum - 1) % 5;
+      final localY = (cellNum - 1) ~/ 5;
+      if (localX < minLocalX) minLocalX = localX;
+      if (localY < minLocalY) minLocalY = localY;
+    }
+
+    for (final cellNum in position) {
+      final localX = (cellNum - 1) % 5 - minLocalX;
+      final localY = (cellNum - 1) ~/ 5 - minLocalY;
+      yield Point(gridX + localX, gridY + localY);
+    }
+  }
+
+  PentoscopePlacedPiece copyWith({
+    Pento? piece,
+    int? positionIndex,
+    int? gridX,
+    int? gridY,
+  }) {
+    return PentoscopePlacedPiece(
+      piece: piece ?? this.piece,
+      positionIndex: positionIndex ?? this.positionIndex,
+      gridX: gridX ?? this.gridX,
+      gridY: gridY ?? this.gridY,
+    );
+  }
 }
 
 /// État du jeu Pentoscope
 class PentoscopeState {
+  /// Orientation "vue" (repère écran). Ne change pas la logique.
+  /// Sert à interpréter des actions (ex: Sym H/V) en paysage.
+  final ViewOrientation viewOrientation;
   final PentoscopePuzzle? puzzle;
   final Plateau plateau;
   final List<Pento> availablePieces;
-  final List<PlacedPiece> placedPieces;
+  final List<PentoscopePlacedPiece> placedPieces;
 
   // Sélection pièce du slider
   final Pento? selectedPiece;
@@ -679,7 +848,7 @@ class PentoscopeState {
   final Map<int, int> piecePositionIndices;
 
   // Sélection pièce placée
-  final PlacedPiece? selectedPlacedPiece;
+  final PentoscopePlacedPiece? selectedPlacedPiece;
   final Point? selectedCellInPiece; // Mastercase
 
   // Preview
@@ -694,6 +863,7 @@ class PentoscopeState {
   final bool isSnapped;
 
   const PentoscopeState({
+    this.viewOrientation = ViewOrientation.portrait,
     this.puzzle,
     required this.plateau,
     this.availablePieces = const [],
@@ -748,15 +918,16 @@ class PentoscopeState {
   }
 
   PentoscopeState copyWith({
+    ViewOrientation? viewOrientation,
     PentoscopePuzzle? puzzle,
     Plateau? plateau,
     List<Pento>? availablePieces,
-    List<PlacedPiece>? placedPieces,
+    List<PentoscopePlacedPiece>? placedPieces,
     Pento? selectedPiece,
     bool clearSelectedPiece = false,
     int? selectedPositionIndex,
     Map<int, int>? piecePositionIndices,
-    PlacedPiece? selectedPlacedPiece,
+    PentoscopePlacedPiece? selectedPlacedPiece,
     bool clearSelectedPlacedPiece = false,
     Point? selectedCellInPiece,
     bool clearSelectedCellInPiece = false,
@@ -770,6 +941,7 @@ class PentoscopeState {
     bool? isSnapped,
   }) {
     return PentoscopeState(
+      viewOrientation: viewOrientation ?? this.viewOrientation,
       puzzle: puzzle ?? this.puzzle,
       plateau: plateau ?? this.plateau,
       availablePieces: availablePieces ?? this.availablePieces,
@@ -801,4 +973,14 @@ class PentoscopeState {
   int getPiecePositionIndex(int pieceId) {
     return piecePositionIndices[pieceId] ?? 0;
   }
+
+
+
 }
+
+/// Orientation "vue" (repère écran).
+///
+/// Important: le provider reste en coordonnées logiques. Cette info sert
+/// uniquement à interpréter les actions utilisateur (ex: Sym H/V) pour que
+/// le ressenti soit cohérent en paysage.
+enum ViewOrientation { portrait, landscape }
