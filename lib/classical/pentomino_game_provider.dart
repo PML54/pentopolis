@@ -2,7 +2,7 @@
 // Modified: 251209157
 // Corrections: (1) Toujours calculer solutions même si plateau vide, (2) Afficher 9356 à l'initialisation
 
-import 'package:flutter/material.dart' show Color;
+import 'package:flutter/material.dart' show Color, debugPrint;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:pentapol/common/pentominos.dart';
@@ -23,6 +23,112 @@ class PentominoGameNotifier extends Notifier<PentominoGameState> {
   static const int _snapRadius = 2;
 
 
+
+  // ========================================================================
+  // 🆕 GESTION ORIENTATION + ISOMÉTRIES LOOKUP (Pentoscope approach)
+  // ========================================================================
+
+  /// Enregistre l'orientation de la vue (portrait/landscape)
+  void setViewOrientation(bool isLandscape) {
+    final orientation =
+    isLandscape ? ViewOrientation.landscape : ViewOrientation.portrait;
+    state = state.copyWith(viewOrientation: orientation);
+  }
+
+  /// Remapping de la cellule de référence lors d'une isométrie
+  Point? _remapSelectedCell({
+    required Pento piece,
+    required int oldIndex,
+    required int newIndex,
+    required Point? oldCell,
+  }) {
+    if (oldCell == null) return null;
+
+    final oldPos = piece.positions[oldIndex];
+    final newPos = piece.positions[newIndex];
+
+    // Trouver la cellule correspondante dans la nouvelle position
+    if (oldPos.isNotEmpty && newPos.isNotEmpty) {
+      final cellNum = oldPos[0]; // Référence : première cellule
+      if (newPos.contains(cellNum)) {
+        final localX = (cellNum - 1) % 5;
+        final localY = (cellNum - 1) ~/ 5;
+        return Point(localX, localY);
+      }
+    }
+    return null;
+  }
+
+  /// Applique une transformation isométrique via lookup
+  void _applyIsoUsingLookup(int Function(Pento p, int idx) f) {
+    final piece = state.selectedPiece;
+    if (piece == null) return;
+    final oldIdx = state.selectedPositionIndex;
+    final newIdx = f(piece, oldIdx);
+
+    // Vérifier si l'index a vraiment changé
+    final didChange = oldIdx != newIdx;
+
+    state = state.copyWith(
+      selectedPositionIndex: newIdx,
+      selectedCellInPiece: _remapSelectedCell(
+        piece: piece,
+        oldIndex: oldIdx,
+        newIndex: newIdx,
+        oldCell: state.selectedCellInPiece,
+      ),
+      clearPreview: true,
+    );
+
+    final sp = state.selectedPlacedPiece;
+    if (sp != null) {
+      state = state.copyWith(
+        selectedPlacedPiece: sp.copyWith(positionIndex: newIdx),
+      );
+    }
+  }
+
+  /// Applique une rotation 90° anti-horaire
+  void applyIsometryRotationTW() {
+    debugPrint(
+      "ISO: RotTW (view=${state.viewOrientation}) idx=${state.selectedPositionIndex} piece=${state.selectedPiece?.id}",
+    );
+    _applyIsoUsingLookup((p, idx) => p.rotationTW(idx));
+  }
+
+  /// Applique une rotation 90° horaire
+  void applyIsometryRotationCW() {
+    debugPrint(
+      "ISO: RotCW (view=${state.viewOrientation}) idx=${state.selectedPositionIndex} piece=${state.selectedPiece?.id}",
+    );
+    _applyIsoUsingLookup((p, idx) => p.rotationCW(idx));
+  }
+
+  /// Applique une symétrie (H/V swap en paysage)
+  void applyIsometrySymmetryH() {
+    debugPrint(
+      "ISO: SymH (view=${state.viewOrientation}) idx=${state.selectedPositionIndex} piece=${state.selectedPiece?.id}",
+    );
+    if (state.viewOrientation == ViewOrientation.landscape) {
+      _applyIsoUsingLookup((p, idx) => p.symmetryV(idx));
+    } else {
+      _applyIsoUsingLookup((p, idx) => p.symmetryH(idx));
+    }
+  }
+
+  /// Applique une symétrie verticale (V/H swap en paysage)
+  void applyIsometrySymmetryV() {
+    debugPrint(
+      "ISO: SymV (view=${state.viewOrientation}) idx=${state.selectedPositionIndex} piece=${state.selectedPiece?.id}",
+    );
+    if (state.viewOrientation == ViewOrientation.landscape) {
+      _applyIsoUsingLookup((p, idx) => p.symmetryH(idx));
+    } else {
+      _applyIsoUsingLookup((p, idx) => p.symmetryV(idx));
+    }
+  }
+
+/*
 // 2. AJOUTER cette méthode helper dans la classe :
 
   /// Applique une rotation 90° anti-horaire à la pièce sélectionnée
@@ -481,7 +587,8 @@ class PentominoGameNotifier extends Notifier<PentominoGameState> {
   /// Applique une symétrie verticale à la pièce sélectionnée
   /// Fonctionne en mode jeu normal ET en mode isométries
   /// Symétrie géométrique par rapport à y = y0 (axe horizontal à travers la mastercase)
-  void applyIsometrySymmetryV() {
+  void applyIsometrySymmetryV()
+  {
     // Transformer une pièce placée avec symétrie géométrique (mode game ET isométries)
     if (state.selectedPlacedPiece != null) {
       final selectedPiece = state.selectedPlacedPiece!;
@@ -611,6 +718,7 @@ class PentominoGameNotifier extends Notifier<PentominoGameState> {
 
     print('[GAME] ⚠️ Aucune pièce sélectionnée pour la symétrie');
   }
+*/
 
   @override
   PentominoGameState build() {

@@ -7,6 +7,10 @@ import 'package:flutter/material.dart';
 import 'package:pentapol/common/pentominos.dart';
 import 'package:pentapol/common/plateau.dart';
 import 'package:pentapol/common/point.dart';
+
+/// Orientation de la vue (repère écran)
+enum ViewOrientation { portrait, landscape }
+
 /// Représente une pièce placée sur le plateau
 class PlacedPiece
 {
@@ -111,6 +115,9 @@ class PentominoGameState {
   // 🆕 SLIDER POSITION
   final int sliderOffset; // Offset de défilement du slider (0 = position initiale)
 
+  // 🆕 ORIENTATION
+  final ViewOrientation viewOrientation; // portrait ou landscape
+
   PentominoGameState({
     required this.plateau,
     required this.availablePieces,
@@ -141,6 +148,7 @@ class PentominoGameState {
     Map<Point, Color>? cellHighlights,
     this.sliderOffset = 0,
     this.highlightedIsometryIcon,
+    this.viewOrientation = ViewOrientation.portrait,
   })  : piecePositionIndices = piecePositionIndices ?? {},
         overlappingCells = overlappingCells ?? <Point>{},
         offBoardCells = offBoardCells ?? <Point>{},
@@ -161,6 +169,7 @@ class PentominoGameState {
       isInTutorial: false,
       sliderOffset: 0,
       cellHighlights: <Point, Color>{},
+      viewOrientation: ViewOrientation.portrait,
     );
   }
 
@@ -237,6 +246,7 @@ class PentominoGameState {
     int? sliderOffset,
     String? highlightedIsometryIcon,
     bool clearHighlightedIsometryIcon = false,
+    ViewOrientation? viewOrientation,
   }) {
     return PentominoGameState(
       plateau: plateau ?? this.plateau,
@@ -268,6 +278,7 @@ class PentominoGameState {
       cellHighlights: clearCellHighlights ? <Point, Color>{} : (cellHighlights ?? this.cellHighlights),
       sliderOffset: sliderOffset ?? this.sliderOffset,
       highlightedIsometryIcon: clearHighlightedIsometryIcon ? null : (highlightedIsometryIcon ?? this.highlightedIsometryIcon),
+      viewOrientation: viewOrientation ?? this.viewOrientation,
     );
   }
 }
