@@ -174,12 +174,12 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
   // RESET - génère un nouveau puzzle
   // ==========================================================================
 
-  void reset() {
+  Future<void> reset() async {
     final puzzle = state.puzzle;
     if (puzzle == null) return;
 
     // Générer un nouveau puzzle avec la même taille
-    final newPuzzle = _generator.generate(puzzle.size);
+    final newPuzzle = await _generator.generate(puzzle.size);
 
     final pieces = newPuzzle.pieceIds
         .map((id) => pentominos.firstWhere((p) => p.id == id))
@@ -202,19 +202,30 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
   // ==========================================================================
   // SÉLECTION PIÈCE (SLIDER)
   // ==========================================================================
-
   void selectPiece(Pento piece) {
     final positionIndex = state.getPiecePositionIndex(piece.id);
     final defaultCell = _calculateDefaultCell(piece, positionIndex);
     _cancelSelectedPlacedPieceIfAny();
+
+    // ✅ RESTAURER LE PLATEAU COMPLET avec TOUTES les pièces placées
+    final newPlateau = Plateau.allVisible(
+      state.plateau.width,
+      state.plateau.height,
+    );
+    for (final p in state.placedPieces) {
+      for (final cell in p.absoluteCells) {
+        newPlateau.setCell(cell.x, cell.y, p.piece.id);
+      }
+    }
+
     state = state.copyWith(
+      plateau: newPlateau,  // ← CLÉ!
       selectedPiece: piece,
       selectedPositionIndex: positionIndex,
       clearSelectedPlacedPiece: true,
       selectedCellInPiece: defaultCell,
     );
   }
-
   // ==========================================================================
   // SÉLECTION PIÈCE PLACÉE (avec mastercase)
   // ==========================================================================
@@ -223,7 +234,8 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
     PentoscopePlacedPiece placed,
     int absoluteX,
     int absoluteY,
-  ) {
+  )
+  {
     // Calculer la cellule locale cliquée (mastercase)
     final localX = absoluteX - placed.gridX;
     final localY = absoluteY - placed.gridY;
@@ -265,11 +277,12 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
   // DÉMARRAGE
   // ==========================================================================
 
-  void startPuzzle(
+  Future<void> startPuzzle(
     PentoscopeSize size, {
     PentoscopeDifficulty difficulty = PentoscopeDifficulty.random,
-  }) {
-    final puzzle = switch (difficulty) {
+  }) async
+  {
+    final puzzle = await switch (difficulty) {
       PentoscopeDifficulty.easy => _generator.generateEasy(size),
       PentoscopeDifficulty.hard => _generator.generateHard(size),
       PentoscopeDifficulty.random => _generator.generate(size),
@@ -424,9 +437,11 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
   void _applyIsoUsingLookup(int Function(Pento p, int idx) f) {
     final piece = state.selectedPiece;
     if (piece == null) return;
-
     final oldIdx = state.selectedPositionIndex;
     final newIdx = f(piece, oldIdx);
+
+    // Vérifier si l'index a vraiment changé (éviter double-count)
+    final didChange = oldIdx != newIdx;
 
     state = state.copyWith(
       selectedPositionIndex: newIdx,
@@ -437,9 +452,9 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
         oldCell: state.selectedCellInPiece,
       ),
       clearPreview: true,
+      isometryCount: didChange ? state.isometryCount + 1 : state.isometryCount,  // ← AJOUTER
     );
 
-    // Si on manipule une pièce déjà placée ("en main"), on met aussi à jour son orientation.
     final sp = state.selectedPlacedPiece;
     if (sp != null) {
       state = state.copyWith(
@@ -804,18 +819,12 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
     final oldCoords = coordsInPositionOrder(oldIndex);
 
     // retrouve l'indice géométrique stable (0..4)
-    final k = oldCoords.indexWhere(
-          (p) => p.x == oldCell.x && p.y == oldCell.y,
-    );
+    final k = oldCoords.indexWhere((p) => p.x == oldCell.x && p.y == oldCell.y);
     if (k < 0) return oldCell; // sécurité
 
     final newCoords = coordsInPositionOrder(newIndex);
     return newCoords[k];
   }
-
-
-
-
 }
 
 /// Pièce placée sur le plateau Pentoscope

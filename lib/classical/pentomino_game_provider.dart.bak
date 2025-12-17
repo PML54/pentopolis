@@ -1243,7 +1243,7 @@ class PentominoGameNotifier extends Notifier<PentominoGameState> {
       }
 
       // Replacer la pièce qui était sélectionnée
-      final position = placedPiece.piece.positions[placedPiece.positionIndex];
+      final position = placedPiece.piece.positions[state.selectedPositionIndex];
       for (final cellNum in position) {
         final localX = (cellNum - 1) % 5;
         final localY = (cellNum - 1) ~/ 5;
@@ -1256,7 +1256,7 @@ class PentominoGameNotifier extends Notifier<PentominoGameState> {
 
       // Remettre la pièce dans les placées
       final newPlaced = List<PlacedPiece>.from(state.placedPieces)
-        ..add(placedPiece.copyWith(positionIndex: placedPiece.positionIndex));
+        ..add(placedPiece.copyWith(positionIndex: state.selectedPositionIndex));
 
       state = state.copyWith(plateau: newPlateau, placedPieces: newPlaced);
       _recomputeBoardValidity();

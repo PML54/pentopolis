@@ -23,16 +23,16 @@ class PentoscopeGameScreen extends ConsumerWidget {
     final settings = ref.watch(settingsProvider);
 
     if (state.puzzle == null) {
-      return const Scaffold(
-        body: Center(child: Text('Aucun puzzle')),
-      );
+      return const Scaffold(body: Center(child: Text('Aucun puzzle')));
     }
 
     // Détection du mode transformation (pièce sélectionnée)
-    final isInTransformMode = state.selectedPiece != null || state.selectedPlacedPiece != null;
+    final isInTransformMode =
+        state.selectedPiece != null || state.selectedPlacedPiece != null;
 
     // Orientation
-    final isLandscape = MediaQuery.of(context).size.width > MediaQuery.of(context).size.height;
+    final isLandscape =
+        MediaQuery.of(context).size.width > MediaQuery.of(context).size.height;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -44,10 +44,12 @@ class PentoscopeGameScreen extends ConsumerWidget {
           toolbarHeight: 56.0,
           backgroundColor: Colors.white,
           leading: IconButton(
-            icon: const Icon(Icons.logout),
+            icon: const Icon(Icons.close, color: Colors.red),
             onPressed: () => Navigator.pop(context),
           ),
-          title: null, // PAS DE TITRE
+          title: isInTransformMode
+              ? null
+              : _buildSolutionCountWidget(state),
           actions: isInTransformMode
               ? _buildTransformActions(state, notifier, settings)
               : _buildGeneralActions(state, notifier),
@@ -60,7 +62,14 @@ class PentoscopeGameScreen extends ConsumerWidget {
               final isLandscape = constraints.maxWidth > constraints.maxHeight;
 
               if (isLandscape) {
-                return _buildLandscapeLayout(context, ref, state, notifier, settings, isInTransformMode);
+                return _buildLandscapeLayout(
+                  context,
+                  ref,
+                  state,
+                  notifier,
+                  settings,
+                  isInTransformMode,
+                );
               } else {
                 return _buildPortraitLayout(context, ref, state, notifier);
               }
@@ -71,13 +80,33 @@ class PentoscopeGameScreen extends ConsumerWidget {
     );
   }
 
+  /// Affiche le nombre de solutions (uniquement en mode général, pas en isométrie)
+  Widget _buildSolutionCountWidget(PentoscopeState state) {
+    final count = state.puzzle?.solutionCount ?? 0;
+    return Text(
+      '$count solution${count != 1 ? "s" : ""}',
+      style: const TextStyle(
+        fontSize: 14,
+        fontWeight: FontWeight.w500,
+        color: Colors.black87,
+      ),
+    );
+  }
+
   /// Actions en mode TRANSFORMATION (pièce sélectionnée)
-  List<Widget> _buildTransformActions(PentoscopeState state, PentoscopeNotifier notifier, settings) {
+  List<Widget> _buildTransformActions(
+      PentoscopeState state,
+      PentoscopeNotifier notifier,
+      settings,
+      ) {
     return [
       // Rotation anti-horaire
       // Rotation anti-horaire (TW)
       IconButton(
-        icon: Icon(GameIcons.isometryRotationTW.icon, size: settings.ui.iconSize),
+        icon: Icon(
+          GameIcons.isometryRotationTW.icon,
+          size: settings.ui.iconSize,
+        ),
         onPressed: () {
           HapticFeedback.selectionClick();
           notifier.applyIsometryRotationTW();
@@ -86,9 +115,12 @@ class PentoscopeGameScreen extends ConsumerWidget {
         color: GameIcons.isometryRotationTW.color,
       ),
 
-// Rotation horaire (CW)
+      // Rotation horaire (CW)
       IconButton(
-        icon: Icon(GameIcons.isometryRotationCW.icon, size: settings.ui.iconSize),
+        icon: Icon(
+          GameIcons.isometryRotationCW.icon,
+          size: settings.ui.iconSize,
+        ),
         onPressed: () {
           HapticFeedback.selectionClick();
           notifier.applyIsometryRotationCW();
@@ -99,7 +131,10 @@ class PentoscopeGameScreen extends ConsumerWidget {
 
       // Symétrie horizontale
       IconButton(
-        icon: Icon(GameIcons.isometrySymmetryH.icon, size: settings.ui.iconSize),
+        icon: Icon(
+          GameIcons.isometrySymmetryH.icon,
+          size: settings.ui.iconSize,
+        ),
         onPressed: () {
           HapticFeedback.selectionClick();
           notifier.applyIsometrySymmetryH();
@@ -109,7 +144,10 @@ class PentoscopeGameScreen extends ConsumerWidget {
       ),
       // Symétrie verticale
       IconButton(
-        icon: Icon(GameIcons.isometrySymmetryV.icon, size: settings.ui.iconSize),
+        icon: Icon(
+          GameIcons.isometrySymmetryV.icon,
+          size: settings.ui.iconSize,
+        ),
         onPressed: () {
           HapticFeedback.selectionClick();
           notifier.applyIsometrySymmetryV();
@@ -117,10 +155,6 @@ class PentoscopeGameScreen extends ConsumerWidget {
         tooltip: GameIcons.isometrySymmetryV.tooltip,
         color: GameIcons.isometrySymmetryV.color,
       ),
-
-
-
-
       // Supprimer (uniquement si pièce placée sélectionnée)
       if (state.selectedPlacedPiece != null)
         IconButton(
@@ -136,25 +170,15 @@ class PentoscopeGameScreen extends ConsumerWidget {
   }
 
   /// Actions en mode GÉNÉRAL (aucune pièce sélectionnée)
-  List<Widget> _buildGeneralActions(PentoscopeState state, PentoscopeNotifier notifier) {
+  List<Widget> _buildGeneralActions(
+      PentoscopeState state,
+      PentoscopeNotifier notifier,
+      ) {
     return [
-      // Compteur pièces
-      Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8),
-        child: Center(
-          child: Text(
-            '${state.placedPieces.length}/${state.puzzle?.size.numPieces ?? 0}',
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
-            ),
-          ),
-        ),
-      ),
 
       // Reset
       IconButton(
-        icon: const Icon(Icons.refresh),
+        icon: const Icon(Icons.games),
         onPressed: () {
           HapticFeedback.mediumImpact();
           notifier.reset();
@@ -205,9 +229,7 @@ class PentoscopeGameScreen extends ConsumerWidget {
             border: isHovering
                 ? Border.all(color: Colors.red.shade400, width: 3)
                 : null,
-            color: isHovering
-                ? Colors.red.shade50
-                : decoration.color,
+            color: isHovering ? Colors.red.shade50 : decoration.color,
           ),
           child: Stack(
             children: [
@@ -252,10 +274,7 @@ class PentoscopeGameScreen extends ConsumerWidget {
     return Column(
       children: [
         // Plateau de jeu
-        const Expanded(
-          flex: 3,
-          child: PentoscopeBoard(isLandscape: false),
-        ),
+        const Expanded(flex: 3, child: PentoscopeBoard(isLandscape: false)),
 
         // Slider de pièces horizontal avec DragTarget
         _buildSliderWithDragTarget(
@@ -290,9 +309,7 @@ class PentoscopeGameScreen extends ConsumerWidget {
     return Row(
       children: [
         // Plateau de jeu
-        const Expanded(
-          child: PentoscopeBoard(isLandscape: true),
-        ),
+        const Expanded(child: PentoscopeBoard(isLandscape: true)),
 
         // Colonne de droite : actions + slider
         Row(
@@ -317,7 +334,7 @@ class PentoscopeGameScreen extends ConsumerWidget {
                     : [
                   // Reset en mode général
                   IconButton(
-                    icon: const Icon(Icons.refresh),
+                    icon: const Icon(Icons.games),
                     onPressed: () {
                       HapticFeedback.mediumImpact();
                       notifier.reset();
@@ -326,7 +343,7 @@ class PentoscopeGameScreen extends ConsumerWidget {
                   ),
                   // Retour
                   IconButton(
-                    icon: const Icon(Icons.arrow_back),
+                    icon: const Icon(Icons.close),
                     onPressed: () => Navigator.pop(context),
                     tooltip: 'Retour',
                   ),

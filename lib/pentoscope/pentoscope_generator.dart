@@ -1,168 +1,169 @@
 // lib/pentoscope/pentoscope_generator.dart
-// Générateur de puzzles Pentoscope utilisant les données pré-calculées
+// Modified: 2512161105
+// Générator lazy: cherche solutions en live (pas de data table)
+// Dimensions transposées: 3×5 = 3 colonnes × 5 lignes (portrait)
 
 import 'dart:math';
+import 'package:pentapol/pentoscope/pentoscope_solver.dart';
+import 'package:pentapol/pentoscope/piece_difficulty.dart';
 
-
-import 'package:pentapol/pentoscope/pentoscope_data.dart';
-// Remplacer dans pentoscope_generator.dart
-
-/// Générateur de puzzles Pentoscope
+/// Générateur de puzzles Pentoscope (lazy, sans table pré-calculée)
 class PentoscopeGenerator {
   final Random _random;
+  late final PentoscopeSolver _solver;
 
-  PentoscopeGenerator([Random? random]) : _random = random ?? Random();
+  PentoscopeGenerator([Random? random])
+      : _random = random ?? Random() {
+    _solver = PentoscopeSolver();
+  }
 
   /// Génère un puzzle aléatoire pour une taille donnée
-  PentoscopePuzzle generate(PentoscopeSize size) {
-    final entries = pentoscopeData[size.dataIndex];
-    if (entries == null || entries.isEmpty) {
-      throw StateError('Aucune configuration disponible pour ${size.label}');
+  /// Boucle jusqu'à trouver une combinaison valide (avec 1+ solution)
+  Future<PentoscopePuzzle> generate(PentoscopeSize size) async {
+    while (true) {
+      final pieceIds = _selectRandomPieces(size.numPieces);
+
+      // Étape 2: chercher rapidement si solution existe
+      final hasFirst = _solver.findFirstSolution(
+        pieceIds,
+        size.width,
+        size.height,
+      );
+
+      if (!hasFirst) {
+        continue; // Retry
+      }
+
+      // Étape 3: chercher TOUTES les solutions avec timeout 2s
+      final result = await _solver.findAllSolutions(
+        pieceIds,
+        size.width,
+        size.height,
+        timeout: const Duration(seconds: 2),
+      );
+
+      // Étape 4: créer puzzle
+      return PentoscopePuzzle(
+        size: size,
+        pieceIds: pieceIds,
+        solutionCount: result.solutionCount,
+        solutions: result.solutions,
+      );
     }
-
-    // Sélectionner une entrée au hasard
-    final index = _random.nextInt(entries.length);
-    final (bitmask, solutionCount) = entries[index];
-
-    return PentoscopePuzzle(
-      size: size,
-      bitmask: bitmask,
-      pieceIds: _bitmaskToIds(bitmask),
-      solutionCount: solutionCount,
-    );
   }
 
-  /// Génère un puzzle en favorisant ceux avec plus de solutions (plus faciles)
-  PentoscopePuzzle generateEasy(PentoscopeSize size) {
-    final entries = pentoscopeData[size.dataIndex];
-    if (entries == null || entries.isEmpty) {
-      throw StateError('Aucune configuration disponible pour ${size.label}');
-    }
+  /// Génère un puzzle en favorisant ceux avec plus de solutions (faciles)
+  /// Boucle jusqu'à solutionCount >= threshold
+  Future<PentoscopePuzzle> generateEasy(PentoscopeSize size) async {
+    const minSolutions = 4; // Au moins 4 solutions pour être "facile"
 
-    // Pondérer par le nombre de solutions
-    final totalWeight = entries.fold<int>(0, (sum, e) => sum + e.$2);
-    var target = _random.nextInt(totalWeight);
+    while (true) {
+      final pieceIds = _selectRandomPieces(size.numPieces);
 
-    for (final (bitmask, solutionCount) in entries) {
-      target -= solutionCount;
-      if (target < 0) {
+      final hasFirst = _solver.findFirstSolution(
+        pieceIds,
+        size.width,
+        size.height,
+      );
+
+      if (!hasFirst) {
+        continue;
+      }
+
+      final result = await _solver.findAllSolutions(
+        pieceIds,
+        size.width,
+        size.height,
+        timeout: const Duration(seconds: 2),
+      );
+
+      // Garder si assez de solutions
+      if (result.solutionCount >= minSolutions) {
         return PentoscopePuzzle(
           size: size,
-          bitmask: bitmask,
-          pieceIds: _bitmaskToIds(bitmask),
-          solutionCount: solutionCount,
+          pieceIds: pieceIds,
+          solutionCount: result.solutionCount,
+          solutions: result.solutions,
         );
       }
+      // Sinon: retry
     }
-
-    // Fallback (ne devrait pas arriver)
-    return generate(size);
   }
 
-  /// Génère un puzzle en favorisant ceux avec moins de solutions (plus durs)
-  PentoscopePuzzle generateHard(PentoscopeSize size) {
-    final entries = pentoscopeData[size.dataIndex];
-    if (entries == null || entries.isEmpty) {
-      throw StateError('Aucune configuration disponible pour ${size.label}');
-    }
+  /// Génère un puzzle en favorisant ceux avec peu de solutions (durs)
+  /// Boucle jusqu'à solutionCount <= threshold
+  Future<PentoscopePuzzle> generateHard(PentoscopeSize size) async {
+    const maxSolutions = 2; // Max 2 solutions pour être "difficile"
 
-    // Inverser les poids (1/solutionCount)
-    final weights = entries.map((e) => 1.0 / e.$2).toList();
-    final totalWeight = weights.fold<double>(0, (sum, w) => sum + w);
-    var target = _random.nextDouble() * totalWeight;
+    while (true) {
+      final pieceIds = _selectRandomPieces(size.numPieces);
 
-    for (int i = 0; i < entries.length; i++) {
-      target -= weights[i];
-      if (target < 0) {
-        final (bitmask, solutionCount) = entries[i];
+      final hasFirst = _solver.findFirstSolution(
+        pieceIds,
+        size.width,
+        size.height,
+      );
+
+      if (!hasFirst) {
+        continue;
+      }
+
+      final result = await _solver.findAllSolutions(
+        pieceIds,
+        size.width,
+        size.height,
+        timeout: const Duration(seconds: 2),
+      );
+
+      // Garder si peu de solutions
+      if (result.solutionCount <= maxSolutions) {
         return PentoscopePuzzle(
           size: size,
-          bitmask: bitmask,
-          pieceIds: _bitmaskToIds(bitmask),
-          solutionCount: solutionCount,
+          pieceIds: pieceIds,
+          solutionCount: result.solutionCount,
+          solutions: result.solutions,
         );
       }
+      // Sinon: retry
     }
-
-    // Fallback
-    return generate(size);
   }
 
-  /// Retourne toutes les configurations pour une taille
-  List<PentoscopePuzzle> getAllForSize(PentoscopeSize size) {
-    final entries = pentoscopeData[size.dataIndex] ?? [];
-    return entries
-        .map(
-          (e) => PentoscopePuzzle(
-            size: size,
-            bitmask: e.$1,
-            pieceIds: _bitmaskToIds(e.$1),
-            solutionCount: e.$2,
-          ),
-        )
-        .toList();
-  }
-
-  /// Statistiques pour une taille
-  PentoscopeStats getStats(PentoscopeSize size) {
-    final entries = pentoscopeData[size.dataIndex] ?? [];
-    final totalSolutions = entries.fold<int>(0, (sum, e) => sum + e.$2);
-    final minSolutions = entries.isEmpty
-        ? 0
-        : entries.map((e) => e.$2).reduce(min);
-    final maxSolutions = entries.isEmpty
-        ? 0
-        : entries.map((e) => e.$2).reduce(max);
-
-    return PentoscopeStats(
-      size: size,
-      configCount: entries.length,
-      totalSolutions: totalSolutions,
-      minSolutions: minSolutions,
-      maxSolutions: maxSolutions,
-    );
-  }
-
-  /// Convertit un bitmask en liste d'IDs de pièces
-  List<int> _bitmaskToIds(int bitmask) {
-    final ids = <int>[];
-    for (int i = 0; i < 12; i++) {
-      if (bitmask & (1 << i) != 0) {
-        ids.add(i + 1);
-      }
-    }
-    return ids;
+  /// Sélectionne N pièces aléatoires parmi les 12 disponibles
+  List<int> _selectRandomPieces(int count) {
+    final all = List<int>.generate(12, (i) => i + 1); // 1..12
+    all.shuffle(_random);
+    return all.sublist(0, count);
   }
 }
 
 /// Configuration d'un puzzle Pentoscope
 class PentoscopePuzzle {
-  /// Noms des pièces (F, I, L, N, P, T, U, V, W, X, Y, Z)
+  /// Noms des pièces (X, P, T, F, Y, V, U, L, N, W, Z, I)
   static const _pieceNames = [
-    'F',
-    'I',
-    'L',
-    'N',
+    'X',
     'P',
     'T',
-    'U',
-    'V',
-    'W',
-    'X',
+    'F',
     'Y',
+    'V',
+    'U',
+    'L',
+    'N',
+    'W',
     'Z',
+    'I',
   ];
-  final PentoscopeSize size;
-  final int bitmask;
-  final List<int> pieceIds;
 
+  final PentoscopeSize size;
+  final List<int> pieceIds;
   final int solutionCount;
+  final List<Solution> solutions; // Toutes les solutions trouvées
 
   const PentoscopePuzzle({
     required this.size,
-    required this.bitmask,
     required this.pieceIds,
     required this.solutionCount,
+    required this.solutions,
   });
 
   /// Description lisible
@@ -177,49 +178,39 @@ class PentoscopePuzzle {
   String toString() => 'PentoscopePuzzle($description)';
 }
 
-/// Tailles de plateau disponibles
+/// Tailles de plateau disponibles (TRANSPOSÉES pour portrait)
 enum PentoscopeSize {
-  size3x5(0, 5, 3, 3, '3×5'),
-  size4x5(1, 5, 4, 4, '4×5'),
-  size5x5(2, 5, 5, 5, '5×5');
+  size3x5(0, 3, 5, 3, '3×5'),   // width=3, height=5 (portrait: 3 col × 5 lignes)
+  size4x5(1, 4, 5, 4, '4×5'),   // width=4, height=5
+  size5x5(2, 5, 5, 5, '5×5');   // width=5, height=5 (carré inchangé)
 
-  final int dataIndex; // ← renommé
+  final int dataIndex; // Legacy
   final int width;
   final int height;
   final int numPieces;
   final String label;
 
   const PentoscopeSize(
-    this.dataIndex,
-    this.width,
-    this.height,
-    this.numPieces,
-    this.label,
-  );
+      this.dataIndex,
+      this.width,
+      this.height,
+      this.numPieces,
+      this.label,
+      );
 
   int get area => width * height;
 }
 
-/// Statistiques pour une taille de plateau
+/// Statistiques (optionnel - pas vraiment utilisé en lazy mode)
 class PentoscopeStats {
   final PentoscopeSize size;
-  final int configCount;
-  final int totalSolutions;
-  final int minSolutions;
-  final int maxSolutions;
+  final String description;
 
   const PentoscopeStats({
     required this.size,
-    required this.configCount,
-    required this.totalSolutions,
-    required this.minSolutions,
-    required this.maxSolutions,
+    required this.description,
   });
 
-  double get avgSolutions => configCount > 0 ? totalSolutions / configCount : 0;
-
   @override
-  String toString() =>
-      '${size.label}: $configCount configs, '
-      '$totalSolutions solutions (min=$minSolutions, max=$maxSolutions, avg=${avgSolutions.toStringAsFixed(1)})';
+  String toString() => '$description';
 }

@@ -89,7 +89,7 @@ class _PentoscopeMenuScreenState extends ConsumerState<PentoscopeMenuScreen> {
     return Row(
       children: PentoscopeSize.values.map((size) {
         final isSelected = size == _selectedSize;
-        final stats = PentoscopeGenerator().getStats(size);
+
 
         return Expanded(
           child: GestureDetector(
@@ -123,13 +123,7 @@ class _PentoscopeMenuScreenState extends ConsumerState<PentoscopeMenuScreen> {
                       color: isSelected ? Colors.white70 : Colors.grey[600],
                     ),
                   ),
-                  Text(
-                    '${stats.configCount} configs',
-                    style: TextStyle(
-                      fontSize: 10,
-                      color: isSelected ? Colors.white60 : Colors.grey[500],
-                    ),
-                  ),
+
                 ],
               ),
             ),
