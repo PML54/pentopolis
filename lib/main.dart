@@ -5,8 +5,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pentapol/classical/pentomino_game_screen.dart';
-import 'package:pentapol/isopento/screens/isopento_game_screen.dart';
-import 'package:pentapol/isopento/screens/isopento_menu_screen.dart';
+
 import 'package:pentapol/screens/home_screen.dart';
 import 'package:pentapol/services/pentapol_solutions_loader.dart';
 import 'package:pentapol/services/solution_matcher.dart';
@@ -53,8 +52,7 @@ class MyApp extends StatelessWidget {
 
       routes: {
         '/game': (context) => const PentominoGameScreen(),
-        '/isopento_menu': (context) => const IsopentoMenuScreen(),
-        '/isopento_game': (context) => const IsopentoGameScreen(),
+
       },
     );
   }
