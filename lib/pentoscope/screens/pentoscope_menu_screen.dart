@@ -37,12 +37,7 @@ class _PentoscopeMenuScreenState extends ConsumerState<PentoscopeMenuScreen> {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 8),
-              Text(
-                'Remplissez le plateau avec les pièces proposées',
-                style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 32),
+
 
               // Sélection de la taille
               const Text(
@@ -62,7 +57,7 @@ class _PentoscopeMenuScreenState extends ConsumerState<PentoscopeMenuScreen> {
               const SizedBox(height: 12),
               _buildDifficultySelector(),
 
-              const SizedBox(height: 24),
+              const SizedBox(height: 12),
 
               // ✅ NOUVEAU: Toggle "Afficher la solution"
               Container(
@@ -81,7 +76,7 @@ class _PentoscopeMenuScreenState extends ConsumerState<PentoscopeMenuScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const Text(
-                            'Mode apprentissage',
+                            'Training',
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,

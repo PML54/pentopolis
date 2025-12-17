@@ -572,11 +572,10 @@ class PentoscopeBoard extends ConsumerWidget {
     // Bordure de plateau
     if (cellValue == -1) return Colors.grey.shade800;
 
-    // Cellule vide avec solution
-    if (cellValue == 0 && isSolution) {
-      return Colors.orange.withOpacity(0.5);
+    // Cellule vide avec solution → afficher couleur VRAIE de la pièce!
+    if (cellValue == 0 && isSolution && solutionPieceId != null) {
+      return settings.ui.getPieceColor(solutionPieceId).withOpacity(0.6);  // ✅ COULEUR VRAIE!
     }
-
     // Cellule vide normale
     if (cellValue == 0) return Colors.grey.shade300;
 
