@@ -16,6 +16,7 @@ class PentoscopeMenuScreen extends ConsumerStatefulWidget {
 class _PentoscopeMenuScreenState extends ConsumerState<PentoscopeMenuScreen> {
   PentoscopeSize _selectedSize = PentoscopeSize.size3x5;
   PentoscopeDifficulty _selectedDifficulty = PentoscopeDifficulty.random;
+  bool _showSolution = false;  // ✅ NOUVEAU
 
   @override
   Widget build(BuildContext context) {
@@ -61,7 +62,52 @@ class _PentoscopeMenuScreenState extends ConsumerState<PentoscopeMenuScreen> {
               const SizedBox(height: 12),
               _buildDifficultySelector(),
 
-              const Spacer(),
+              const SizedBox(height: 24),
+
+              // ✅ NOUVEAU: Toggle "Afficher la solution"
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  color: Colors.blue.shade50,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.blue.shade200, width: 1),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.lightbulb, color: Colors.blue.shade700),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Mode apprentissage',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          Text(
+                            'Afficher la solution optimale',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Switch(
+                      value: _showSolution,
+                      onChanged: (value) {
+                        setState(() => _showSolution = value);
+                      },
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 24),
 
               // Bouton Jouer
               ElevatedButton(
@@ -204,6 +250,7 @@ class _PentoscopeMenuScreenState extends ConsumerState<PentoscopeMenuScreen> {
     ref.read(pentoscopeProvider.notifier).startPuzzle(
       _selectedSize,
       difficulty: _selectedDifficulty,
+      showSolution: _showSolution,  // ✅ NOUVEAU
     );
 
     Navigator.push(

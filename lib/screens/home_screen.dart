@@ -102,17 +102,7 @@ class HomeScreen extends ConsumerWidget {
                             );
                           },
                         ),
-                        const SizedBox(height: 12),
-                        _MenuCard(
-                          icon: Icons.transform,
-                          title: 'Manipuler les Pentominos ',
-                          subtitle: 'Reussir  avec  peu de Manips',
-                          color: colorScheme.secondary,
-                          // couleur vive, comme les autres
-                          onTap: () {
-                            Navigator.of(context).pushNamed('/isopento_menu');
-                          },
-                        ),
+
                         const SizedBox(height: 12),
 
                         const SizedBox(height: 12),

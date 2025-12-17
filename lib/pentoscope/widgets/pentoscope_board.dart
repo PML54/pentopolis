@@ -7,6 +7,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pentapol/common/pentominos.dart';
 import 'package:pentapol/pentoscope/pentoscope_provider.dart';
+import 'package:pentapol/pentoscope/pentoscope_solver.dart'
+    show SolverPlacement, Solution;
 import 'package:pentapol/providers/settings_provider.dart';
 import 'package:pentapol/screens/pentomino_game/widgets/shared/piece_border_calculator.dart';
 import 'package:pentapol/screens/pentomino_game/widgets/shared/piece_renderer.dart';
@@ -17,19 +19,17 @@ class PentoscopeBoard extends ConsumerWidget {
   const PentoscopeBoard({super.key, required this.isLandscape});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref)
-  {
+  Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(pentoscopeProvider);
     final notifier = ref.read(pentoscopeProvider.notifier);
     final settings = ref.read(settingsProvider);
 
-// Informe le provider APRÈS le build (sinon Riverpod assertion).
+    // Informe le provider APRÈS le build (sinon Riverpod assertion).
     // ✅ Ne PAS modifier le provider pendant le build.
     // On reporte l'info d'orientation après la frame.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       notifier.setViewOrientation(isLandscape);
     });
-
 
     final puzzle = state.puzzle;
     if (puzzle == null) {
@@ -217,45 +217,53 @@ class PentoscopeBoard extends ConsumerWidget {
     );
   }
 
+  // ============================================================================
+  // HELPER FUNCTIONS POUR _buildCell - À AJOUTER À LA FIN DE LA CLASSE
+  // ============================================================================
+
+  // ============================================================================
+  // NOUVELLE FONCTION _buildCell - REFACTORISÉE ET LISIBLE
+  // ============================================================================
+
   Widget _buildCell(
-      BuildContext context,
-      WidgetRef ref,
-      PentoscopeState state,
-      PentoscopeNotifier notifier,
-      settings,
-      int logicalX,
-      int logicalY,
-      bool isLandscape,
-      )
-  {
+    BuildContext context,
+    WidgetRef ref,
+    PentoscopeState state,
+    PentoscopeNotifier notifier,
+    settings,
+    int logicalX,
+    int logicalY,
+    bool isLandscape,
+  ) {
+    // 1️⃣ RÉCUPÉRER LES DONNÉES DE BASE
     final cellValue = state.plateau.getCell(logicalX, logicalY);
+    final isSolutionCell = _isSolutionCell(state, logicalX, logicalY);
+    final solutionPieceId = _getSolutionPieceIdAt(state, logicalX, logicalY);
 
-    Color cellColor;
-    String cellText = '';
-    bool isOccupied = false;
+    // 2️⃣ DÉTERMINER LA COULEUR DE BASE
+    Color cellColor = _getBaseCellColor(cellValue, isSolutionCell,  solutionPieceId,   settings);
 
-    if (cellValue == -1) {
-      cellColor = Colors.grey.shade800;
-    } else if (cellValue == 0) {
-      cellColor = Colors.grey.shade300;
-    } else {
-      cellColor = settings.ui.getPieceColor(cellValue);
-      cellText = cellValue.toString();
-      isOccupied = true;
+    // 3️⃣ DÉTECTER LA PIÈCE SÉLECTIONNÉE
+    final selectedInfo = _detectSelectedPlacedPiece(
+      state,
+      logicalX,
+      logicalY,
+      cellValue,
+      settings,
+    );
+    bool isSelected = selectedInfo.isSelected;
+    bool isReferenceCell = false;
+
+    if (isSelected && selectedInfo.selectedColor != null) {
+      cellColor = selectedInfo.selectedColor!;
     }
 
-    bool isSelected = false;
-    bool isReferenceCell = false;
-    bool isPreview = false;
-    bool isSnappedPreview = false;
-
-    // Pièce placée sélectionnée
-    if (state.selectedPlacedPiece != null) {
+    // Vérifier mastercase
+    if (isSelected && state.selectedCellInPiece != null) {
+      // Chercher position locale pour comparer
       final selectedPiece = state.selectedPlacedPiece!;
       final position =
-      selectedPiece.piece.positions[state.selectedPositionIndex];
-
-      // Calculer la normalisation
+          selectedPiece.piece.positions[state.selectedPositionIndex];
       final minOffset = _getMinOffset(position);
 
       for (final cellNum in position) {
@@ -265,132 +273,87 @@ class PentoscopeBoard extends ConsumerWidget {
         final pieceY = selectedPiece.gridY + localY;
 
         if (pieceX == logicalX && pieceY == logicalY) {
-          isSelected = true;
-
-          if (state.selectedCellInPiece != null) {
-            isReferenceCell =
-            (localX == state.selectedCellInPiece!.x &&
-                localY == state.selectedCellInPiece!.y);
-          }
-
-          if (cellValue == 0) {
-            cellColor = settings.ui.getPieceColor(selectedPiece.piece.id);
-            cellText = selectedPiece.piece.id.toString();
-            isOccupied = true;
-          }
+          isReferenceCell =
+              (localX == state.selectedCellInPiece!.x &&
+              localY == state.selectedCellInPiece!.y);
           break;
         }
       }
     }
 
-    // Preview (avec support du snap)
-    if (!isSelected &&
-        state.selectedPiece != null &&
-        state.previewX != null &&
-        state.previewY != null) {
-      final piece = state.selectedPiece!;
-      final position = piece.positions[state.selectedPositionIndex];
+    // 4️⃣ DÉTECTER LA PREVIEW
+    final previewInfo = _detectPreview(
+      state,
+      logicalX,
+      logicalY,
+      isSelected,
+      settings,
+    );
 
-      // Calculer la normalisation
-      final minOffset = _getMinOffset(position);
-
-      for (final cellNum in position) {
-        final localX = (cellNum - 1) % 5 - minOffset.$1;
-        final localY = (cellNum - 1) ~/ 5 - minOffset.$2;
-        final pieceX = state.previewX! + localX;
-        final pieceY = state.previewY! + localY;
-
-        if (pieceX == logicalX && pieceY == logicalY) {
-          isPreview = true;
-          isSnappedPreview = state.isSnapped;
-
-          if (state.isPreviewValid) {
-            // Couleur légèrement différente pour le snap
-            if (isSnappedPreview) {
-              // Snap actif : vert plus lumineux avec effet "magnétique"
-              cellColor = settings.ui
-                  .getPieceColor(piece.id)
-                  .withValues(alpha: 0.6);
-            } else {
-              // Position exacte
-              cellColor = settings.ui
-                  .getPieceColor(piece.id)
-                  .withValues(alpha: 0.4);
-            }
-          } else {
-            cellColor = Colors.red.withValues(alpha: 0.3);
-          }
-          cellText = piece.id.toString();
-          break;
-        }
-      }
+    if (previewInfo.isPreview && previewInfo.previewColor != null) {
+      cellColor = previewInfo.previewColor!;
     }
 
-    // Bordure
-    Border border;
-    if (isReferenceCell) {
-      border = Border.all(color: Colors.red, width: 4);
-    } else if (isPreview) {
-      if (state.isPreviewValid) {
-        if (isSnappedPreview) {
-          // Snap actif : bordure cyan/turquoise pour indiquer l'aimantation
-          border = Border.all(color: Colors.cyan.shade400, width: 3);
-        } else {
-          // Position exacte valide
-          border = Border.all(color: Colors.green, width: 3);
-        }
-      } else {
-        border = Border.all(color: Colors.red, width: 3);
-      }
-    } else if (isSelected) {
-      border = Border.all(color: Colors.amber, width: 3);
-    } else {
-      // Utiliser PieceBorderCalculator pour les bordures fusionnées
-      border = PieceBorderCalculator.calculate(
-        logicalX,
-        logicalY,
-        state.plateau,
-        isLandscape,
-      );
+    // 5️⃣ DÉTERMINER LE TEXTE
+    String cellText = _getCellText(cellValue, isSolutionCell, solutionPieceId);
+
+    if (isSelected && selectedInfo.selectedText != null) {
+      cellText = selectedInfo.selectedText!;
+    } else if (previewInfo.isPreview && previewInfo.previewText != null) {
+      cellText = previewInfo.previewText!;
     }
 
+    // 6️⃣ CALCULER LA BORDURE
+    Border border = _calculateBorder(
+      state,
+      // ✅ AJOUTER en premier!
+      isReferenceCell,
+      previewInfo.isPreview,
+      isSelected,
+      previewInfo.isSnappedPreview,
+      previewInfo.isPreviewValid,
+      logicalX,
+      logicalY,
+      isLandscape,
+    );
+
+    // 7️⃣ CRÉER LE WIDGET DE CELLULE
     Widget cellWidget = Container(
       decoration: BoxDecoration(
         color: cellColor,
         border: border,
-        // Effet de glow subtil pour le snap
-        boxShadow: isSnappedPreview && state.isPreviewValid
+        boxShadow: previewInfo.isSnappedPreview && previewInfo.isPreviewValid
             ? [
-          BoxShadow(
-            color: Colors.cyan.withValues(alpha: 0.3),
-            blurRadius: 4,
-            spreadRadius: 1,
-          ),
-        ]
+                BoxShadow(
+                  color: Colors.cyan.withValues(alpha: 0.3),
+                  blurRadius: 4,
+                  spreadRadius: 1,
+                ),
+              ]
             : null,
       ),
       child: Center(
         child: Text(
           cellText,
           style: TextStyle(
-            color: isPreview
-                ? (state.isPreviewValid
-                ? (isSnappedPreview
-                ? Colors.cyan.shade900
-                : Colors.green.shade900)
-                : Colors.red.shade900)
-                : Colors.white,
-            fontWeight: (isSelected || isPreview)
-                ? FontWeight.w900
-                : FontWeight.bold,
-            fontSize: (isSelected || isPreview) ? 16 : 14,
+            color: _getTextColor(
+              previewInfo.isPreview,
+              isSelected,
+              previewInfo.isPreviewValid,
+              previewInfo.isSnappedPreview,
+            ),
+            fontWeight: _getTextWeight(previewInfo.isPreview, isSelected),
+            fontSize: _getTextSize(isSelected, previewInfo.isPreview),
           ),
         ),
       ),
     );
 
-    // Pièce sélectionnée : draggable
+    // 8️⃣ GÉRER LES INTERACTIONS
+    bool isOccupied = cellValue > 0;
+
     if (isSelected && state.selectedPiece != null) {
+      // Pièce sélectionnée: draggable
       cellWidget = Draggable<Pento>(
         data: state.selectedPiece!,
         feedback: Material(
@@ -424,7 +387,7 @@ class PentoscopeBoard extends ConsumerWidget {
         ),
       );
     } else if (isOccupied && !isSelected) {
-      // Pièce placée non sélectionnée : sélectionnable
+      // Pièce placée non sélectionnée: sélectionnable
       cellWidget = GestureDetector(
         onTap: () {
           final piece = notifier.getPlacedPieceAt(logicalX, logicalY);
@@ -436,7 +399,7 @@ class PentoscopeBoard extends ConsumerWidget {
         child: cellWidget,
       );
     } else if (!isOccupied && state.selectedPiece != null && cellValue == 0) {
-      // Case vide avec pièce sélectionnée : annuler sélection
+      // Case vide avec pièce sélectionnée: annuler sélection
       cellWidget = GestureDetector(
         onTap: () {
           notifier.cancelSelection();
@@ -448,11 +411,198 @@ class PentoscopeBoard extends ConsumerWidget {
     return cellWidget;
   }
 
+  /// Détermine la bordure à afficher
+  Border _calculateBorder(
+    PentoscopeState state, // ✅ AJOUTER
+    bool isReferenceCell,
+    bool isPreview,
+    bool isSelected,
+    bool isSnappedPreview,
+    bool isPreviewValid,
+    int logicalX,
+    int logicalY,
+    bool isLandscape,
+  ) {
+    // Mastercase
+    if (isReferenceCell) return Border.all(color: Colors.red, width: 4);
+
+    // Preview
+    if (isPreview) {
+      if (isPreviewValid) {
+        if (isSnappedPreview) {
+          return Border.all(color: Colors.cyan.shade400, width: 3);
+        } else {
+          return Border.all(color: Colors.green, width: 3);
+        }
+      } else {
+        return Border.all(color: Colors.red, width: 3);
+      }
+    }
+
+    // Pièce sélectionnée
+    if (isSelected) return Border.all(color: Colors.amber, width: 3);
+
+    // Bordure fusionnée normale
+    return PieceBorderCalculator.calculate(
+      logicalX,
+      logicalY,
+      state.plateau,
+      isLandscape,
+    );
+  }
+
+  /// Détecte si une preview est à cette cellule
+  ({
+    bool isPreview,
+    Color? previewColor,
+    String? previewText,
+    bool isSnappedPreview,
+    bool isPreviewValid,
+  })
+  _detectPreview(
+    PentoscopeState state,
+    int logicalX,
+    int logicalY,
+    bool isSelected,
+    dynamic settings,
+  ) {
+    if (isSelected ||
+        state.selectedPiece == null ||
+        state.previewX == null ||
+        state.previewY == null) {
+      return (
+        isPreview: false,
+        previewColor: null,
+        previewText: null,
+        isSnappedPreview: false,
+        isPreviewValid: false,
+      );
+    }
+
+    final piece = state.selectedPiece!;
+    final position = piece.positions[state.selectedPositionIndex];
+    final minOffset = _getMinOffset(position);
+
+    for (final cellNum in position) {
+      final localX = (cellNum - 1) % 5 - minOffset.$1;
+      final localY = (cellNum - 1) ~/ 5 - minOffset.$2;
+      final pieceX = state.previewX! + localX;
+      final pieceY = state.previewY! + localY;
+
+      if (pieceX == logicalX && pieceY == logicalY) {
+        Color previewColor;
+        bool isSnappedPreview = state.isSnapped;
+
+        if (state.isPreviewValid) {
+          if (isSnappedPreview) {
+            previewColor = settings.ui
+                .getPieceColor(piece.id)
+                .withValues(alpha: 0.6);
+          } else {
+            previewColor = settings.ui
+                .getPieceColor(piece.id)
+                .withValues(alpha: 0.4);
+          }
+        } else {
+          previewColor = Colors.red.withValues(alpha: 0.3);
+        }
+
+        return (
+          isPreview: true,
+          previewColor: previewColor,
+          previewText: piece.id.toString(),
+          isSnappedPreview: isSnappedPreview,
+          isPreviewValid: state.isPreviewValid,
+        );
+      }
+    }
+
+    return (
+      isPreview: false,
+      previewColor: null,
+      previewText: null,
+      isSnappedPreview: false,
+      isPreviewValid: false,
+    );
+  }
+
+  /// Détecte si une pièce placée est sélectionnée à cette cellule
+  ({bool isSelected, Color? selectedColor, String? selectedText})
+  _detectSelectedPlacedPiece(
+    PentoscopeState state,
+    int logicalX,
+    int logicalY,
+    int cellValue,
+    dynamic settings,
+  ) {
+    if (state.selectedPlacedPiece == null) {
+      return (isSelected: false, selectedColor: null, selectedText: null);
+    }
+
+    final selectedPiece = state.selectedPlacedPiece!;
+    final position = selectedPiece.piece.positions[state.selectedPositionIndex];
+    final minOffset = _getMinOffset(position);
+
+    for (final cellNum in position) {
+      final localX = (cellNum - 1) % 5 - minOffset.$1;
+      final localY = (cellNum - 1) ~/ 5 - minOffset.$2;
+      final pieceX = selectedPiece.gridX + localX;
+      final pieceY = selectedPiece.gridY + localY;
+
+      if (pieceX == logicalX && pieceY == logicalY) {
+        Color selectedColor = settings.ui.getPieceColor(selectedPiece.piece.id);
+
+        if (cellValue == 0) {
+          selectedColor = settings.ui.getPieceColor(selectedPiece.piece.id);
+        }
+
+        return (
+          isSelected: true,
+          selectedColor: selectedColor,
+          selectedText: selectedPiece.piece.id.toString(),
+        );
+      }
+    }
+
+    return (isSelected: false, selectedColor: null, selectedText: null);
+  }
+
+  /// Détermine la couleur de base de la cellule
+  Color _getBaseCellColor(int cellValue, bool isSolution,  int? solutionPieceId, dynamic settings) {
+    // Bordure de plateau
+    if (cellValue == -1) return Colors.grey.shade800;
+
+    // Cellule vide avec solution
+    if (cellValue == 0 && isSolution) {
+      return Colors.orange.withOpacity(0.5);
+    }
+
+    // Cellule vide normale
+    if (cellValue == 0) return Colors.grey.shade300;
+
+    // Pièce placée
+    return settings.ui.getPieceColor(cellValue);
+  }
+
+  /// Texte à afficher dans la cellule
+  String _getCellText(int cellValue, bool isSolution, int? solutionPieceId) {
+    // Solution: afficher numéro de pièce
+    if (isSolution && solutionPieceId != null) {
+      return solutionPieceId.toString();
+    }
+
+    // Pièce occupée: afficher son numéro
+    if (cellValue > 0) return cellValue.toString();
+
+    // Vide: rien
+    return '';
+  }
+
   int _getDisplayPositionIndex(
-      int positionIndex,
-      Pento piece,
-      bool isLandscape,
-      ) {
+    int positionIndex,
+    Pento piece,
+    bool isLandscape,
+  ) {
     if (isLandscape) {
       return (positionIndex - 1 + piece.numPositions) % piece.numPositions;
     }
@@ -469,6 +619,74 @@ class PentoscopeBoard extends ConsumerWidget {
       if (localY < minY) minY = localY;
     }
     return (minX, minY);
+  }
+
+  /// Récupère le numéro de pièce solution à une cellule donnée
+  int? _getSolutionPieceIdAt(
+    PentoscopeState state,
+    int logicalX,
+    int logicalY,
+  ) {
+    if (state.currentSolution == null) return null;
+
+    for (final placement in state.currentSolution!) {
+      final piece = pentominos.firstWhere((p) => p.id == placement.pieceId);
+      final position = piece.positions[placement.positionIndex];
+
+      // Calculer le minOffset pour normalisation
+      int minLocalX = 5, minLocalY = 5;
+      for (final cellNum in position) {
+        final lx = (cellNum - 1) % 5;
+        final ly = (cellNum - 1) ~/ 5;
+        if (lx < minLocalX) minLocalX = lx;
+        if (ly < minLocalY) minLocalY = ly;
+      }
+
+      // Chercher la cellule
+      for (final cellNum in position) {
+        final localX = (cellNum - 1) % 5 - minLocalX;
+        final localY = (cellNum - 1) ~/ 5 - minLocalY;
+        final absX = placement.gridX + localX;
+        final absY = placement.gridY + localY;
+
+        if (absX == logicalX && absY == logicalY) {
+          return placement.pieceId;
+        }
+      }
+    }
+    return null;
+  }
+
+  /// Couleur du texte selon le contexte
+  Color _getTextColor(
+    bool isPreview,
+    bool isSelected,
+    bool isPreviewValid,
+    bool isSnappedPreview,
+  ) {
+    if (isPreview) {
+      if (isPreviewValid) {
+        return isSnappedPreview ? Colors.cyan.shade900 : Colors.green.shade900;
+      } else {
+        return Colors.red.shade900;
+      }
+    }
+    return Colors.white;
+  }
+
+  /// Taille du texte
+  double _getTextSize(bool isSelected, bool isPreview) {
+    return (isSelected || isPreview) ? 16.0 : 14.0;
+  }
+
+  /// Épaisseur du texte
+  FontWeight _getTextWeight(bool isSelected, bool isPreview) {
+    return (isSelected || isPreview) ? FontWeight.w900 : FontWeight.bold;
+  }
+
+  /// Détecte si cette cellule est une pièce solution
+  bool _isSolutionCell(PentoscopeState state, int logicalX, int logicalY) {
+    return _getSolutionPieceIdAt(state, logicalX, logicalY) != null;
   }
 
   void _showVictoryDialog(BuildContext context, WidgetRef ref) {
@@ -493,24 +711,6 @@ class PentoscopeBoard extends ConsumerWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(
-                        Icons.emoji_events,
-                        color: Colors.amber,
-                        size: 24,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Bravo ! ${state.puzzle?.size.label}',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
-                      ),
-                    ],
-                  ),
                   const SizedBox(height: 8),
                   Text(
                     'Isométries: ${state.isometryCount}  Translations: ${state.translationCount}',

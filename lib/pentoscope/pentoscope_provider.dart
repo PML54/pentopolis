@@ -9,7 +9,8 @@ import 'package:pentapol/common/pentominos.dart';
 import 'package:pentapol/common/plateau.dart';
 import 'package:pentapol/common/point.dart';
 import 'package:pentapol/common/shape_recognizer.dart';
-
+import 'package:pentapol/pentoscope/pentoscope_solver.dart'
+    show SolverPlacement, Solution;
 import 'pentoscope_generator.dart';
 
 // ============================================================================
@@ -187,7 +188,13 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
 
     final plateau = Plateau.allVisible(puzzle.size.width, puzzle.size.height);
 
+    Solution? firstSolution;
+    if (state.showSolution && newPuzzle.solutions.isNotEmpty) {
+      firstSolution = newPuzzle.solutions[0];
+    }
+
     state = PentoscopeState(
+      viewOrientation: state.viewOrientation,
       puzzle: newPuzzle,
       plateau: plateau,
       availablePieces: pieces,
@@ -196,6 +203,9 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
       isComplete: false,
       isometryCount: 0,
       translationCount: 0,
+      showSolution: state.showSolution,
+      // ✅ Récupérer de state
+      currentSolution: firstSolution, // ✅ Stocker la solution
     );
   }
 
@@ -219,13 +229,15 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
     }
 
     state = state.copyWith(
-      plateau: newPlateau,  // ← CLÉ!
+      plateau: newPlateau,
+      // ← CLÉ!
       selectedPiece: piece,
       selectedPositionIndex: positionIndex,
       clearSelectedPlacedPiece: true,
       selectedCellInPiece: defaultCell,
     );
   }
+
   // ==========================================================================
   // SÉLECTION PIÈCE PLACÉE (avec mastercase)
   // ==========================================================================
@@ -234,8 +246,7 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
     PentoscopePlacedPiece placed,
     int absoluteX,
     int absoluteY,
-  )
-  {
+  ) {
     // Calculer la cellule locale cliquée (mastercase)
     final localX = absoluteX - placed.gridX;
     final localY = absoluteY - placed.gridY;
@@ -280,6 +291,7 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
   Future<void> startPuzzle(
     PentoscopeSize size, {
     PentoscopeDifficulty difficulty = PentoscopeDifficulty.random,
+    bool showSolution = false, // ✅ NOUVEAU
   }) async
   {
     final puzzle = await switch (difficulty) {
@@ -294,7 +306,15 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
 
     final plateau = Plateau.allVisible(size.width, size.height);
 
+    // ✅ NOUVEAU: Extraire la première solution si showSolution=true
+    Solution? firstSolution;
+    if (showSolution && puzzle.solutions.isNotEmpty) {
+      firstSolution = puzzle.solutions[0];
+    }
+    debugPrint("showSolution=$showSolution solutions=${puzzle.solutions.length} first=${puzzle.solutions.isNotEmpty}");
+
     state = PentoscopeState(
+      viewOrientation: ViewOrientation.portrait,
       puzzle: puzzle,
       plateau: plateau,
       availablePieces: pieces,
@@ -303,6 +323,8 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
       isComplete: false,
       isometryCount: 0,
       translationCount: 0,
+      showSolution: showSolution,      // ✅ PASSER LE FLAG!
+      currentSolution: firstSolution,  // ✅ PASSER LA SOLUTION!
     );
   }
 
@@ -452,13 +474,24 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
         oldCell: state.selectedCellInPiece,
       ),
       clearPreview: true,
-      isometryCount: didChange ? state.isometryCount + 1 : state.isometryCount,  // ← AJOUTER
+      isometryCount: didChange
+          ? state.isometryCount + 1
+          : state.isometryCount, // ← AJOUTER
     );
 
     final sp = state.selectedPlacedPiece;
     if (sp != null) {
+      // ✅ Mettre à jour AUSSI dans placedPieces!
+      final updatedPlacedPieces = state.placedPieces.map((p) {
+        if (p.piece.id == sp.piece.id) {
+          return p.copyWith(positionIndex: newIdx);
+        }
+        return p;
+      }).toList();
+
       state = state.copyWith(
         selectedPlacedPiece: sp.copyWith(positionIndex: newIdx),
+        placedPieces: updatedPlacedPieces, // ✅ C'EST LE FIX!
       );
     }
   }
@@ -904,7 +937,10 @@ class PentoscopeState {
   final bool isComplete;
   final int isometryCount;
   final int translationCount;
+
   final bool isSnapped;
+  final bool showSolution; // ✅ NOUVEAU
+  final Solution? currentSolution; // ✅ NOUVEAU (une solution complète)
 
   const PentoscopeState({
     this.viewOrientation = ViewOrientation.portrait,
@@ -923,11 +959,18 @@ class PentoscopeState {
     this.isComplete = false,
     this.isometryCount = 0,
     this.translationCount = 0,
+
     this.isSnapped = false,
+    this.showSolution = false, // ✅ NOUVEAU
+    this.currentSolution, // ✅ NOUVEAU
   });
 
   factory PentoscopeState.initial() {
-    return PentoscopeState(plateau: Plateau.allVisible(5, 5));
+    return PentoscopeState(
+      plateau: Plateau.allVisible(5, 5),
+      showSolution: false, // ✅ NOUVEAU
+      currentSolution: null, // ✅ NOUVEAU
+    );
   }
 
   bool canPlacePiece(Pento piece, int positionIndex, int gridX, int gridY) {
@@ -983,6 +1026,8 @@ class PentoscopeState {
     int? isometryCount,
     int? translationCount,
     bool? isSnapped,
+    bool? showSolution, // ✅ NOUVEAU
+    Solution? currentSolution, // ✅ NOUVEAU
   }) {
     return PentoscopeState(
       viewOrientation: viewOrientation ?? this.viewOrientation,
@@ -1011,6 +1056,9 @@ class PentoscopeState {
       isometryCount: isometryCount ?? this.isometryCount,
       translationCount: translationCount ?? this.translationCount,
       isSnapped: isSnapped ?? this.isSnapped,
+      showSolution: showSolution ?? this.showSolution,
+      // ✅ NOUVEAU
+      currentSolution: currentSolution ?? this.currentSolution, // ✅ NOUVEAU
     );
   }
 
