@@ -1,7 +1,7 @@
 // lib/pentoscope/pentoscope_provider.dart
 // Provider Pentoscope - calqué sur pentomino_game_provider
 // CORRIGÉ: Bug de disparition des pièces (sync plateau/placedPieces)
-
+import 'package:flutter/services.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pentapol/common/isometry_transforms.dart';
@@ -32,23 +32,16 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
   late final PentoscopeGenerator _generator;
 
   void applyIsometryRotationCW() {
-    debugPrint(
-      "ISO: RotCW (view=${state.viewOrientation}) idx=${state.selectedPositionIndex} piece=${state.selectedPiece?.id}",
-    );
+
     _applyIsoUsingLookup((p, idx) => p.rotationCW(idx));
   }
 
   void applyIsometryRotationTW() {
-    debugPrint(
-      "ISO: RotTW (view=${state.viewOrientation}) idx=${state.selectedPositionIndex} piece=${state.selectedPiece?.id}",
-    );
+
     _applyIsoUsingLookup((p, idx) => p.rotationTW(idx));
   }
 
   void applyIsometrySymmetryH() {
-    debugPrint(
-      "ISO: SymH (view=${state.viewOrientation}) idx=${state.selectedPositionIndex} piece=${state.selectedPiece?.id}",
-    );
 
     if (state.viewOrientation == ViewOrientation.landscape) {
       _applyIsoUsingLookup((p, idx) => p.symmetryV(idx));
@@ -58,9 +51,7 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
   }
 
   void applyIsometrySymmetryV() {
-    debugPrint(
-      "ISO: SymV (view=${state.viewOrientation}) idx=${state.selectedPositionIndex} piece=${state.selectedPiece?.id}",
-    );
+
 
     if (state.viewOrientation == ViewOrientation.landscape) {
       _applyIsoUsingLookup((p, idx) => p.symmetryH(idx));
@@ -311,7 +302,6 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
     if (showSolution && puzzle.solutions.isNotEmpty) {
       firstSolution = puzzle.solutions[0];
     }
-    debugPrint("showSolution=$showSolution solutions=${puzzle.solutions.length} first=${puzzle.solutions.isNotEmpty}");
 
     state = PentoscopeState(
       viewOrientation: ViewOrientation.portrait,
@@ -456,16 +446,82 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
     }
   }
 
+
+  // ============================================================================
+  // VALIDATION ISOMÉTRIES - NOUVELLE MÉTHODE
+  // ============================================================================
+
+  /// Vérifie si une pièce placée peut occuper sa position sans chevauchement
+  bool _canPlacePieceWithoutChecker(PentoscopePlacedPiece placed) {
+    for (final cell in placed.absoluteCells) {
+      if (cell.x < 0 || cell.x >= state.plateau.width ||
+          cell.y < 0 || cell.y >= state.plateau.height) {
+        return false;
+      }
+
+      final cellValue = state.plateau.getCell(cell.x, cell.y);
+      if (cellValue != 0 && cellValue != placed.piece.id) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   void _applyIsoUsingLookup(int Function(Pento p, int idx) f) {
     final piece = state.selectedPiece;
     if (piece == null) return;
+
     final oldIdx = state.selectedPositionIndex;
     final newIdx = f(piece, oldIdx);
-
-    // Vérifier si l'index a vraiment changé (éviter double-count)
     final didChange = oldIdx != newIdx;
 
+    if (!didChange) return;
+
+    // ========================================================================
+    // CAS 1: Pièce du SLIDER sélectionnée (pas de validation nécessaire)
+    // ========================================================================
+    final sp = state.selectedPlacedPiece;
+    if (sp == null) {
+      state = state.copyWith(
+        selectedPositionIndex: newIdx,
+        selectedCellInPiece: _remapSelectedCell(
+          piece: piece,
+          oldIndex: oldIdx,
+          newIndex: newIdx,
+          oldCell: state.selectedCellInPiece,
+        ),
+        clearPreview: true,
+        isometryCount: state.isometryCount + 1,
+      );
+      return;
+    }
+
+    // ========================================================================
+    // CAS 2: Pièce PLACÉE sur plateau (VALIDATION REQUISE!)
+    // ========================================================================
+
+    // 1️⃣ Créer la pièce transformée (avec nouveau positionIndex)
+    final transformedPiece = sp.copyWith(positionIndex: newIdx);
+
+    // 2️⃣ VÉRIFIER si elle peut se placer (pas de chevauchement)
+    if (!_canPlacePieceWithoutChecker(transformedPiece)) {
+
+      HapticFeedback.heavyImpact();
+      return; // ← ROLLBACK: aucun changement
+    }
+
+    // 3️⃣ ✅ VALIDE: Commiter la transformation
+
+    final updatedPlacedPieces = state.placedPieces.map((p) {
+      if (p.piece.id == sp.piece.id) {
+        return transformedPiece;
+      }
+      return p;
+    }).toList();
+
     state = state.copyWith(
+      selectedPlacedPiece: transformedPiece,
+      placedPieces: updatedPlacedPieces,
       selectedPositionIndex: newIdx,
       selectedCellInPiece: _remapSelectedCell(
         piece: piece,
@@ -474,27 +530,10 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
         oldCell: state.selectedCellInPiece,
       ),
       clearPreview: true,
-      isometryCount: didChange
-          ? state.isometryCount + 1
-          : state.isometryCount, // ← AJOUTER
+      isometryCount: state.isometryCount + 1,
     );
-
-    final sp = state.selectedPlacedPiece;
-    if (sp != null) {
-      // ✅ Mettre à jour AUSSI dans placedPieces!
-      final updatedPlacedPieces = state.placedPieces.map((p) {
-        if (p.piece.id == sp.piece.id) {
-          return p.copyWith(positionIndex: newIdx);
-        }
-        return p;
-      }).toList();
-
-      state = state.copyWith(
-        selectedPlacedPiece: sp.copyWith(positionIndex: newIdx),
-        placedPieces: updatedPlacedPieces, // ✅ C'EST LE FIX!
-      );
-    }
   }
+
 
   // ==========================================================================
   // CORRECTION 2: _applyPlacedPieceIsometry - sync placedPieces

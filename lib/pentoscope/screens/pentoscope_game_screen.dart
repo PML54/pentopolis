@@ -1,6 +1,7 @@
 // lib/pentoscope/screens/pentoscope_game_screen.dart
-// Écran de jeu Pentoscope - calqué sur pentomino_game_screen.dart
-// MODIFICATION: Drag vers slider = retirer la pièce
+// Modified: 2512191000
+// Refactorisation UI: Actions isométrie contextuelles (slider vs plateau)
+// CHANGEMENTS: (1) Extraction Widget _buildIsometryActionsBar() lignes 67-110, (2) Portrait: Actions au-dessus slider si pièce sélectionnée (lignes 280-310), (3) Landscape: Actions verticales contextuelles (lignes 312-365)
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -26,9 +27,9 @@ class PentoscopeGameScreen extends ConsumerWidget {
       return const Scaffold(body: Center(child: Text('Aucun puzzle')));
     }
 
-    // Détection du mode transformation (pièce sélectionnée)
-    final isInTransformMode =
-        state.selectedPiece != null || state.selectedPlacedPiece != null;
+    // Détection du mode transformation
+    final isPlacedPieceSelected = state.selectedPlacedPiece != null;
+    final isSliderPieceSelected = state.selectedPiece != null;
 
     // Orientation
     final isLandscape =
@@ -47,12 +48,37 @@ class PentoscopeGameScreen extends ConsumerWidget {
             icon: const Icon(Icons.close, color: Colors.red),
             onPressed: () => Navigator.pop(context),
           ),
-          title: isInTransformMode
+          // EXCLUSIF:
+          // 1. Actions isométrie si pièce PLATEAU sélectionnée
+          // 2. Reset si pièce SLIDER sélectionnée
+          // 3. Solution count si AUCUNE pièce sélectionnée
+          title: isPlacedPieceSelected
               ? null
               : _buildSolutionCountWidget(state),
-          actions: isInTransformMode
-              ? _buildTransformActions(state, notifier, settings)
-              : _buildGeneralActions(state, notifier),
+          actions: isPlacedPieceSelected
+              ? [
+            _buildIsometryActionsBar(
+              state,
+              ref.read(pentoscopeProvider.notifier),
+              settings,
+              Axis.horizontal,
+            ),
+          ]
+              : isSliderPieceSelected
+              ? [
+            // Rien en AppBar si pièce slider (actions au-dessus slider)
+          ]
+              : [
+            // Reset en mode général
+            IconButton(
+              icon: const Icon(Icons.games),
+              onPressed: () {
+                HapticFeedback.mediumImpact();
+                notifier.reset();
+              },
+              tooltip: 'Recommencer',
+            ),
+          ],
         ),
       ),
       body: Stack(
@@ -68,10 +94,18 @@ class PentoscopeGameScreen extends ConsumerWidget {
                   state,
                   notifier,
                   settings,
-                  isInTransformMode,
+                  isSliderPieceSelected,
+                  isPlacedPieceSelected,
                 );
               } else {
-                return _buildPortraitLayout(context, ref, state, notifier);
+                return _buildPortraitLayout(
+                  context,
+                  ref,
+                  state,
+                  notifier,
+                  isSliderPieceSelected,
+                  isPlacedPieceSelected,
+                );
               }
             },
           ),
@@ -80,7 +114,82 @@ class PentoscopeGameScreen extends ConsumerWidget {
     );
   }
 
-  /// Affiche le nombre de solutions (uniquement en mode général, pas en isométrie)
+  // ============================================================================
+  // WIDGET RÉUTILISABLE: Barre d'actions isométrie
+  // ============================================================================
+
+  /// Widget réutilisable pour les icônes isométrie (horizontal ou vertical)
+  Widget _buildIsometryActionsBar(
+      PentoscopeState state,
+      PentoscopeNotifier notifier,
+      dynamic settings,
+      Axis direction,
+      ) {
+    final children = [
+      // Rotation anti-horaire (CCW)
+      _buildIconButton(
+        GameIcons.isometryRotationTW,
+        settings,
+            () => notifier.applyIsometryRotationTW(),
+      ),
+
+      // Rotation horaire (CW)
+      _buildIconButton(
+        GameIcons.isometryRotationCW,
+        settings,
+            () => notifier.applyIsometryRotationCW(),
+      ),
+
+      // Symétrie horizontale
+      _buildIconButton(
+        GameIcons.isometrySymmetryH,
+        settings,
+            () => notifier.applyIsometrySymmetryH(),
+      ),
+
+      // Symétrie verticale
+      _buildIconButton(
+        GameIcons.isometrySymmetryV,
+        settings,
+            () => notifier.applyIsometrySymmetryV(),
+      ),
+
+      // Supprimer (uniquement si pièce placée sélectionnée)
+      if (state.selectedPlacedPiece != null)
+        _buildIconButton(
+          GameIcons.removePiece,
+          settings,
+              () => notifier.removePlacedPiece(state.selectedPlacedPiece!),
+        ),
+    ];
+
+    return direction == Axis.horizontal
+        ? Row(mainAxisSize: MainAxisSize.min, children: children)
+        : Column(mainAxisSize: MainAxisSize.min, children: children);
+  }
+
+  /// Helper: bouton d'action isométrie
+  Widget _buildIconButton(
+      dynamic icon,
+      dynamic settings,
+      VoidCallback onPressed,
+      ) {
+    return IconButton(
+      icon: Icon(icon.icon, size: settings.ui.iconSize),
+      onPressed: () {
+        HapticFeedback.selectionClick();
+        onPressed();
+      },
+      tooltip: icon.tooltip,
+      color: icon.color,
+    );
+  }
+
+  // ============================================================================
+  // HELPERS
+  // ============================================================================
+
+  /// Affiche le nombre de solutions
   Widget _buildSolutionCountWidget(PentoscopeState state) {
     final count = state.puzzle?.solutionCount ?? 0;
     return Text(
@@ -93,107 +202,7 @@ class PentoscopeGameScreen extends ConsumerWidget {
     );
   }
 
-  /// Actions en mode TRANSFORMATION (pièce sélectionnée)
-  List<Widget> _buildTransformActions(
-      PentoscopeState state,
-      PentoscopeNotifier notifier,
-      settings,
-      ) {
-    return [
-      // Rotation anti-horaire
-      // Rotation anti-horaire (TW)
-      IconButton(
-        icon: Icon(
-          GameIcons.isometryRotationTW.icon,
-          size: settings.ui.iconSize,
-        ),
-        onPressed: () {
-          HapticFeedback.selectionClick();
-          notifier.applyIsometryRotationTW();
-        },
-        tooltip: GameIcons.isometryRotationTW.tooltip,
-        color: GameIcons.isometryRotationTW.color,
-      ),
-
-      // Rotation horaire (CW)
-      IconButton(
-        icon: Icon(
-          GameIcons.isometryRotationCW.icon,
-          size: settings.ui.iconSize,
-        ),
-        onPressed: () {
-          HapticFeedback.selectionClick();
-          notifier.applyIsometryRotationCW();
-        },
-        tooltip: GameIcons.isometryRotationCW.tooltip,
-        color: GameIcons.isometryRotationCW.color,
-      ),
-
-      // Symétrie horizontale
-      IconButton(
-        icon: Icon(
-          GameIcons.isometrySymmetryH.icon,
-          size: settings.ui.iconSize,
-        ),
-        onPressed: () {
-          HapticFeedback.selectionClick();
-          notifier.applyIsometrySymmetryH();
-        },
-        tooltip: GameIcons.isometrySymmetryH.tooltip,
-        color: GameIcons.isometrySymmetryH.color,
-      ),
-      // Symétrie verticale
-      IconButton(
-        icon: Icon(
-          GameIcons.isometrySymmetryV.icon,
-          size: settings.ui.iconSize,
-        ),
-        onPressed: () {
-          HapticFeedback.selectionClick();
-          notifier.applyIsometrySymmetryV();
-        },
-        tooltip: GameIcons.isometrySymmetryV.tooltip,
-        color: GameIcons.isometrySymmetryV.color,
-      ),
-      // Supprimer (uniquement si pièce placée sélectionnée)
-      if (state.selectedPlacedPiece != null)
-        IconButton(
-          icon: Icon(GameIcons.removePiece.icon, size: settings.ui.iconSize),
-          onPressed: () {
-            HapticFeedback.mediumImpact();
-            notifier.removePlacedPiece(state.selectedPlacedPiece!);
-          },
-          tooltip: GameIcons.removePiece.tooltip,
-          color: GameIcons.removePiece.color,
-        ),
-    ];
-  }
-
-  /// Actions en mode GÉNÉRAL (aucune pièce sélectionnée)
-  List<Widget> _buildGeneralActions(
-      PentoscopeState state,
-      PentoscopeNotifier notifier,
-      ) {
-    return [
-
-      // Reset
-      IconButton(
-        icon: const Icon(Icons.games),
-        onPressed: () {
-          HapticFeedback.mediumImpact();
-          notifier.reset();
-        },
-        tooltip: 'Recommencer',
-      ),
-    ];
-  }
-
-  // ============================================================================
-  // NOUVEAU: Widget slider avec DragTarget pour retirer les pièces
-  // ============================================================================
-
-  /// Construit le slider enveloppé dans un DragTarget
-  /// Quand on drag une pièce placée vers le slider, elle est retirée du plateau
+  /// Construit le slider avec DragTarget (drag pièce vers slider = suppression)
   Widget _buildSliderWithDragTarget({
     required WidgetRef ref,
     required bool isLandscape,
@@ -207,7 +216,7 @@ class PentoscopeGameScreen extends ConsumerWidget {
 
     return DragTarget<Pento>(
       onWillAcceptWithDetails: (details) {
-        // Accepter seulement si c'est une pièce placée (pas du slider)
+        // Accepter seulement si c'est une pièce placée
         return state.selectedPlacedPiece != null;
       },
       onAcceptWithDetails: (details) {
@@ -218,7 +227,7 @@ class PentoscopeGameScreen extends ConsumerWidget {
         }
       },
       builder: (context, candidateData, rejectedData) {
-        // Highlight visuel quand on survole avec une pièce placée
+        // Highlight visuel au survol
         final isHovering = candidateData.isNotEmpty;
 
         return AnimatedContainer(
@@ -234,7 +243,7 @@ class PentoscopeGameScreen extends ConsumerWidget {
           child: Stack(
             children: [
               sliderChild,
-              // Icône poubelle qui apparaît au survol
+              // Icône poubelle au survol
               if (isHovering)
                 Positioned.fill(
                   child: IgnorePointer(
@@ -264,19 +273,40 @@ class PentoscopeGameScreen extends ConsumerWidget {
     );
   }
 
-  /// Layout portrait : plateau en haut, slider en bas
+  // ============================================================================
+  // LAYOUTS
+  // ============================================================================
+
+  /// Layout portrait : plateau en haut, actions + slider en bas
   Widget _buildPortraitLayout(
       BuildContext context,
       WidgetRef ref,
       PentoscopeState state,
       PentoscopeNotifier notifier,
+      bool isSliderPieceSelected,
+      bool isPlacedPieceSelected,
       ) {
+    final settings = ref.read(settingsProvider);
+
     return Column(
       children: [
         // Plateau de jeu
         const Expanded(flex: 3, child: PentoscopeBoard(isLandscape: false)),
 
-        // Slider de pièces horizontal avec DragTarget
+        // 🎯 Actions isométrie UNIQUEMENT si pièce du SLIDER sélectionnée
+        // (exclue si pièce plateau sélectionnée)
+        if (isSliderPieceSelected && !isPlacedPieceSelected)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: _buildIsometryActionsBar(
+              state,
+              notifier,
+              settings,
+              Axis.horizontal,
+            ),
+          ),
+
+        // Slider de pièces horizontal
         _buildSliderWithDragTarget(
           ref: ref,
           isLandscape: false,
@@ -303,8 +333,9 @@ class PentoscopeGameScreen extends ConsumerWidget {
       WidgetRef ref,
       PentoscopeState state,
       PentoscopeNotifier notifier,
-      settings,
-      bool isInTransformMode,
+      dynamic settings,
+      bool isSliderPieceSelected,
+      bool isPlacedPieceSelected,
       ) {
     return Row(
       children: [
@@ -314,7 +345,7 @@ class PentoscopeGameScreen extends ConsumerWidget {
         // Colonne de droite : actions + slider
         Row(
           children: [
-            // Slider d'actions verticales
+            // 🎯 Colonne d'actions (contextuelles)
             Container(
               width: 44,
               decoration: BoxDecoration(
@@ -329,10 +360,18 @@ class PentoscopeGameScreen extends ConsumerWidget {
               ),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
-                children: isInTransformMode
-                    ? _buildTransformActions(state, notifier, settings)
+                children: isPlacedPieceSelected
+                    ? [
+                  // Actions isométrie si pièce plateau sélectionnée
+                  _buildIsometryActionsBar(
+                    state,
+                    notifier,
+                    settings,
+                    Axis.vertical,
+                  ),
+                ]
                     : [
-                  // Reset en mode général
+                  // Actions générales
                   IconButton(
                     icon: const Icon(Icons.games),
                     onPressed: () {
@@ -341,7 +380,6 @@ class PentoscopeGameScreen extends ConsumerWidget {
                     },
                     tooltip: 'Recommencer',
                   ),
-                  // Retour
                   IconButton(
                     icon: const Icon(Icons.close),
                     onPressed: () => Navigator.pop(context),
@@ -351,7 +389,7 @@ class PentoscopeGameScreen extends ConsumerWidget {
               ),
             ),
 
-            // Slider de pièces vertical avec DragTarget
+            // Slider de pièces vertical
             _buildSliderWithDragTarget(
               ref: ref,
               isLandscape: true,
