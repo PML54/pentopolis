@@ -107,12 +107,7 @@ class PentoscopePieceSlider extends ConsumerWidget {
               }
               notifier.selectPiece(piece);
             },
-            onCycle: () {
-              if (settings.game.enableHaptics) {
-                HapticFeedback.selectionClick();
-              }
-              notifier.cycleToNextOrientation();
-            },
+            onCycle: () {},  // ← Fonction vide, fait rien
             onCancel: () {
               if (settings.game.enableHaptics) {
                 HapticFeedback.lightImpact();

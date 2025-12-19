@@ -86,7 +86,7 @@ class _PentominoGameScreenState extends ConsumerState<PentominoGameScreen> {
                   MaterialPageRoute(
                     builder: (context) => SolutionsBrowserScreen.forSolutions(
                       solutions: solutions,
-                      title: 'Solutions possibles',
+                      title: 'Solutions',
                     ),
                   ),
                 );

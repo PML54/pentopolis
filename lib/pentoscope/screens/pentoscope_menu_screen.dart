@@ -190,13 +190,7 @@ class _PentoscopeMenuScreenState extends ConsumerState<PentoscopeMenuScreen> {
           Icons.shuffle,
           Colors.blue,
         ),
-        const SizedBox(width: 8),
-        _buildDifficultyButton(
-          PentoscopeDifficulty.hard,
-          'Difficile',
-          Icons.local_fire_department,
-          Colors.orange,
-        ),
+
       ],
     );
   }
