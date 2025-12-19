@@ -44,6 +44,7 @@ class PentoscopeGameScreen extends ConsumerWidget {
         child: AppBar(
           toolbarHeight: 56.0,
           backgroundColor: Colors.white,
+          automaticallyImplyLeading: !isPlacedPieceSelected,
           leading: isPlacedPieceSelected
               ? null  // Pas de croix quand icônes isométrie actifs
               : IconButton(
