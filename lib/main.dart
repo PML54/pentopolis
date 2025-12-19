@@ -1,14 +1,14 @@
-// Modified: 2025-12-01 01:00:00
+// Modified: 2025-12-06 16:00
 // lib/main.dart
 // Version adaptée avec pré-chargement des solutions BigInt
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:pentapol/classical/pentomino_game_screen.dart';
 
-import 'screens/home_screen.dart';
-import 'screens/pentomino_game_screen.dart';
-import 'services/solution_matcher.dart';
-import 'services/pentapol_solutions_loader.dart';
+import 'package:pentapol/screens/home_screen.dart';
+import 'package:pentapol/services/pentapol_solutions_loader.dart';
+import 'package:pentapol/services/solution_matcher.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -49,8 +49,10 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
       ),
       home: const HomeScreen(),
+
       routes: {
         '/game': (context) => const PentominoGameScreen(),
+
       },
     );
   }

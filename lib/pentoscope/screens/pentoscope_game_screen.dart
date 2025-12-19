@@ -44,17 +44,20 @@ class PentoscopeGameScreen extends ConsumerWidget {
         child: AppBar(
           toolbarHeight: 56.0,
           backgroundColor: Colors.white,
-          leading: IconButton(
-            icon: const Icon(Icons.close, color: Colors.red),
-            onPressed: () => Navigator.pop(context),
-          ),
+          leading: isPlacedPieceSelected
+              ? null  // Pas de croix quand icônes isométrie actifs
+              : IconButton(
+                  icon: const Icon(Icons.close, color: Colors.red),
+                  onPressed: () => Navigator.pop(context),
+                ),
           // EXCLUSIF:
           // 1. Actions isométrie si pièce PLATEAU sélectionnée
           // 2. Reset si pièce SLIDER sélectionnée
           // 3. Solution count si AUCUNE pièce sélectionnée
           title: isPlacedPieceSelected
               ? null
-              : _buildSolutionCountWidget(state),
+       //       : _buildSolutionCountWidget(state),
+          :null,
           actions: isPlacedPieceSelected
               ? [
             _buildIsometryActionsBar(

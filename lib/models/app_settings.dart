@@ -100,7 +100,7 @@ class UISettings {
     this.enableAnimations = true,
     this.pieceOpacity = 1.0,
     this.isometriesAppBarColor = const Color(0xFF9575CD), // Violet clair par défaut
-    this.iconSize = 28.0, // Taille par défaut : 28px
+    this.iconSize = 48.0, // Taille par défaut : 48px (max)
   });
 
   UISettings copyWith({
