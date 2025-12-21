@@ -112,6 +112,7 @@ CREATE TABLE duplicate_functions (
   occurrence_count INTEGER NOT NULL,
   FOREIGN KEY (dart_id) REFERENCES dartfiles(dart_id)
 );
+ALTER TABLE duplicate_functions ADD COLUMN filename TEXT;
 
 CREATE INDEX idx_duplicate_functions_name ON duplicate_functions(function_name);
 CREATE INDEX idx_duplicate_functions_dart_id ON duplicate_functions(dart_id);
@@ -146,3 +147,14 @@ CREATE TABLE violations (
 
 CREATE INDEX idx_violations_relative_path ON violations(relative_path);
 CREATE INDEX idx_violations_type ON violations(violation_type);
+CREATE TABLE IF NOT EXISTS transverse_duplicates (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  function_name TEXT NOT NULL,
+  nb_dirs INTEGER NOT NULL,
+  occurrences INTEGER NOT NULL,
+  dirs TEXT NOT NULL,
+  last_updated TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_transverse_duplicates_name
+ON transverse_duplicates(function_name);

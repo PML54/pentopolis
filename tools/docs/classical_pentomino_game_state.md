@@ -6,6 +6,7 @@
 
 ### getOccupiedCells
 
+Orientation de la vue (repère écran)
 Représente une pièce placée sur le plateau
 Obtient les cellules occupées par cette pièce sur le plateau
 

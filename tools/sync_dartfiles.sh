@@ -179,7 +179,18 @@ printf "${GREEN}✓ Import endfiles: $END_COUNT fichier(s)${NC}\n\n"
 
 # Étape 10: Extraire les fonctions publiques
 printf "${YELLOW}10. Extraction des fonctions publiques...${NC}\n"
-dart tools/check_public_functions.dart
+printf "${YELLOW}10. Extraction des fonctions publiques...${NC}\n"
+
+PROJECT_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+DB_FILE="$PROJECT_ROOT/tools/db/pentapol.db"
+
+dart run "$PROJECT_ROOT/tools/check_public_functions.dart" \
+  --db "$DB_FILE" \
+  --root "$PROJECT_ROOT" \
+  --include-generated false \
+  --include-ctors false \
+  --include-call true
+
 
 # Importer le CSV functions
 printf "${YELLOW}11. Import des fonctions publiques...${NC}\n"
@@ -224,6 +235,75 @@ EOSQL
 
 FUNC_COUNT=$(sqlite3 "$DB_FILE" "SELECT COUNT(*) FROM functions;")
 printf "${GREEN}✓ Import functions: $FUNC_COUNT fonction(s)${NC}\n\n"
+
+printf "${YELLOW}Détection des fonctions publiques dupliquées...${NC}\n"
+
+NB=$(sqlite3 "$DB_FILE" "SELECT COUNT(*) FROM transverse_duplicates;")
+printf "${YELLOW}Mise à jour duplicate_functions + transverse_duplicates...${NC}\n"
+
+printf "${YELLOW}Détection des fonctions publiques dupliquées...${NC}\n"
+
+sqlite3 "$DB_FILE" <<'EOSQL'
+DELETE FROM duplicate_functions;
+
+WITH duplicates AS (
+  SELECT function_name, COUNT(*) AS cnt
+  FROM functions
+  WHERE function_name NOT LIKE '\_%' ESCAPE '\'
+  GROUP BY function_name
+  HAVING COUNT(*) > 1
+)
+INSERT INTO duplicate_functions (
+  function_name,
+  filename,
+  dart_id,
+  relative_path,
+  first_dir,
+  occurrence_count
+)
+SELECT
+  f.function_name,
+  d.filename,
+  d.dart_id,
+  d.relative_path,
+  d.first_dir,
+  dup.cnt
+FROM functions f
+JOIN dartfiles d ON d.dart_id = f.dart_id
+JOIN duplicates dup ON dup.function_name = f.function_name
+WHERE f.function_name NOT LIKE '\_%' ESCAPE '\'
+ORDER BY f.function_name, d.relative_path;
+EOSQL
+
+printf "${YELLOW}Mise à jour transverse_duplicates...${NC}\n"
+
+sqlite3 "$DB_FILE" <<'EOSQL'
+DELETE FROM transverse_duplicates;
+
+INSERT INTO transverse_duplicates(function_name, nb_dirs, occurrences, dirs, last_updated)
+SELECT
+  function_name,
+  COUNT(DISTINCT first_dir) AS nb_dirs,
+  MAX(occurrence_count)     AS occurrences,
+  GROUP_CONCAT(DISTINCT first_dir) AS dirs,
+  datetime('now')           AS last_updated
+FROM duplicate_functions
+WHERE function_name NOT IN (
+  'build','initState','dispose','didChangeDependencies','didUpdateWidget',
+  'reassemble','toString','hashCode','createState','setState'
+)
+GROUP BY function_name
+HAVING nb_dirs >= 2;
+EOSQL
+
+NB=$(sqlite3 "$DB_FILE" "SELECT COUNT(*) FROM transverse_duplicates;")
+printf "${GREEN}✓ transverse_duplicates: $NB fonction(s)${NC}\n\n"
+
+ NB=$(sqlite3 "$DB_FILE" "SELECT COUNT(*) FROM transverse_duplicates;")
+ printf "${GREEN}✓ transverse_duplicates: $NB fonction(s) transverse(s)${NC}\n\n"
+
+COUNT=$(sqlite3 "$DB_FILE" "SELECT COUNT(*) FROM duplicate_functions;")
+printf "${GREEN}✓ $COUNT fonctions dupliquées détectées${NC}\n\n"
 
 # Étape 12: Vérifier les imports relatifs
 printf "${YELLOW}12. Vérification des imports relatifs...${NC}\n"

@@ -1,26 +1,28 @@
 // lib/pentoscope/pentoscope_provider.dart
 // Provider Pentoscope - calqué sur pentomino_game_provider
 // CORRIGÉ: Bug de disparition des pièces (sync plateau/placedPieces)
-import 'package:flutter/services.dart';
+import 'dart:math';
+
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:pentapol/common/isometry_transforms.dart';
+
 import 'package:pentapol/common/pentominos.dart';
 import 'package:pentapol/common/plateau.dart';
 import 'package:pentapol/common/point.dart';
-import 'package:pentapol/common/shape_recognizer.dart';
+
+import 'package:pentapol/pentoscope/pentoscope_generator.dart';
 import 'package:pentapol/pentoscope/pentoscope_solver.dart'
     show SolverPlacement, Solution;
-import 'pentoscope_generator.dart';
 
 // ============================================================================
 // ÉTAT
 // ============================================================================
 
 final pentoscopeProvider =
-    NotifierProvider<PentoscopeNotifier, PentoscopeState>(
-      PentoscopeNotifier.new,
-    );
+NotifierProvider<PentoscopeNotifier, PentoscopeState>(
+  PentoscopeNotifier.new,
+);
 
 // ============================================================================
 // PROVIDER
@@ -32,17 +34,14 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
   late final PentoscopeGenerator _generator;
 
   void applyIsometryRotationCW() {
-
     _applyIsoUsingLookup((p, idx) => p.rotationCW(idx));
   }
 
   void applyIsometryRotationTW() {
-
     _applyIsoUsingLookup((p, idx) => p.rotationTW(idx));
   }
 
   void applyIsometrySymmetryH() {
-
     if (state.viewOrientation == ViewOrientation.landscape) {
       _applyIsoUsingLookup((p, idx) => p.symmetryV(idx));
     } else {
@@ -51,8 +50,6 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
   }
 
   void applyIsometrySymmetryV() {
-
-
     if (state.viewOrientation == ViewOrientation.landscape) {
       _applyIsoUsingLookup((p, idx) => p.symmetryH(idx));
     } else {
@@ -234,10 +231,10 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
   // ==========================================================================
 
   void selectPlacedPiece(
-    PentoscopePlacedPiece placed,
-    int absoluteX,
-    int absoluteY,
-  ) {
+      PentoscopePlacedPiece placed,
+      int absoluteX,
+      int absoluteY,
+      ) {
     // Calculer la cellule locale cliquée (mastercase)
     final localX = absoluteX - placed.gridX;
     final localY = absoluteY - placed.gridY;
@@ -280,11 +277,10 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
   // ==========================================================================
 
   Future<void> startPuzzle(
-    PentoscopeSize size, {
-    PentoscopeDifficulty difficulty = PentoscopeDifficulty.random,
-    bool showSolution = false, // ✅ NOUVEAU
-  }) async
-  {
+      PentoscopeSize size, {
+        PentoscopeDifficulty difficulty = PentoscopeDifficulty.random,
+        bool showSolution = false,
+      }) async {
     final puzzle = await switch (difficulty) {
       PentoscopeDifficulty.easy => _generator.generateEasy(size),
       PentoscopeDifficulty.hard => _generator.generateHard(size),
@@ -297,10 +293,30 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
 
     final plateau = Plateau.allVisible(size.width, size.height);
 
-    // ✅ NOUVEAU: Extraire la première solution si showSolution=true
+    // 🎯 INITIALISER ALÉATOIREMENT LES POSITIONS
+    final Random random = Random();
+    final piecePositionIndices = <int, int>{};
+
+    for (final piece in pieces) {
+      final randomPos = random.nextInt(piece.numPositions);
+      piecePositionIndices[piece.id] = randomPos;
+      debugPrint('🎯 Pièce ${piece.id} position aléatoire: $randomPos/${piece.numPositions}');
+    }
+
+    // Calculer le nombre MIN théorique
     Solution? firstSolution;
-    if (showSolution && puzzle.solutions.isNotEmpty) {
+    if (puzzle.solutions.isNotEmpty) {
       firstSolution = puzzle.solutions[0];
+
+      int totalMinIsometries = 0;
+      for (final placement in firstSolution) {
+        final pento = pentominos.firstWhere((p) => p.id == placement.pieceId);
+        final initialPos = piecePositionIndices[placement.pieceId] ?? 0;
+
+        final minIso = pento.minIsometriesToReach(initialPos, placement.positionIndex);
+        totalMinIsometries += minIso;
+      }
+      debugPrint('🎯 MIN ISOMETRIES THÉORIQUES: $totalMinIsometries');
     }
 
     state = PentoscopeState(
@@ -309,12 +325,12 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
       plateau: plateau,
       availablePieces: pieces,
       placedPieces: [],
-      piecePositionIndices: {},
+      piecePositionIndices: piecePositionIndices,  // 👈 AVEC POSITIONS ALÉATOIRES!
       isComplete: false,
       isometryCount: 0,
       translationCount: 0,
-      showSolution: showSolution,      // ✅ PASSER LE FLAG!
-      currentSolution: firstSolution,  // ✅ PASSER LA SOLUTION!
+      showSolution: showSolution,
+      currentSolution: firstSolution,
     );
   }
 
@@ -395,6 +411,21 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
         ? state.translationCount + 1
         : state.translationCount;
 
+// 🎯 NOUVEAU: Calculer le score si victoire
+    int newScore = state.score;
+
+    debugPrint('🎯 DEBUG AVANT SCORE: isComplete=$isComplete');
+    debugPrint('🎯 DEBUG AVANT SCORE: currentSolution != null = ${state.currentSolution != null}');
+    if (state.currentSolution != null) {
+      debugPrint('🎯 DEBUG AVANT SCORE: solution.length = ${state.currentSolution!.length}');
+    }
+
+    if (isComplete && state.currentSolution != null) {
+      debugPrint('🎯 CALLING _calculateScore!');
+      newScore = _calculateScore(newPlacedPieces, state.currentSolution!, state.isometryCount);
+    } else {
+      debugPrint('🎯 NOT CALLING _calculateScore');
+    }
     state = state.copyWith(
       plateau: newPlateau,
       availablePieces: newAvailable,
@@ -405,6 +436,8 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
       clearPreview: true,
       isComplete: isComplete,
       translationCount: newTranslationCount,
+      score: newScore, // 🎯 NOUVEAU
+      currentSolution: state.currentSolution,  // 👈 AJOUTER CETTE LIGNE!
     );
 
     return true;
@@ -446,26 +479,9 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
     }
   }
 
-
   // ============================================================================
   // VALIDATION ISOMÉTRIES - NOUVELLE MÉTHODE
   // ============================================================================
-
-  /// Vérifie si une pièce placée peut occuper sa position sans chevauchement
-  bool _canPlacePieceWithoutChecker(PentoscopePlacedPiece placed) {
-    for (final cell in placed.absoluteCells) {
-      if (cell.x < 0 || cell.x >= state.plateau.width ||
-          cell.y < 0 || cell.y >= state.plateau.height) {
-        return false;
-      }
-
-      final cellValue = state.plateau.getCell(cell.x, cell.y);
-      if (cellValue != 0 && cellValue != placed.piece.id) {
-        return false;
-      }
-    }
-    return true;
-  }
 
   void _applyIsoUsingLookup(int Function(Pento p, int idx) f) {
     final piece = state.selectedPiece;
@@ -505,7 +521,6 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
 
     // 2️⃣ VÉRIFIER si elle peut se placer (pas de chevauchement)
     if (!_canPlacePieceWithoutChecker(transformedPiece)) {
-
       HapticFeedback.heavyImpact();
       return; // ← ROLLBACK: aucun changement
     }
@@ -535,231 +550,45 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
   }
 
 
-  // ==========================================================================
-  // CORRECTION 2: _applyPlacedPieceIsometry - sync placedPieces
-  // ==========================================================================
 
-  void _applyPlacedPieceIsometry(
-    List<List<int>> Function(List<List<int>>, int, int) transform,
-  ) {
-    final selectedPiece = state.selectedPlacedPiece!;
+  // ============================================================================
+  // CALCUL DU SCORE - Efficacité isométries
+  // ============================================================================
+  int _calculateScore(
+      List<PentoscopePlacedPiece> placedPieces,
+      Solution solution,
+      int actualIsometries,
+      )
+  {
+    debugPrint('🎯 _calculateScore called');
+    debugPrint('  actualIsometries = $actualIsometries');
 
-    // 1. Extraire les coordonnées absolues
-    final currentCoords = _extractAbsoluteCoords(selectedPiece);
+    if (actualIsometries == 0) {
+      debugPrint('  → actualIsometries=0, returning 20');
+      return 20;
+    }
 
-    // 2. Centre de rotation = mastercase
-    final refX = (state.selectedCellInPiece?.x ?? 0);
-    final refY = (state.selectedCellInPiece?.y ?? 0);
-    final centerX = selectedPiece.gridX + refX;
-    final centerY = selectedPiece.gridY + refY;
+    int totalMinIsometries = 0;
 
-    // 3. Appliquer la transformation
-    final transformedCoords = transform(currentCoords, centerX, centerY);
+    for (final placed in placedPieces) {
+      final pento = pentominos.firstWhere((p) => p.id == placed.piece.id);
+      final optimalPlacement = solution
+          .firstWhere((p) => p.pieceId == placed.piece.id);
 
-    // 4. Reconnaître la forme
-    final match = recognizeShape(transformedCoords);
-    if (match == null) return;
+      final minIso = pento.minIsometriesToReach(
+        placed.positionIndex,
+        optimalPlacement.positionIndex,
+      );
 
-    // 5. Vérifier placement valide
-    if (!_canPlacePieceAt(match, selectedPiece)) return;
+      debugPrint('  Pièce ${placed.piece.id}: ${placed.positionIndex} → ${optimalPlacement.positionIndex}, minIso=$minIso');
+      totalMinIsometries += minIso;
+    }
 
-    // 6. Créer la pièce transformée
-    final transformedPiece = PentoscopePlacedPiece(
-      piece: match.piece,
-      positionIndex: match.positionIndex,
-      gridX: match.gridX,
-      gridY: match.gridY,
-    );
-
-    // 7. Nouvelle mastercase
-    final newSelectedCell = Point(centerX - match.gridX, centerY - match.gridY);
-
-    // 8. CORRECTION: Mettre à jour placedPieces aussi !
-    final newPlacedPieces = state.placedPieces
-        .map((p) => p.piece.id == selectedPiece.piece.id ? transformedPiece : p)
-        .toList();
-
-    // 9. Mettre à jour l'état
-    state = state.copyWith(
-      placedPieces: newPlacedPieces,
-      selectedPlacedPiece: transformedPiece,
-      selectedPositionIndex: match.positionIndex,
-      selectedCellInPiece: newSelectedCell,
-      isometryCount: state.isometryCount + 1,
-    );
+    debugPrint('  totalMin=$totalMinIsometries');
+    final score = ((totalMinIsometries / actualIsometries) * 20).round().clamp(0, 20);
+    debugPrint('  SCORE FINAL = $score/20');
+    return score;
   }
-
-  // ==========================================================================
-  // CORRECTION 3: _applyPlacedPieceSymmetryH - sync placedPieces
-  // ==========================================================================
-
-  void _applyPlacedPieceSymmetryH() {
-    final selectedPiece = state.selectedPlacedPiece!;
-    final currentCoords = _extractAbsoluteCoords(selectedPiece);
-
-    final refX = (state.selectedCellInPiece?.x ?? 0);
-    final refY = (state.selectedCellInPiece?.y ?? 0);
-    final axisX = selectedPiece.gridX + refX;
-
-    final flippedCoords = flipVertical(currentCoords, axisX);
-    final match = recognizeShape(flippedCoords);
-    if (match == null) return;
-    if (!_canPlacePieceAt(match, selectedPiece)) return;
-
-    final transformedPiece = PentoscopePlacedPiece(
-      piece: match.piece,
-      positionIndex: match.positionIndex,
-      gridX: match.gridX,
-      gridY: match.gridY,
-    );
-
-    final centerX = axisX;
-    final centerY = selectedPiece.gridY + refY;
-    final newSelectedCell = Point(centerX - match.gridX, centerY - match.gridY);
-
-    // CORRECTION: Mettre à jour placedPieces aussi !
-    final newPlacedPieces = state.placedPieces
-        .map((p) => p.piece.id == selectedPiece.piece.id ? transformedPiece : p)
-        .toList();
-
-    state = state.copyWith(
-      placedPieces: newPlacedPieces,
-      selectedPlacedPiece: transformedPiece,
-      selectedPositionIndex: match.positionIndex,
-      selectedCellInPiece: newSelectedCell,
-      isometryCount: state.isometryCount + 1,
-    );
-  }
-
-  // ==========================================================================
-  // CORRECTION 4: _applyPlacedPieceSymmetryV - sync placedPieces
-  // ==========================================================================
-
-  void _applyPlacedPieceSymmetryV() {
-    final selectedPiece = state.selectedPlacedPiece!;
-    final currentCoords = _extractAbsoluteCoords(selectedPiece);
-
-    final refX = (state.selectedCellInPiece?.x ?? 0);
-    final refY = (state.selectedCellInPiece?.y ?? 0);
-    final axisY = selectedPiece.gridY + refY;
-
-    final flippedCoords = flipHorizontal(currentCoords, axisY);
-    final match = recognizeShape(flippedCoords);
-    if (match == null) return;
-    if (!_canPlacePieceAt(match, selectedPiece)) return;
-
-    final transformedPiece = PentoscopePlacedPiece(
-      piece: match.piece,
-      positionIndex: match.positionIndex,
-      gridX: match.gridX,
-      gridY: match.gridY,
-    );
-
-    final centerX = selectedPiece.gridX + refX;
-    final centerY = axisY;
-    final newSelectedCell = Point(centerX - match.gridX, centerY - match.gridY);
-
-    // CORRECTION: Mettre à jour placedPieces aussi !
-    final newPlacedPieces = state.placedPieces
-        .map((p) => p.piece.id == selectedPiece.piece.id ? transformedPiece : p)
-        .toList();
-
-    state = state.copyWith(
-      placedPieces: newPlacedPieces,
-      selectedPlacedPiece: transformedPiece,
-      selectedPositionIndex: match.positionIndex,
-      selectedCellInPiece: newSelectedCell,
-      isometryCount: state.isometryCount + 1,
-    );
-  }
-
-  void _applySliderPieceIsometry(
-    List<List<int>> Function(List<List<int>>, int, int) transform,
-  ) {
-    final piece = state.selectedPiece!;
-    final currentIndex = state.selectedPositionIndex;
-
-    // 1. Coordonnées actuelles
-    final currentCoords = piece.cartesianCoords[currentIndex];
-
-    // 2. Centre de rotation
-    final refX = (state.selectedCellInPiece?.x ?? 0);
-    final refY = (state.selectedCellInPiece?.y ?? 0);
-
-    // 3. Appliquer la transformation
-    final transformedCoords = transform(currentCoords, refX, refY);
-
-    // 4. Reconnaître
-    final match = recognizeShape(transformedCoords);
-    if (match == null || match.piece.id != piece.id) return;
-
-    // 5. Sauvegarder
-    final newIndices = Map<int, int>.from(state.piecePositionIndices);
-    newIndices[piece.id] = match.positionIndex;
-
-    // 6. Recalculer la mastercase pour la nouvelle orientation
-    final newCell = _calculateDefaultCell(piece, match.positionIndex);
-
-    state = state.copyWith(
-      selectedPositionIndex: match.positionIndex,
-      piecePositionIndices: newIndices,
-      selectedCellInPiece: newCell,
-      isometryCount: state.isometryCount + 1,
-    );
-  }
-
-  // Symétrie H sur pièce slider
-  void _applySliderPieceSymmetryH() {
-    final piece = state.selectedPiece!;
-    final currentIndex = state.selectedPositionIndex;
-    final currentCoords = piece.cartesianCoords[currentIndex];
-
-    final refX = (state.selectedCellInPiece?.x ?? 0);
-    final flippedCoords = flipVertical(currentCoords, refX);
-
-    final match = recognizeShape(flippedCoords);
-    if (match == null || match.piece.id != piece.id) return;
-
-    final newIndices = Map<int, int>.from(state.piecePositionIndices);
-    newIndices[piece.id] = match.positionIndex;
-
-    // Recalculer la mastercase
-    final newCell = _calculateDefaultCell(piece, match.positionIndex);
-
-    state = state.copyWith(
-      selectedPositionIndex: match.positionIndex,
-      piecePositionIndices: newIndices,
-      selectedCellInPiece: newCell,
-      isometryCount: state.isometryCount + 1,
-    );
-  }
-
-  // Symétrie V sur pièce slider
-  void _applySliderPieceSymmetryV() {
-    final piece = state.selectedPiece!;
-    final currentIndex = state.selectedPositionIndex;
-    final currentCoords = piece.cartesianCoords[currentIndex];
-
-    final refY = (state.selectedCellInPiece?.y ?? 0);
-    final flippedCoords = flipHorizontal(currentCoords, refY);
-
-    final match = recognizeShape(flippedCoords);
-    if (match == null || match.piece.id != piece.id) return;
-
-    final newIndices = Map<int, int>.from(state.piecePositionIndices);
-    newIndices[piece.id] = match.positionIndex;
-
-    // Recalculer la mastercase
-    final newCell = _calculateDefaultCell(piece, match.positionIndex);
-
-    state = state.copyWith(
-      selectedPositionIndex: match.positionIndex,
-      piecePositionIndices: newIndices,
-      selectedCellInPiece: newCell,
-      isometryCount: state.isometryCount + 1,
-    );
-  }
-
   /// Helper: calcule la mastercase par défaut (première cellule normalisée)
   Point? _calculateDefaultCell(Pento piece, int positionIndex) {
     final position = piece.positions[positionIndex];
@@ -791,35 +620,23 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
     );
   }
 
-  bool _canPlacePieceAt(ShapeMatch match, PentoscopePlacedPiece? excludePiece) {
-    final position = match.piece.positions[match.positionIndex];
 
-    // Normaliser les coordonnées
-    int minLocalX = 5, minLocalY = 5;
-    for (final cellNum in position) {
-      final localX = (cellNum - 1) % 5;
-      final localY = (cellNum - 1) ~/ 5;
-      if (localX < minLocalX) minLocalX = localX;
-      if (localY < minLocalY) minLocalY = localY;
-    }
 
-    for (final cellNum in position) {
-      final localX = (cellNum - 1) % 5 - minLocalX;
-      final localY = (cellNum - 1) ~/ 5 - minLocalY;
-      final absX = match.gridX + localX;
-      final absY = match.gridY + localY;
-
-      if (!state.plateau.isInBounds(absX, absY)) {
+  /// Vérifie si une pièce placée peut occuper sa position sans chevauchement
+  bool _canPlacePieceWithoutChecker(PentoscopePlacedPiece placed) {
+    for (final cell in placed.absoluteCells) {
+      if (cell.x < 0 ||
+          cell.x >= state.plateau.width ||
+          cell.y < 0 ||
+          cell.y >= state.plateau.height) {
         return false;
       }
 
-      final cell = state.plateau.getCell(absX, absY);
-      if (cell != 0 &&
-          (excludePiece == null || cell != excludePiece.piece.id)) {
+      final cellValue = state.plateau.getCell(cell.x, cell.y);
+      if (cellValue != 0 && cellValue != placed.piece.id) {
         return false;
       }
     }
-
     return true;
   }
 
@@ -976,10 +793,11 @@ class PentoscopeState {
   final bool isComplete;
   final int isometryCount;
   final int translationCount;
+  final int score; // 🎯 NOUVEAU: Score basé sur efficacité (0-20)
 
   final bool isSnapped;
-  final bool showSolution; // ✅ NOUVEAU
-  final Solution? currentSolution; // ✅ NOUVEAU (une solution complète)
+  final bool showSolution;
+  final Solution? currentSolution;
 
   const PentoscopeState({
     this.viewOrientation = ViewOrientation.portrait,
@@ -998,10 +816,10 @@ class PentoscopeState {
     this.isComplete = false,
     this.isometryCount = 0,
     this.translationCount = 0,
-
+    this.score = 0, // 🎯 NOUVEAU
     this.isSnapped = false,
-    this.showSolution = false, // ✅ NOUVEAU
-    this.currentSolution, // ✅ NOUVEAU
+    this.showSolution = false,
+    this.currentSolution,
   });
 
   factory PentoscopeState.initial() {
@@ -1064,6 +882,7 @@ class PentoscopeState {
     bool? isComplete,
     int? isometryCount,
     int? translationCount,
+    int? score, // 🎯 NOUVEAU
     bool? isSnapped,
     bool? showSolution, // ✅ NOUVEAU
     Solution? currentSolution, // ✅ NOUVEAU
@@ -1078,7 +897,7 @@ class PentoscopeState {
           ? null
           : (selectedPiece ?? this.selectedPiece),
       selectedPositionIndex:
-          selectedPositionIndex ?? this.selectedPositionIndex,
+      selectedPositionIndex ?? this.selectedPositionIndex,
       piecePositionIndices: piecePositionIndices ?? this.piecePositionIndices,
       selectedPlacedPiece: clearSelectedPlacedPiece
           ? null
@@ -1094,6 +913,7 @@ class PentoscopeState {
       isComplete: isComplete ?? this.isComplete,
       isometryCount: isometryCount ?? this.isometryCount,
       translationCount: translationCount ?? this.translationCount,
+      score: score ?? this.score, // 🎯 NOUVEAU
       isSnapped: isSnapped ?? this.isSnapped,
       showSolution: showSolution ?? this.showSolution,
       // ✅ NOUVEAU

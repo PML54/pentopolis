@@ -25,61 +25,73 @@ Widget build(BuildContext context) {
 ### Scaffold
 
 ```dart
-return Scaffold( appBar: AppBar( title: const Text('Pentoscope'), centerTitle: true, ), body: SafeArea( child: Padding( padding: const EdgeInsets.all(24.0), child: Column( crossAxisAlignment: CrossAxisAlignment.stretch, children: [ const Text( 'Mini-Puzzles Pentominos', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold), textAlign: TextAlign.center, ), const SizedBox(height: 8), Text( 'Remplissez le plateau avec les pièces proposées', style: TextStyle(fontSize: 14, color: Colors.grey[600]), textAlign: TextAlign.center, ), const SizedBox(height: 32),  // Sélection de la taille const Text( 'Taille du plateau', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600), ), const SizedBox(height: 12), _buildSizeSelector(),  const SizedBox(height: 24),  // Sélection de la difficulté const Text( 'Difficulté', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600), ), const SizedBox(height: 12), _buildDifficultySelector(),  const Spacer(),  // Bouton Jouer ElevatedButton( onPressed: _startGame, style: ElevatedButton.styleFrom( padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder( borderRadius: BorderRadius.circular(12), ), ), child: const Text( 'Jouer', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold), ), ), const SizedBox(height: 16), ], ), ), ), );
+return Scaffold( appBar: AppBar( title: const Text('Pentoscope'), centerTitle: true, ), body: SafeArea( child: Padding( padding: const EdgeInsets.all(24.0), child: Column( crossAxisAlignment: CrossAxisAlignment.stretch, children: [ const Text( 'Mini-Puzzles Pentominos', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold), textAlign: TextAlign.center, ), const SizedBox(height: 8),   // Sélection de la taille const Text( 'Taille du plateau', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600), ), const SizedBox(height: 12), _buildSizeSelector(),  const SizedBox(height: 24),  // Sélection de la difficulté const Text( 'Difficulté', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600), ), const SizedBox(height: 12), _buildDifficultySelector(),  const SizedBox(height: 12),  // ✅ NOUVEAU: Toggle "Afficher la solution" Container( padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12), decoration: BoxDecoration( color: Colors.blue.shade50, borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.blue.shade200, width: 1), ), child: Row( children: [ Icon(Icons.lightbulb, color: Colors.blue.shade700), const SizedBox(width: 12), Expanded( child: Column( crossAxisAlignment: CrossAxisAlignment.start, children: [ const Text( 'Training', style: TextStyle( fontSize: 14, fontWeight: FontWeight.w600, ), ), Text( 'Afficher la solution optimale', style: TextStyle( fontSize: 12, color: Colors.grey[600], ), ), ], ), ), Switch( value: _showSolution, onChanged: (value) {
 ```
 
 ### Text
 
 ```dart
-const Text( 'Mini-Puzzles Pentominos', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold), textAlign: TextAlign.center, ), const SizedBox(height: 8), Text( 'Remplissez le plateau avec les pièces proposées', style: TextStyle(fontSize: 14, color: Colors.grey[600]), textAlign: TextAlign.center, ), const SizedBox(height: 32),  // Sélection de la taille const Text( 'Taille du plateau', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600), ), const SizedBox(height: 12), _buildSizeSelector(),  const SizedBox(height: 24),  // Sélection de la difficulté const Text( 'Difficulté', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600), ), const SizedBox(height: 12), _buildDifficultySelector(),  const Spacer(),  // Bouton Jouer ElevatedButton( onPressed: _startGame, style: ElevatedButton.styleFrom( padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder( borderRadius: BorderRadius.circular(12), ), ), child: const Text( 'Jouer', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold), ), ), const SizedBox(height: 16), ], ), ), ), );
+const Text( 'Mini-Puzzles Pentominos', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold), textAlign: TextAlign.center, ), const SizedBox(height: 8),   // Sélection de la taille const Text( 'Taille du plateau', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600), ), const SizedBox(height: 12), _buildSizeSelector(),  const SizedBox(height: 24),  // Sélection de la difficulté const Text( 'Difficulté', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600), ), const SizedBox(height: 12), _buildDifficultySelector(),  const SizedBox(height: 12),  // ✅ NOUVEAU: Toggle "Afficher la solution" Container( padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12), decoration: BoxDecoration( color: Colors.blue.shade50, borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.blue.shade200, width: 1), ), child: Row( children: [ Icon(Icons.lightbulb, color: Colors.blue.shade700), const SizedBox(width: 12), Expanded( child: Column( crossAxisAlignment: CrossAxisAlignment.start, children: [ const Text( 'Training', style: TextStyle( fontSize: 14, fontWeight: FontWeight.w600, ), ), Text( 'Afficher la solution optimale', style: TextStyle( fontSize: 12, color: Colors.grey[600], ), ), ], ), ), Switch( value: _showSolution, onChanged: (value) {
 ```
 
 ### SizedBox
 
 ```dart
-const SizedBox(height: 8), Text( 'Remplissez le plateau avec les pièces proposées', style: TextStyle(fontSize: 14, color: Colors.grey[600]), textAlign: TextAlign.center, ), const SizedBox(height: 32),  // Sélection de la taille const Text( 'Taille du plateau', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600), ), const SizedBox(height: 12), _buildSizeSelector(),  const SizedBox(height: 24),  // Sélection de la difficulté const Text( 'Difficulté', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600), ), const SizedBox(height: 12), _buildDifficultySelector(),  const Spacer(),  // Bouton Jouer ElevatedButton( onPressed: _startGame, style: ElevatedButton.styleFrom( padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder( borderRadius: BorderRadius.circular(12), ), ), child: const Text( 'Jouer', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold), ), ), const SizedBox(height: 16), ], ), ), ), );
-```
-
-### SizedBox
-
-```dart
-const SizedBox(height: 32),  // Sélection de la taille const Text( 'Taille du plateau', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600), ), const SizedBox(height: 12), _buildSizeSelector(),  const SizedBox(height: 24),  // Sélection de la difficulté const Text( 'Difficulté', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600), ), const SizedBox(height: 12), _buildDifficultySelector(),  const Spacer(),  // Bouton Jouer ElevatedButton( onPressed: _startGame, style: ElevatedButton.styleFrom( padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder( borderRadius: BorderRadius.circular(12), ), ), child: const Text( 'Jouer', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold), ), ), const SizedBox(height: 16), ], ), ), ), );
+const SizedBox(height: 8),   // Sélection de la taille const Text( 'Taille du plateau', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600), ), const SizedBox(height: 12), _buildSizeSelector(),  const SizedBox(height: 24),  // Sélection de la difficulté const Text( 'Difficulté', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600), ), const SizedBox(height: 12), _buildDifficultySelector(),  const SizedBox(height: 12),  // ✅ NOUVEAU: Toggle "Afficher la solution" Container( padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12), decoration: BoxDecoration( color: Colors.blue.shade50, borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.blue.shade200, width: 1), ), child: Row( children: [ Icon(Icons.lightbulb, color: Colors.blue.shade700), const SizedBox(width: 12), Expanded( child: Column( crossAxisAlignment: CrossAxisAlignment.start, children: [ const Text( 'Training', style: TextStyle( fontSize: 14, fontWeight: FontWeight.w600, ), ), Text( 'Afficher la solution optimale', style: TextStyle( fontSize: 12, color: Colors.grey[600], ), ), ], ), ), Switch( value: _showSolution, onChanged: (value) {
 ```
 
 ### Text
 
 ```dart
-const Text( 'Taille du plateau', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600), ), const SizedBox(height: 12), _buildSizeSelector(),  const SizedBox(height: 24),  // Sélection de la difficulté const Text( 'Difficulté', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600), ), const SizedBox(height: 12), _buildDifficultySelector(),  const Spacer(),  // Bouton Jouer ElevatedButton( onPressed: _startGame, style: ElevatedButton.styleFrom( padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder( borderRadius: BorderRadius.circular(12), ), ), child: const Text( 'Jouer', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold), ), ), const SizedBox(height: 16), ], ), ), ), );
+const Text( 'Taille du plateau', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600), ), const SizedBox(height: 12), _buildSizeSelector(),  const SizedBox(height: 24),  // Sélection de la difficulté const Text( 'Difficulté', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600), ), const SizedBox(height: 12), _buildDifficultySelector(),  const SizedBox(height: 12),  // ✅ NOUVEAU: Toggle "Afficher la solution" Container( padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12), decoration: BoxDecoration( color: Colors.blue.shade50, borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.blue.shade200, width: 1), ), child: Row( children: [ Icon(Icons.lightbulb, color: Colors.blue.shade700), const SizedBox(width: 12), Expanded( child: Column( crossAxisAlignment: CrossAxisAlignment.start, children: [ const Text( 'Training', style: TextStyle( fontSize: 14, fontWeight: FontWeight.w600, ), ), Text( 'Afficher la solution optimale', style: TextStyle( fontSize: 12, color: Colors.grey[600], ), ), ], ), ), Switch( value: _showSolution, onChanged: (value) {
 ```
 
 ### SizedBox
 
 ```dart
-const SizedBox(height: 12), _buildSizeSelector(),  const SizedBox(height: 24),  // Sélection de la difficulté const Text( 'Difficulté', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600), ), const SizedBox(height: 12), _buildDifficultySelector(),  const Spacer(),  // Bouton Jouer ElevatedButton( onPressed: _startGame, style: ElevatedButton.styleFrom( padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder( borderRadius: BorderRadius.circular(12), ), ), child: const Text( 'Jouer', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold), ), ), const SizedBox(height: 16), ], ), ), ), );
+const SizedBox(height: 12), _buildSizeSelector(),  const SizedBox(height: 24),  // Sélection de la difficulté const Text( 'Difficulté', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600), ), const SizedBox(height: 12), _buildDifficultySelector(),  const SizedBox(height: 12),  // ✅ NOUVEAU: Toggle "Afficher la solution" Container( padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12), decoration: BoxDecoration( color: Colors.blue.shade50, borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.blue.shade200, width: 1), ), child: Row( children: [ Icon(Icons.lightbulb, color: Colors.blue.shade700), const SizedBox(width: 12), Expanded( child: Column( crossAxisAlignment: CrossAxisAlignment.start, children: [ const Text( 'Training', style: TextStyle( fontSize: 14, fontWeight: FontWeight.w600, ), ), Text( 'Afficher la solution optimale', style: TextStyle( fontSize: 12, color: Colors.grey[600], ), ), ], ), ), Switch( value: _showSolution, onChanged: (value) {
 ```
 
 ### SizedBox
 
 ```dart
-const SizedBox(height: 24),  // Sélection de la difficulté const Text( 'Difficulté', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600), ), const SizedBox(height: 12), _buildDifficultySelector(),  const Spacer(),  // Bouton Jouer ElevatedButton( onPressed: _startGame, style: ElevatedButton.styleFrom( padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder( borderRadius: BorderRadius.circular(12), ), ), child: const Text( 'Jouer', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold), ), ), const SizedBox(height: 16), ], ), ), ), );
+const SizedBox(height: 24),  // Sélection de la difficulté const Text( 'Difficulté', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600), ), const SizedBox(height: 12), _buildDifficultySelector(),  const SizedBox(height: 12),  // ✅ NOUVEAU: Toggle "Afficher la solution" Container( padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12), decoration: BoxDecoration( color: Colors.blue.shade50, borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.blue.shade200, width: 1), ), child: Row( children: [ Icon(Icons.lightbulb, color: Colors.blue.shade700), const SizedBox(width: 12), Expanded( child: Column( crossAxisAlignment: CrossAxisAlignment.start, children: [ const Text( 'Training', style: TextStyle( fontSize: 14, fontWeight: FontWeight.w600, ), ), Text( 'Afficher la solution optimale', style: TextStyle( fontSize: 12, color: Colors.grey[600], ), ), ], ), ), Switch( value: _showSolution, onChanged: (value) {
 ```
 
 ### Text
 
 ```dart
-const Text( 'Difficulté', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600), ), const SizedBox(height: 12), _buildDifficultySelector(),  const Spacer(),  // Bouton Jouer ElevatedButton( onPressed: _startGame, style: ElevatedButton.styleFrom( padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder( borderRadius: BorderRadius.circular(12), ), ), child: const Text( 'Jouer', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold), ), ), const SizedBox(height: 16), ], ), ), ), );
+const Text( 'Difficulté', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600), ), const SizedBox(height: 12), _buildDifficultySelector(),  const SizedBox(height: 12),  // ✅ NOUVEAU: Toggle "Afficher la solution" Container( padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12), decoration: BoxDecoration( color: Colors.blue.shade50, borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.blue.shade200, width: 1), ), child: Row( children: [ Icon(Icons.lightbulb, color: Colors.blue.shade700), const SizedBox(width: 12), Expanded( child: Column( crossAxisAlignment: CrossAxisAlignment.start, children: [ const Text( 'Training', style: TextStyle( fontSize: 14, fontWeight: FontWeight.w600, ), ), Text( 'Afficher la solution optimale', style: TextStyle( fontSize: 12, color: Colors.grey[600], ), ), ], ), ), Switch( value: _showSolution, onChanged: (value) {
 ```
 
 ### SizedBox
 
 ```dart
-const SizedBox(height: 12), _buildDifficultySelector(),  const Spacer(),  // Bouton Jouer ElevatedButton( onPressed: _startGame, style: ElevatedButton.styleFrom( padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder( borderRadius: BorderRadius.circular(12), ), ), child: const Text( 'Jouer', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold), ), ), const SizedBox(height: 16), ], ), ), ), );
+const SizedBox(height: 12), _buildDifficultySelector(),  const SizedBox(height: 12),  // ✅ NOUVEAU: Toggle "Afficher la solution" Container( padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12), decoration: BoxDecoration( color: Colors.blue.shade50, borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.blue.shade200, width: 1), ), child: Row( children: [ Icon(Icons.lightbulb, color: Colors.blue.shade700), const SizedBox(width: 12), Expanded( child: Column( crossAxisAlignment: CrossAxisAlignment.start, children: [ const Text( 'Training', style: TextStyle( fontSize: 14, fontWeight: FontWeight.w600, ), ), Text( 'Afficher la solution optimale', style: TextStyle( fontSize: 12, color: Colors.grey[600], ), ), ], ), ), Switch( value: _showSolution, onChanged: (value) {
 ```
 
-### Spacer
+### SizedBox
 
 ```dart
-const Spacer(),  // Bouton Jouer ElevatedButton( onPressed: _startGame, style: ElevatedButton.styleFrom( padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder( borderRadius: BorderRadius.circular(12), ), ), child: const Text( 'Jouer', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold), ), ), const SizedBox(height: 16), ], ), ), ), );
+const SizedBox(height: 12),  // ✅ NOUVEAU: Toggle "Afficher la solution" Container( padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12), decoration: BoxDecoration( color: Colors.blue.shade50, borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.blue.shade200, width: 1), ), child: Row( children: [ Icon(Icons.lightbulb, color: Colors.blue.shade700), const SizedBox(width: 12), Expanded( child: Column( crossAxisAlignment: CrossAxisAlignment.start, children: [ const Text( 'Training', style: TextStyle( fontSize: 14, fontWeight: FontWeight.w600, ), ), Text( 'Afficher la solution optimale', style: TextStyle( fontSize: 12, color: Colors.grey[600], ), ), ], ), ), Switch( value: _showSolution, onChanged: (value) {
+```
+
+### SizedBox
+
+```dart
+const SizedBox(width: 12), Expanded( child: Column( crossAxisAlignment: CrossAxisAlignment.start, children: [ const Text( 'Training', style: TextStyle( fontSize: 14, fontWeight: FontWeight.w600, ), ), Text( 'Afficher la solution optimale', style: TextStyle( fontSize: 12, color: Colors.grey[600], ), ), ], ), ), Switch( value: _showSolution, onChanged: (value) {
+```
+
+### Text
+
+```dart
+const Text( 'Training', style: TextStyle( fontSize: 14, fontWeight: FontWeight.w600, ), ), Text( 'Afficher la solution optimale', style: TextStyle( fontSize: 12, color: Colors.grey[600], ), ), ], ), ), Switch( value: _showSolution, onChanged: (value) {
+```
+
+### SizedBox
+
+```dart
+const SizedBox(height: 24),  // Bouton Jouer ElevatedButton( onPressed: _startGame, style: ElevatedButton.styleFrom( padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder( borderRadius: BorderRadius.circular(12), ), ), child: const Text( 'Jouer', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold), ), ), const SizedBox(height: 16), ], ), ), ), );
 ```
 
 ### SizedBox
@@ -109,19 +121,13 @@ const SizedBox(height: 4), Text( '${size.numPieces} pièces',
 ### Row
 
 ```dart
-return Row( children: [ _buildDifficultyButton( PentoscopeDifficulty.easy, 'Facile', Icons.sentiment_satisfied, Colors.green, ), const SizedBox(width: 8), _buildDifficultyButton( PentoscopeDifficulty.random, 'Aléatoire', Icons.shuffle, Colors.blue, ), const SizedBox(width: 8), _buildDifficultyButton( PentoscopeDifficulty.hard, 'Difficile', Icons.local_fire_department, Colors.orange, ), ], );
+return Row( children: [ _buildDifficultyButton( PentoscopeDifficulty.easy, 'Facile', Icons.sentiment_satisfied, Colors.green, ), const SizedBox(width: 8), _buildDifficultyButton( PentoscopeDifficulty.random, 'Aléatoire', Icons.shuffle, Colors.blue, ),  ], );
 ```
 
 ### SizedBox
 
 ```dart
-const SizedBox(width: 8), _buildDifficultyButton( PentoscopeDifficulty.random, 'Aléatoire', Icons.shuffle, Colors.blue, ), const SizedBox(width: 8), _buildDifficultyButton( PentoscopeDifficulty.hard, 'Difficile', Icons.local_fire_department, Colors.orange, ), ], );
-```
-
-### SizedBox
-
-```dart
-const SizedBox(width: 8), _buildDifficultyButton( PentoscopeDifficulty.hard, 'Difficile', Icons.local_fire_department, Colors.orange, ), ], );
+const SizedBox(width: 8), _buildDifficultyButton( PentoscopeDifficulty.random, 'Aléatoire', Icons.shuffle, Colors.blue, ),  ], );
 ```
 
 ### Expanded

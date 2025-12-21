@@ -241,7 +241,12 @@ class PentoscopeBoard extends ConsumerWidget {
     final solutionPieceId = _getSolutionPieceIdAt(state, logicalX, logicalY);
 
     // 2️⃣ DÉTERMINER LA COULEUR DE BASE
-    Color cellColor = _getBaseCellColor(cellValue, isSolutionCell,  solutionPieceId,   settings);
+    Color cellColor = _getBaseCellColor(
+      cellValue,
+      isSolutionCell,
+      solutionPieceId,
+      settings,
+    );
 
     // 3️⃣ DÉTECTER LA PIÈCE SÉLECTIONNÉE
     final selectedInfo = _detectSelectedPlacedPiece(
@@ -568,13 +573,20 @@ class PentoscopeBoard extends ConsumerWidget {
   }
 
   /// Détermine la couleur de base de la cellule
-  Color _getBaseCellColor(int cellValue, bool isSolution,  int? solutionPieceId, dynamic settings) {
+  Color _getBaseCellColor(
+    int cellValue,
+    bool isSolution,
+    int? solutionPieceId,
+    dynamic settings,
+  ) {
     // Bordure de plateau
     if (cellValue == -1) return Colors.grey.shade800;
 
     // Cellule vide avec solution → afficher couleur VRAIE de la pièce!
     if (cellValue == 0 && isSolution && solutionPieceId != null) {
-      return settings.ui.getPieceColor(solutionPieceId).withOpacity(0.6);  // ✅ COULEUR VRAIE!
+      return settings.ui
+          .getPieceColor(solutionPieceId)
+          .withOpacity(0.6); // ✅ COULEUR VRAIE!
     }
     // Cellule vide normale
     if (cellValue == 0) return Colors.grey.shade300;
@@ -687,7 +699,6 @@ class PentoscopeBoard extends ConsumerWidget {
   bool _isSolutionCell(PentoscopeState state, int logicalX, int logicalY) {
     return _getSolutionPieceIdAt(state, logicalX, logicalY) != null;
   }
-
   void _showVictoryDialog(BuildContext context, WidgetRef ref) {
     final state = ref.read(pentoscopeProvider);
 
@@ -711,10 +722,27 @@ class PentoscopeBoard extends ConsumerWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   const SizedBox(height: 8),
+
+                  // 🎯 SCORE PRINCIPAL
+                  Text(
+                    'Note: ${state.score}/20',
+                    style: const TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.green,
+                    ),
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  // Détails isométries
                   Text(
                     'Isométries: ${state.isometryCount}  Translations: ${state.translationCount}',
+                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                   ),
+
                   const SizedBox(height: 12),
+
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [

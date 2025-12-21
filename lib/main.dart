@@ -50,10 +50,7 @@ class MyApp extends StatelessWidget {
       ),
       home: const HomeScreen(),
 
-      routes: {
-        '/game': (context) => const PentominoGameScreen(),
-
-      },
+      routes: {'/game': (context) => const PentominoGameScreen()},
     );
   }
 }

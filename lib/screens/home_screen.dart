@@ -4,11 +4,9 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
+import 'package:pentapol/classical/pentomino_game_screen.dart';
 import 'package:pentapol/duel/screens/duel_home_screen.dart';
 import 'package:pentapol/pentoscope/screens/pentoscope_menu_screen.dart';
-import 'package:pentapol/classical/pentomino_game_screen.dart';
-
 import 'package:pentapol/screens/settings_screen.dart';
 
 class HomeScreen extends ConsumerWidget {
@@ -191,6 +189,7 @@ class _MenuCard extends StatelessWidget {
   final Color color;
   final Color? foregroundOnColor;
   final VoidCallback onTap;
+
   const _MenuCard({
     required this.icon,
     required this.title,

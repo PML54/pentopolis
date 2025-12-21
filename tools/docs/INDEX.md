@@ -5,15 +5,14 @@
 ## Modules
 
 - **classical** (3 fichiers)
-- **common** (6 fichiers)
+- **common** (8 fichiers)
 - **config** (1 fichiers)
 - **data** (1 fichiers)
 - **database** (2 fichiers)
 - **duel** (15 fichiers)
-- **isopento** (8 fichiers)
 - **main.dart** (1 fichiers)
 - **models** (1 fichiers)
-- **pentoscope** (6 fichiers)
+- **pentoscope** (7 fichiers)
 - **providers** (1 fichiers)
 - **screens** (12 fichiers)
 - **services** (4 fichiers)
@@ -28,6 +27,8 @@
 
 **Fonctions :**
 
+- `setViewOrientation()`
+- `Point()`
 - `applyIsometryRotationTW()`
 - `applyIsometryRotationCW()`
 - `applyIsometrySymmetryH()`
@@ -89,15 +90,15 @@
 
 - `PentominoGameScreen()`
 - `createState()`
-- `initState()`
-- `dispose()`
 - `build()`
 - `Scaffold()`
 - `TutorialOverlay()`
 - `TutorialControls()`
-- `AnimatedContainer()`
-- `Column()`
+- `dispose()`
+- `initState()`
 - `Row()`
+- `Column()`
+- `AnimatedContainer()`
 
 ### classical/pentomino_game_state.dart
 
@@ -145,6 +146,17 @@
 - `unplace()`
 - `GamePiece()`
 
+### common/isometry_transformation_service.dart
+
+**Fonctions :**
+
+- `applyRotationTW()`
+- `applyRotationCW()`
+- `applySymmetryH()`
+- `applySymmetryV()`
+- `canPlacePiece()`
+- `UnimplementedError()`
+
 ### common/pentominos.dart
 
 **Fonctions :**
@@ -155,6 +167,21 @@
 - `findRotation90()`
 - `findSymmetryH()`
 - `findSymmetryV()`
+- `rotationCW()`
+- `rotationTW()`
+- `symmetryH()`
+- `symmetryV()`
+- `rotate180()`
+
+### common/placed_piece.dart
+
+**Fonctions :**
+
+- `PlacedPiece()`
+- `Point()`
+- `copyWith()`
+- `PlacedPiece()`
+- `toString()`
 
 ### common/plateau.dart
 
@@ -195,7 +222,6 @@
 - `GameIconConfig()`
 - `isVisibleIn()`
 - `getIconsForMode()`
-- `printIconsForMode()`
 
 ---
 
@@ -525,141 +551,6 @@
 
 ---
 
-## Module: isopento
-
-### isopento/isopento_config.dart
-
-**Fonctions :**
-
-- `IsopentoConfig()`
-
-### isopento/isopento_generator.dart
-
-**Fonctions :**
-
-- `IsopentoSize()`
-- `IsopentoPuzzle()`
-- `toString()`
-- `generate()`
-- `StateError()`
-- `IsopentoPuzzle()`
-- `generateEasy()`
-- `StateError()`
-- `IsopentoPuzzle()`
-- `generate()`
-- `generateHard()`
-- `StateError()`
-- `IsopentoPuzzle()`
-- `generate()`
-- `getAllForSize()`
-- `getStats()`
-- `IsopentoStats()`
-- `IsopentoStats()`
-- `toString()`
-
-### isopento/isopento_provider.dart
-
-**Fonctions :**
-
-- `applyIsometryRotationCW()`
-- `applyIsometryRotationTW()`
-- `applyIsometrySymmetryH()`
-- `applyIsometrySymmetryV()`
-- `build()`
-- `calculateMinimalIsometries()`
-- `cancelSelection()`
-- `clearPreview()`
-- `cycleToNextOrientation()`
-- `removePlacedPiece()`
-- `reset()`
-- `selectPiece()`
-- `selectPlacedPiece()`
-- `startPuzzle()`
-- `tryPlacePiece()`
-- `updatePreview()`
-- `Point()`
-- `IsopentoPlacedPiece()`
-- `Point()`
-- `copyWith()`
-- `IsopentoPlacedPiece()`
-- `IsopentoState()`
-- `IsopentoState()`
-- `canPlacePiece()`
-- `copyWith()`
-- `IsopentoState()`
-- `getPiecePositionIndex()`
-
-### isopento/isopento_solver.dart
-
-**Fonctions :**
-
-- `toString()`
-- `isInBounds()`
-- `getCell()`
-- `setCell()`
-- `isFree()`
-- `copy()`
-- `cellIndex()`
-- `hasSolution()`
-- `countAllSolutions()`
-- `stopCounting()`
-
-### isopento/screens/isopento_game_screen.dart
-
-**Fonctions :**
-
-- `IsopentoGameScreen()`
-- `build()`
-- `Scaffold()`
-- `Column()`
-- `Row()`
-- `Expanded()`
-- `AnimatedContainer()`
-
-### isopento/screens/isopento_menu_screen.dart
-
-**Fonctions :**
-
-- `IsopentoMenuScreen()`
-- `createState()`
-- `build()`
-- `Scaffold()`
-- `Text()`
-- `SizedBox()`
-- `SizedBox()`
-- `SizedBox()`
-- `Text()`
-- `SizedBox()`
-- `SizedBox()`
-- `GestureDetector()`
-- `SizedBox()`
-- `GestureDetector()`
-
-### isopento/widgets/isopento_board.dart
-
-**Fonctions :**
-
-- `IsopentoBoard()`
-- `build()`
-- `LayoutBuilder()`
-- `Center()`
-- `Icon()`
-- `SizedBox()`
-- `SizedBox()`
-- `SizedBox()`
-- `SizedBox()`
-- `SizedBox()`
-
-### isopento/widgets/isopento_piece_slider.dart
-
-**Fonctions :**
-
-- `IsopentoPieceSlider()`
-- `build()`
-- `Padding()`
-
----
-
 ## Module: main.dart
 
 ### main.dart
@@ -714,19 +605,11 @@
 **Fonctions :**
 
 - `generate()`
-- `StateError()`
 - `PentoscopePuzzle()`
 - `generateEasy()`
-- `StateError()`
 - `PentoscopePuzzle()`
-- `generate()`
 - `generateHard()`
-- `StateError()`
 - `PentoscopePuzzle()`
-- `generate()`
-- `getAllForSize()`
-- `getStats()`
-- `PentoscopeStats()`
 - `PentoscopePuzzle()`
 - `toString()`
 - `PentoscopeSize()`
@@ -737,8 +620,8 @@
 
 **Fonctions :**
 
-- `applyIsometryRotationTW()`
 - `applyIsometryRotationCW()`
+- `applyIsometryRotationTW()`
 - `applyIsometrySymmetryH()`
 - `applyIsometrySymmetryV()`
 - `build()`
@@ -749,9 +632,12 @@
 - `reset()`
 - `selectPiece()`
 - `selectPlacedPiece()`
+- `setViewOrientation()`
 - `startPuzzle()`
 - `tryPlacePiece()`
 - `updatePreview()`
+- `Point()`
+- `coordsInPositionOrder()`
 - `Point()`
 - `PentoscopePlacedPiece()`
 - `Point()`
@@ -764,6 +650,19 @@
 - `PentoscopeState()`
 - `getPiecePositionIndex()`
 
+### pentoscope/pentoscope_solver.dart
+
+**Fonctions :**
+
+- `SolverPlacement()`
+- `toString()`
+- `findFirstSolution()`
+- `findAllSolutions()`
+- `backtrackAll()`
+- `SolverResult()`
+- `SolverResult()`
+- `toString()`
+
 ### pentoscope/screens/pentoscope_game_screen.dart
 
 **Fonctions :**
@@ -771,6 +670,8 @@
 - `PentoscopeGameScreen()`
 - `build()`
 - `Scaffold()`
+- `IconButton()`
+- `Text()`
 - `AnimatedContainer()`
 - `Column()`
 - `Expanded()`
@@ -787,19 +688,20 @@
 - `Scaffold()`
 - `Text()`
 - `SizedBox()`
-- `SizedBox()`
 - `Text()`
 - `SizedBox()`
 - `SizedBox()`
 - `Text()`
 - `SizedBox()`
-- `Spacer()`
+- `SizedBox()`
+- `SizedBox()`
+- `Text()`
+- `SizedBox()`
 - `SizedBox()`
 - `Row()`
 - `Expanded()`
 - `SizedBox()`
 - `Row()`
-- `SizedBox()`
 - `SizedBox()`
 - `Expanded()`
 - `SizedBox()`
@@ -812,8 +714,6 @@
 - `build()`
 - `LayoutBuilder()`
 - `Center()`
-- `Icon()`
-- `SizedBox()`
 - `SizedBox()`
 - `SizedBox()`
 - `SizedBox()`
@@ -891,7 +791,6 @@
 - `HomeScreen()`
 - `build()`
 - `Scaffold()`
-- `SizedBox()`
 - `SizedBox()`
 - `SizedBox()`
 - `SizedBox()`

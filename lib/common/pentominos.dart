@@ -678,13 +678,12 @@ final List<Pento> pentominos = [
   ),
 ];
 
-
-
 class Pento {
   final int id;
   final int size;
   final List<List<int>> positions;
-  final List<List<List<int>>> cartesianCoords; // Coordonnées (x,y) normalisées et triées
+  final List<List<List<int>>>
+  cartesianCoords; // Coordonnées (x,y) normalisées et triées
   final int numPositions;
   final List<int> baseShape;
   final int bit6; // code binaire 6 bits unique pour la pièce (0..63)
@@ -698,6 +697,22 @@ class Pento {
     required this.baseShape,
     required this.bit6,
   });
+
+  /// Ancien nom : rotation 90° anti-horaire (trigo)
+  int findRotation90(int currentPositionIndex) =>
+      rotationTW(currentPositionIndex);
+
+  /// Ancien nom : symétrie horizontale
+  int findSymmetryH(int currentPositionIndex) =>
+      symmetryH(currentPositionIndex);
+
+  // ------------------------------------------------------------------
+  // Aliases de compatibilité (ancien code Duel / autres modules)
+  // ------------------------------------------------------------------
+
+  /// Ancien nom : symétrie verticale
+  int findSymmetryV(int currentPositionIndex) =>
+      symmetryV(currentPositionIndex);
 
   // ----------------------------
   // Lettres (inchangé)
@@ -717,18 +732,10 @@ class Pento {
     if (indexInPosition == -1) return '?';
     return letters[indexInPosition];
   }
-// ------------------------------------------------------------------
-// Aliases de compatibilité (ancien code Duel / autres modules)
-// ------------------------------------------------------------------
 
-  /// Ancien nom : rotation 90° anti-horaire (trigo)
-  int findRotation90(int currentPositionIndex) => rotationTW(currentPositionIndex);
-
-  /// Ancien nom : symétrie horizontale
-  int findSymmetryH(int currentPositionIndex) => symmetryH(currentPositionIndex);
-
-  /// Ancien nom : symétrie verticale
-  int findSymmetryV(int currentPositionIndex) => symmetryV(currentPositionIndex);
+  /// Rotation 180° (optionnel)
+  int rotate180(int currentPositionIndex) =>
+      rotationTW(rotationTW(currentPositionIndex));
 
   // ----------------------------
   // Isométries robustes (lookup)
@@ -738,30 +745,50 @@ class Pento {
   int rotationCW(int currentPositionIndex) =>
       _applyIso(currentPositionIndex, _rotate90TWCoords); // (-y, x)
 
-// Rotation 90° anti-horaire (TW) en repère écran (y vers le bas)
+  // Rotation 90° anti-horaire (TW) en repère écran (y vers le bas)
   int rotationTW(int currentPositionIndex) =>
       _applyIso(currentPositionIndex, _rotate90CWCoords); // (y, -x)
 
-// Symétrie axe horizontal (haut ↔ bas) : y -> -y
+  // Symétrie axe horizontal (haut ↔ bas) : y -> -y
   int symmetryH(int currentPositionIndex) =>
       _applyIso(currentPositionIndex, _flipVCoords);
 
-// Symétrie axe vertical (gauche ↔ droite) : x -> -x
+  // Symétrie axe vertical (gauche ↔ droite) : x -> -x
   int symmetryV(int currentPositionIndex) =>
       _applyIso(currentPositionIndex, _flipHCoords);
 
-  /// Rotation 180° (optionnel)
-  int rotate180(int currentPositionIndex) =>
-      rotationTW(rotationTW(currentPositionIndex));
+  /// Retourne le nombre MIN d'isométries pour aller de startPos à endPos
+  int minIsometriesToReach(int startPos, int endPos) {
+    if (startPos == endPos) return 0;
 
+    // BFS
+    final visited = Set<int>();
+    final queue = [(pos: startPos, cost: 0)];
+
+    while (queue.isNotEmpty) {
+      final (pos: current, cost: steps) = queue.removeAt(0);
+
+      if (current == endPos) return steps;
+      if (visited.contains(current)) continue;
+      visited.add(current);
+
+      // Ajouter les 4 voisins (les 4 isométries)
+      queue.add((pos: rotationCW(current), cost: steps + 1));
+      queue.add((pos: rotationTW(current), cost: steps + 1));
+      queue.add((pos: symmetryH(current), cost: steps + 1));
+      queue.add((pos: symmetryV(current), cost: steps + 1));
+    }
+
+    return numPositions; // Pas trouvé (shouldn't happen)
+  }
   // ----------------------------
   // Core lookup
   // ----------------------------
 
   int _applyIso(
-      int currentPositionIndex,
-      List<List<int>> Function(List<List<int>>) transform,
-      ) {
+    int currentPositionIndex,
+    List<List<int>> Function(List<List<int>>) transform,
+  ) {
     final current = cartesianCoords[currentPositionIndex];
     final transformed = transform(current);
 
@@ -782,22 +809,6 @@ class Pento {
     return true;
   }
 
-  // ----------------------------
-  // Transformations (toutes normalisées + triées)
-  // ----------------------------
-
-  List<List<int>> _rotate90TWCoords(List<List<int>> coords) {
-    // TW: (x,y) -> (-y, x)
-    final rotated = coords.map((c) => [-c[1], c[0]]).toList();
-    return _normalizeAndSort(rotated);
-  }
-
-  List<List<int>> _rotate90CWCoords(List<List<int>> coords) {
-    // CW: (x,y) -> (y, -x)
-    final rotated = coords.map((c) => [c[1], -c[0]]).toList();
-    return _normalizeAndSort(rotated);
-  }
-
   List<List<int>> _flipHCoords(List<List<int>> coords) {
     // H: (x,y) -> (-x, y)
     final flipped = coords.map((c) => [-c[0], c[1]]).toList();
@@ -816,11 +827,25 @@ class Pento {
     final minX = coords.map((c) => c[0]).reduce((a, b) => a < b ? a : b);
     final minY = coords.map((c) => c[1]).reduce((a, b) => a < b ? a : b);
 
-    final normalized =
-    coords.map((c) => [c[0] - minX, c[1] - minY]).toList();
+    final normalized = coords.map((c) => [c[0] - minX, c[1] - minY]).toList();
 
     normalized.sort((a, b) => a[0] != b[0] ? a[0] - b[0] : a[1] - b[1]);
     return normalized;
   }
-}
 
+  List<List<int>> _rotate90CWCoords(List<List<int>> coords) {
+    // CW: (x,y) -> (y, -x)
+    final rotated = coords.map((c) => [c[1], -c[0]]).toList();
+    return _normalizeAndSort(rotated);
+  }
+
+  // ----------------------------
+  // Transformations (toutes normalisées + triées)
+  // ----------------------------
+
+  List<List<int>> _rotate90TWCoords(List<List<int>> coords) {
+    // TW: (x,y) -> (-y, x)
+    final rotated = coords.map((c) => [-c[1], c[0]]).toList();
+    return _normalizeAndSort(rotated);
+  }
+}

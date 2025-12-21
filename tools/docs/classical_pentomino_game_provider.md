@@ -4,11 +4,28 @@
 
 ## Fonctions
 
+### setViewOrientation
+
+Enregistre l'orientation de la vue (portrait/landscape)
+
+
+```dart
+void setViewOrientation(bool isLandscape) {
+```
+
+### Point
+
+Remapping de la cellule de référence lors d'une isométrie
+
+
+```dart
+return Point(localX, localY);
+```
+
 ### applyIsometryRotationTW
 
-Applique une rotation 90° anti-horaire à la pièce sélectionnée
-Fonctionne en mode jeu normal ET en mode isométries
-Rotation géométrique autour du point de référence (cellule rouge / mastercase)
+Applique une transformation isométrique via lookup
+Applique une rotation 90° anti-horaire
 
 
 ```dart
@@ -17,9 +34,7 @@ void applyIsometryRotationTW() {
 
 ### applyIsometryRotationCW
 
-Applique une rotation 90° horaire à la pièce sélectionnée
-Fonctionne en mode jeu normal ET en mode isométries
-Rotation géométrique autour du point de référence (cellule rouge / mastercase)
+Applique une rotation 90° horaire
 
 
 ```dart
@@ -28,9 +43,7 @@ void applyIsometryRotationCW() {
 
 ### applyIsometrySymmetryH
 
-Applique une symétrie horizontale à la pièce sélectionnée
-Fonctionne en mode jeu normal ET en mode isométries
-Symétrie géométrique par rapport à x = x0 (axe vertical à travers la mastercase)
+Applique une symétrie (H/V swap en paysage)
 
 
 ```dart
@@ -39,9 +52,7 @@ void applyIsometrySymmetryH() {
 
 ### applyIsometrySymmetryV
 
-Applique une symétrie verticale à la pièce sélectionnée
-Fonctionne en mode jeu normal ET en mode isométries
-Symétrie géométrique par rapport à y = y0 (axe horizontal à travers la mastercase)
+Applique une symétrie verticale (V/H swap en paysage)
 
 
 ```dart

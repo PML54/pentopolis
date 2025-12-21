@@ -49,12 +49,6 @@ const SizedBox(height: 12), _MenuCard( icon: Icons.sports_kabaddi, title: 'Duel 
 ### SizedBox
 
 ```dart
-const SizedBox(height: 12), _MenuCard( icon: Icons.transform, title: 'Manipuler les Pentominos ', subtitle: 'Reussir  avec  peu de Manips', color: colorScheme.secondary, // couleur vive, comme les autres onTap: () {
-```
-
-### SizedBox
-
-```dart
 const SizedBox(height: 12),  const SizedBox(height: 12), _MenuCard( icon: Icons.search, title: 'Pentominos Junior', subtitle: 'Petits Plateaux', color: colorScheme.secondary, onTap: () {
 ```
 

@@ -3,33 +3,23 @@
 // AppBar: Solutions au centre + Isométries (mode transformation) OU Close rouge (mode général)
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import 'package:pentapol/classical/pentomino_game_provider.dart';
-import 'package:pentapol/providers/settings_provider.dart';
-import 'package:pentapol/screens/solutions_browser_screen.dart';
-
-
-import 'package:pentapol/config/game_icons_config.dart';
 import 'package:pentapol/common/pentominos.dart';
-
-// Widgets extraits
+import 'package:pentapol/config/game_icons_config.dart';
+import 'package:pentapol/providers/settings_provider.dart';
+import 'package:pentapol/screens/pentomino_game/widgets/game_mode/piece_slider.dart';
 import 'package:pentapol/screens/pentomino_game/widgets/shared/action_slider.dart'
     show ActionSlider, getCompatibleSolutionsIncludingSelected;
 import 'package:pentapol/screens/pentomino_game/widgets/shared/game_board.dart';
-import 'package:pentapol/screens/pentomino_game/widgets/game_mode/piece_slider.dart';
+import 'package:pentapol/screens/solutions_browser_screen.dart';
 
+import 'package:pentapol/tutorial/tutorial.dart';
 import 'package:pentapol/tutorial/widgets/highlighted_icon_button.dart';
 
-// Tutorial
-import 'package:pentapol/tutorial/tutorial.dart';
-import 'package:flutter/services.dart' show rootBundle;
 
-// Duel
-
-
-// Pentoscope
 
 
 class PentominoGameScreen extends ConsumerStatefulWidget {
@@ -40,16 +30,6 @@ class PentominoGameScreen extends ConsumerStatefulWidget {
 }
 
 class _PentominoGameScreenState extends ConsumerState<PentominoGameScreen> {
-
-  @override
-  void initState() {
-    super.initState();
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -151,82 +131,87 @@ class _PentominoGameScreenState extends ConsumerState<PentominoGameScreen> {
     );
   }
 
-  /// Actions en mode TRANSFORMATION (pièce sélectionnée)
-  List<Widget> _buildTransformActions(state, notifier, settings) {
-    return [
-      // Rotation anti-horaire
-      HighlightedIconButton(
-        isHighlighted: state.highlightedIsometryIcon == 'rotation',
-        child: IconButton(
-          icon: Icon(GameIcons.isometryRotationTW.icon, size: settings.ui.iconSize),
-          onPressed: () {
-            HapticFeedback.selectionClick();
-            notifier.applyIsometryRotationTW();
-          },
-          tooltip: GameIcons.isometryRotationTW.tooltip,
-          color: GameIcons.isometryRotationTW.color,
-        ),
-      ),
+  @override
+  void dispose() {
+    super.dispose();
+  }
 
-      // Rotation horaire
-      HighlightedIconButton(
-        isHighlighted: state.highlightedIsometryIcon == 'rotation_cw',
-        child: IconButton(
-          icon: Icon(GameIcons.isometryRotationCW.icon, size: settings.ui.iconSize),
-          onPressed: () {
-            HapticFeedback.selectionClick();
-            notifier.applyIsometryRotationCW();
-          },
-          tooltip: GameIcons.isometryRotationCW.tooltip,
-          color: GameIcons.isometryRotationCW.color,
-        ),
-      ),
+  @override
+  void initState() {
+    super.initState();
+  }
 
-      // Symétrie horizontale
-      HighlightedIconButton(
-        isHighlighted: state.highlightedIsometryIcon == 'symmetry_h',
-        child: IconButton(
-          icon: Icon(GameIcons.isometrySymmetryH.icon, size: settings.ui.iconSize),
-          onPressed: () {
-            HapticFeedback.selectionClick();
-            notifier.applyIsometrySymmetryH();
-          },
-          tooltip: GameIcons.isometrySymmetryH.tooltip,
-          color: GameIcons.isometrySymmetryH.color,
-        ),
-      ),
+  /// Layout paysage : plateau à gauche, actions + slider vertical à droite
+  Widget _buildLandscapeLayout(
+      BuildContext context,
+      WidgetRef ref,
+      state,
+      notifier,
+      bool isInTransformMode,
+      )
+  {
+    final settings = ref.watch(settingsProvider);
 
-      // Symétrie verticale
-      HighlightedIconButton(
-        isHighlighted: state.highlightedIsometryIcon == 'symmetry_v',
-        child: IconButton(
-          icon: Icon(GameIcons.isometrySymmetryV.icon, size: settings.ui.iconSize),
-          onPressed: () {
-            HapticFeedback.selectionClick();
-            notifier.applyIsometrySymmetryV();
-          },
-          tooltip: GameIcons.isometrySymmetryV.tooltip,
-          color: GameIcons.isometrySymmetryV.color,
+    return Row(
+      children: [
+        // Plateau de jeu (10×6 visuel)
+        Expanded(
+          child: GameBoard(isLandscape: true),
         ),
-      ),
 
-      // Delete (uniquement si pièce placée sélectionnée)
-      if (state.selectedPlacedPiece != null)
-        IconButton(
-          icon: Icon(GameIcons.removePiece.icon, size: settings.ui.iconSize),
-          onPressed: () {
-            HapticFeedback.mediumImpact();
-            notifier.removePlacedPiece(state.selectedPlacedPiece!);
-          },
-          tooltip: GameIcons.removePiece.tooltip,
-          color: GameIcons.removePiece.color,
+        // Colonne de droite : actions + slider
+        Row(
+          children: [
+            // Slider d'actions verticales (même logique que l'AppBar)
+            Container(
+              width: 44,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 2,
+                    offset: const Offset(-1, 0),
+                  ),
+                ],
+              ),
+              child: const ActionSlider(isLandscape: true),
+            ),
+
+            // Slider de pièces vertical AVEC DragTarget
+            _buildSliderWithDragTarget(ref: ref, isLandscape: true),
+          ],
         ),
-    ];
+      ],
+    );
   }
 
   // ============================================================================
   // NOUVEAU: Widget slider avec DragTarget pour retirer les pièces
   // ============================================================================
+
+  /// Layout portrait (classique) : plateau en haut, slider en bas
+  Widget _buildPortraitLayout(
+      BuildContext context,
+      WidgetRef ref,
+      state,
+      notifier,
+      )
+  {
+    debugPrint("🔥 _buildPortraitLayout CALLED");
+    return Column(
+      children: [
+        // Plateau de jeu
+        Expanded(
+          flex: 3,
+          child: GameBoard(isLandscape: false),
+        ),
+
+        // Slider de pièces horizontal AVEC DragTarget
+        _buildSliderWithDragTarget(ref: ref, isLandscape: false),
+      ],
+    );
+  }
 
   /// Construit le slider enveloppé dans un DragTarget
   /// Quand on drag une pièce placée vers le slider, elle est retirée du plateau
@@ -324,71 +309,76 @@ class _PentominoGameScreenState extends ConsumerState<PentominoGameScreen> {
     );
   }
 
-  /// Layout portrait (classique) : plateau en haut, slider en bas
-  Widget _buildPortraitLayout(
-      BuildContext context,
-      WidgetRef ref,
-      state,
-      notifier,
-      )
-  {
-    debugPrint("🔥 _buildPortraitLayout CALLED");
-    return Column(
-      children: [
-        // Plateau de jeu
-        Expanded(
-          flex: 3,
-          child: GameBoard(isLandscape: false),
+  /// Actions en mode TRANSFORMATION (pièce sélectionnée)
+  List<Widget> _buildTransformActions(state, notifier, settings) {
+    return [
+      // Rotation anti-horaire
+      HighlightedIconButton(
+        isHighlighted: state.highlightedIsometryIcon == 'rotation',
+        child: IconButton(
+          icon: Icon(GameIcons.isometryRotationTW.icon, size: settings.ui.iconSize),
+          onPressed: () {
+            HapticFeedback.selectionClick();
+            notifier.applyIsometryRotationTW();
+          },
+          tooltip: GameIcons.isometryRotationTW.tooltip,
+          color: GameIcons.isometryRotationTW.color,
         ),
+      ),
 
-        // Slider de pièces horizontal AVEC DragTarget
-        _buildSliderWithDragTarget(ref: ref, isLandscape: false),
-      ],
-    );
-  }
-
-  /// Layout paysage : plateau à gauche, actions + slider vertical à droite
-  Widget _buildLandscapeLayout(
-      BuildContext context,
-      WidgetRef ref,
-      state,
-      notifier,
-      bool isInTransformMode,
-      )
-  {
-    final settings = ref.watch(settingsProvider);
-
-    return Row(
-      children: [
-        // Plateau de jeu (10×6 visuel)
-        Expanded(
-          child: GameBoard(isLandscape: true),
+      // Rotation horaire
+      HighlightedIconButton(
+        isHighlighted: state.highlightedIsometryIcon == 'rotation_cw',
+        child: IconButton(
+          icon: Icon(GameIcons.isometryRotationCW.icon, size: settings.ui.iconSize),
+          onPressed: () {
+            HapticFeedback.selectionClick();
+            notifier.applyIsometryRotationCW();
+          },
+          tooltip: GameIcons.isometryRotationCW.tooltip,
+          color: GameIcons.isometryRotationCW.color,
         ),
+      ),
 
-        // Colonne de droite : actions + slider
-        Row(
-          children: [
-            // Slider d'actions verticales (même logique que l'AppBar)
-            Container(
-              width: 44,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 2,
-                    offset: const Offset(-1, 0),
-                  ),
-                ],
-              ),
-              child: const ActionSlider(isLandscape: true),
-            ),
-
-            // Slider de pièces vertical AVEC DragTarget
-            _buildSliderWithDragTarget(ref: ref, isLandscape: true),
-          ],
+      // Symétrie horizontale
+      HighlightedIconButton(
+        isHighlighted: state.highlightedIsometryIcon == 'symmetry_h',
+        child: IconButton(
+          icon: Icon(GameIcons.isometrySymmetryH.icon, size: settings.ui.iconSize),
+          onPressed: () {
+            HapticFeedback.selectionClick();
+            notifier.applyIsometrySymmetryH();
+          },
+          tooltip: GameIcons.isometrySymmetryH.tooltip,
+          color: GameIcons.isometrySymmetryH.color,
         ),
-      ],
-    );
+      ),
+
+      // Symétrie verticale
+      HighlightedIconButton(
+        isHighlighted: state.highlightedIsometryIcon == 'symmetry_v',
+        child: IconButton(
+          icon: Icon(GameIcons.isometrySymmetryV.icon, size: settings.ui.iconSize),
+          onPressed: () {
+            HapticFeedback.selectionClick();
+            notifier.applyIsometrySymmetryV();
+          },
+          tooltip: GameIcons.isometrySymmetryV.tooltip,
+          color: GameIcons.isometrySymmetryV.color,
+        ),
+      ),
+
+      // Delete (uniquement si pièce placée sélectionnée)
+      if (state.selectedPlacedPiece != null)
+        IconButton(
+          icon: Icon(GameIcons.removePiece.icon, size: settings.ui.iconSize),
+          onPressed: () {
+            HapticFeedback.mediumImpact();
+            notifier.removePlacedPiece(state.selectedPlacedPiece!);
+          },
+          tooltip: GameIcons.removePiece.tooltip,
+          color: GameIcons.removePiece.color,
+        ),
+    ];
   }
 }

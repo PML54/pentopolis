@@ -1,7 +1,8 @@
 relative_path,line_number,import_path
 "database/settings_database.dart",5,"dart:io"
-"pentoscope/pentoscope_generator.dart",4,"dart:math"
-"isopento/isopento_generator.dart",5,"dart:math"
+"pentoscope/pentoscope_generator.dart",6,"dart:math"
+"pentoscope/widgets/pentoscope_piece_slider.dart",8,"dart:math"
+"pentoscope/pentoscope_solver.dart",5,"dart:async"
 "providers/settings_provider.dart",5,"dart:convert"
 "utils/pentomino_geometry.dart",4,"dart:ui"
 "utils/solution_exporter.dart",6,"dart:io"

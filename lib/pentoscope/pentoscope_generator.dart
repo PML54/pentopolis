@@ -5,7 +5,7 @@
 
 import 'dart:math';
 import 'package:pentapol/pentoscope/pentoscope_solver.dart';
-import 'package:pentapol/pentoscope/piece_difficulty.dart';
+
 
 /// Générateur de puzzles Pentoscope (lazy, sans table pré-calculée)
 class PentoscopeGenerator {
