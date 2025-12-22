@@ -144,7 +144,7 @@ class PentoscopeBoard extends ConsumerWidget {
               HapticFeedback.mediumImpact();
               final newState = ref.read(pentoscopeProvider);
               if (newState.isComplete) {
-                _showVictoryDialog(context, ref);
+         //       _showVictoryDialog(context, ref);
               }
             } else {
               HapticFeedback.heavyImpact();
@@ -226,15 +226,15 @@ class PentoscopeBoard extends ConsumerWidget {
   // ============================================================================
 
   Widget _buildCell(
-    BuildContext context,
-    WidgetRef ref,
-    PentoscopeState state,
-    PentoscopeNotifier notifier,
-    settings,
-    int logicalX,
-    int logicalY,
-    bool isLandscape,
-  ) {
+      BuildContext context,
+      WidgetRef ref,
+      PentoscopeState state,
+      PentoscopeNotifier notifier,
+      settings,
+      int logicalX,
+      int logicalY,
+      bool isLandscape,
+      ) {
     // 1️⃣ RÉCUPÉRER LES DONNÉES DE BASE
     final cellValue = state.plateau.getCell(logicalX, logicalY);
     final isSolutionCell = _isSolutionCell(state, logicalX, logicalY);
@@ -268,7 +268,7 @@ class PentoscopeBoard extends ConsumerWidget {
       // Chercher position locale pour comparer
       final selectedPiece = state.selectedPlacedPiece!;
       final position =
-          selectedPiece.piece.positions[state.selectedPositionIndex];
+      selectedPiece.piece.positions[state.selectedPositionIndex];
       final minOffset = _getMinOffset(position);
 
       for (final cellNum in position) {
@@ -279,7 +279,7 @@ class PentoscopeBoard extends ConsumerWidget {
 
         if (pieceX == logicalX && pieceY == logicalY) {
           isReferenceCell =
-              (localX == state.selectedCellInPiece!.x &&
+          (localX == state.selectedCellInPiece!.x &&
               localY == state.selectedCellInPiece!.y);
           break;
         }
@@ -329,12 +329,12 @@ class PentoscopeBoard extends ConsumerWidget {
         border: border,
         boxShadow: previewInfo.isSnappedPreview && previewInfo.isPreviewValid
             ? [
-                BoxShadow(
-                  color: Colors.cyan.withValues(alpha: 0.3),
-                  blurRadius: 4,
-                  spreadRadius: 1,
-                ),
-              ]
+          BoxShadow(
+            color: Colors.cyan.withValues(alpha: 0.3),
+            blurRadius: 4,
+            spreadRadius: 1,
+          ),
+        ]
             : null,
       ),
       child: Center(
@@ -418,16 +418,16 @@ class PentoscopeBoard extends ConsumerWidget {
 
   /// Détermine la bordure à afficher
   Border _calculateBorder(
-    PentoscopeState state, // ✅ AJOUTER
-    bool isReferenceCell,
-    bool isPreview,
-    bool isSelected,
-    bool isSnappedPreview,
-    bool isPreviewValid,
-    int logicalX,
-    int logicalY,
-    bool isLandscape,
-  ) {
+      PentoscopeState state, // ✅ AJOUTER
+      bool isReferenceCell,
+      bool isPreview,
+      bool isSelected,
+      bool isSnappedPreview,
+      bool isPreviewValid,
+      int logicalX,
+      int logicalY,
+      bool isLandscape,
+      ) {
     // Mastercase
     if (isReferenceCell) return Border.all(color: Colors.red, width: 4);
 
@@ -458,29 +458,29 @@ class PentoscopeBoard extends ConsumerWidget {
 
   /// Détecte si une preview est à cette cellule
   ({
-    bool isPreview,
-    Color? previewColor,
-    String? previewText,
-    bool isSnappedPreview,
-    bool isPreviewValid,
+  bool isPreview,
+  Color? previewColor,
+  String? previewText,
+  bool isSnappedPreview,
+  bool isPreviewValid,
   })
   _detectPreview(
-    PentoscopeState state,
-    int logicalX,
-    int logicalY,
-    bool isSelected,
-    dynamic settings,
-  ) {
+      PentoscopeState state,
+      int logicalX,
+      int logicalY,
+      bool isSelected,
+      dynamic settings,
+      ) {
     if (isSelected ||
         state.selectedPiece == null ||
         state.previewX == null ||
         state.previewY == null) {
       return (
-        isPreview: false,
-        previewColor: null,
-        previewText: null,
-        isSnappedPreview: false,
-        isPreviewValid: false,
+      isPreview: false,
+      previewColor: null,
+      previewText: null,
+      isSnappedPreview: false,
+      isPreviewValid: false,
       );
     }
 
@@ -513,33 +513,33 @@ class PentoscopeBoard extends ConsumerWidget {
         }
 
         return (
-          isPreview: true,
-          previewColor: previewColor,
-          previewText: piece.id.toString(),
-          isSnappedPreview: isSnappedPreview,
-          isPreviewValid: state.isPreviewValid,
+        isPreview: true,
+        previewColor: previewColor,
+        previewText: piece.id.toString(),
+        isSnappedPreview: isSnappedPreview,
+        isPreviewValid: state.isPreviewValid,
         );
       }
     }
 
     return (
-      isPreview: false,
-      previewColor: null,
-      previewText: null,
-      isSnappedPreview: false,
-      isPreviewValid: false,
+    isPreview: false,
+    previewColor: null,
+    previewText: null,
+    isSnappedPreview: false,
+    isPreviewValid: false,
     );
   }
 
   /// Détecte si une pièce placée est sélectionnée à cette cellule
   ({bool isSelected, Color? selectedColor, String? selectedText})
   _detectSelectedPlacedPiece(
-    PentoscopeState state,
-    int logicalX,
-    int logicalY,
-    int cellValue,
-    dynamic settings,
-  ) {
+      PentoscopeState state,
+      int logicalX,
+      int logicalY,
+      int cellValue,
+      dynamic settings,
+      ) {
     if (state.selectedPlacedPiece == null) {
       return (isSelected: false, selectedColor: null, selectedText: null);
     }
@@ -562,9 +562,9 @@ class PentoscopeBoard extends ConsumerWidget {
         }
 
         return (
-          isSelected: true,
-          selectedColor: selectedColor,
-          selectedText: selectedPiece.piece.id.toString(),
+        isSelected: true,
+        selectedColor: selectedColor,
+        selectedText: selectedPiece.piece.id.toString(),
         );
       }
     }
@@ -574,11 +574,11 @@ class PentoscopeBoard extends ConsumerWidget {
 
   /// Détermine la couleur de base de la cellule
   Color _getBaseCellColor(
-    int cellValue,
-    bool isSolution,
-    int? solutionPieceId,
-    dynamic settings,
-  ) {
+      int cellValue,
+      bool isSolution,
+      int? solutionPieceId,
+      dynamic settings,
+      ) {
     // Bordure de plateau
     if (cellValue == -1) return Colors.grey.shade800;
 
@@ -610,10 +610,10 @@ class PentoscopeBoard extends ConsumerWidget {
   }
 
   int _getDisplayPositionIndex(
-    int positionIndex,
-    Pento piece,
-    bool isLandscape,
-  ) {
+      int positionIndex,
+      Pento piece,
+      bool isLandscape,
+      ) {
     if (isLandscape) {
       return (positionIndex - 1 + piece.numPositions) % piece.numPositions;
     }
@@ -634,10 +634,10 @@ class PentoscopeBoard extends ConsumerWidget {
 
   /// Récupère le numéro de pièce solution à une cellule donnée
   int? _getSolutionPieceIdAt(
-    PentoscopeState state,
-    int logicalX,
-    int logicalY,
-  ) {
+      PentoscopeState state,
+      int logicalX,
+      int logicalY,
+      ) {
     if (state.currentSolution == null) return null;
 
     for (final placement in state.currentSolution!) {
@@ -670,11 +670,11 @@ class PentoscopeBoard extends ConsumerWidget {
 
   /// Couleur du texte selon le contexte
   Color _getTextColor(
-    bool isPreview,
-    bool isSelected,
-    bool isPreviewValid,
-    bool isSnappedPreview,
-  ) {
+      bool isPreview,
+      bool isSelected,
+      bool isPreviewValid,
+      bool isSnappedPreview,
+      ) {
     if (isPreview) {
       if (isPreviewValid) {
         return isSnappedPreview ? Colors.cyan.shade900 : Colors.green.shade900;
@@ -723,26 +723,6 @@ class PentoscopeBoard extends ConsumerWidget {
                 children: [
                   const SizedBox(height: 8),
 
-                  // 🎯 SCORE PRINCIPAL
-                  Text(
-                    'Note: ${state.score}/20',
-                    style: const TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.green,
-                    ),
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  // Détails isométries
-                  Text(
-                    'Isométries: ${state.isometryCount}  Translations: ${state.translationCount}',
-                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                  ),
-
-                  const SizedBox(height: 12),
-
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -763,6 +743,8 @@ class PentoscopeBoard extends ConsumerWidget {
                       ),
                     ],
                   ),
+
+                  const SizedBox(height: 8),
                 ],
               ),
             ),

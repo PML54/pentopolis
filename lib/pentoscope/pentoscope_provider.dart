@@ -6,11 +6,9 @@ import 'dart:math';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import 'package:pentapol/common/pentominos.dart';
 import 'package:pentapol/common/plateau.dart';
 import 'package:pentapol/common/point.dart';
-
 import 'package:pentapol/pentoscope/pentoscope_generator.dart';
 import 'package:pentapol/pentoscope/pentoscope_solver.dart'
     show SolverPlacement, Solution;
@@ -20,9 +18,9 @@ import 'package:pentapol/pentoscope/pentoscope_solver.dart'
 // ============================================================================
 
 final pentoscopeProvider =
-NotifierProvider<PentoscopeNotifier, PentoscopeState>(
-  PentoscopeNotifier.new,
-);
+    NotifierProvider<PentoscopeNotifier, PentoscopeState>(
+      PentoscopeNotifier.new,
+    );
 
 // ============================================================================
 // PROVIDER
@@ -231,10 +229,12 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
   // ==========================================================================
 
   void selectPlacedPiece(
-      PentoscopePlacedPiece placed,
-      int absoluteX,
-      int absoluteY,
-      ) {
+    PentoscopePlacedPiece placed,
+    int absoluteX,
+    int absoluteY,
+  ) {
+    if (state.isComplete) return;  // ← Bloquer si puzzle complet
+
     // Calculer la cellule locale cliquée (mastercase)
     final localX = absoluteX - placed.gridX;
     final localY = absoluteY - placed.gridY;
@@ -277,10 +277,10 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
   // ==========================================================================
 
   Future<void> startPuzzle(
-      PentoscopeSize size, {
-        PentoscopeDifficulty difficulty = PentoscopeDifficulty.random,
-        bool showSolution = false,
-      }) async {
+    PentoscopeSize size, {
+    PentoscopeDifficulty difficulty = PentoscopeDifficulty.random,
+    bool showSolution = false,
+  }) async {
     final puzzle = await switch (difficulty) {
       PentoscopeDifficulty.easy => _generator.generateEasy(size),
       PentoscopeDifficulty.hard => _generator.generateHard(size),
@@ -300,12 +300,14 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
     for (final piece in pieces) {
       final randomPos = random.nextInt(piece.numPositions);
       piecePositionIndices[piece.id] = randomPos;
-      debugPrint('🎯 Pièce ${piece.id} position aléatoire: $randomPos/${piece.numPositions}');
+      debugPrint(
+        '🎯 Pièce ${piece.id} position aléatoire: $randomPos/${piece.numPositions}',
+      );
     }
 
-    // Calculer le nombre MIN théorique
+    // ✅ TOUJOURS stocker la première solution (pour le calcul du score)
     Solution? firstSolution;
-    if (puzzle.solutions.isNotEmpty) {
+    if (showSolution && puzzle.solutions.isNotEmpty) {
       firstSolution = puzzle.solutions[0];
 
       int totalMinIsometries = 0;
@@ -313,10 +315,15 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
         final pento = pentominos.firstWhere((p) => p.id == placement.pieceId);
         final initialPos = piecePositionIndices[placement.pieceId] ?? 0;
 
-        final minIso = pento.minIsometriesToReach(initialPos, placement.positionIndex);
+        final minIso = pento.minIsometriesToReach(
+          initialPos,
+          placement.positionIndex,
+        );
         totalMinIsometries += minIso;
       }
       debugPrint('🎯 MIN ISOMETRIES THÉORIQUES: $totalMinIsometries');
+
+
     }
 
     state = PentoscopeState(
@@ -325,12 +332,13 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
       plateau: plateau,
       availablePieces: pieces,
       placedPieces: [],
-      piecePositionIndices: piecePositionIndices,  // 👈 AVEC POSITIONS ALÉATOIRES!
+      piecePositionIndices: piecePositionIndices,
       isComplete: false,
       isometryCount: 0,
       translationCount: 0,
       showSolution: showSolution,
-      currentSolution: firstSolution,
+      // ✅ Flag pour contrôler l'AFFICHAGE
+      currentSolution: firstSolution, // ✅ TOUJOURS fournie (pour le SCORE)
     );
   }
 
@@ -411,18 +419,26 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
         ? state.translationCount + 1
         : state.translationCount;
 
-// 🎯 NOUVEAU: Calculer le score si victoire
+    // 🎯 NOUVEAU: Calculer le score si victoire
     int newScore = state.score;
 
     debugPrint('🎯 DEBUG AVANT SCORE: isComplete=$isComplete');
-    debugPrint('🎯 DEBUG AVANT SCORE: currentSolution != null = ${state.currentSolution != null}');
+    debugPrint(
+      '🎯 DEBUG AVANT SCORE: currentSolution != null = ${state.currentSolution != null}',
+    );
     if (state.currentSolution != null) {
-      debugPrint('🎯 DEBUG AVANT SCORE: solution.length = ${state.currentSolution!.length}');
+      debugPrint(
+        '🎯 DEBUG AVANT SCORE: solution.length = ${state.currentSolution!.length}',
+      );
     }
 
     if (isComplete && state.currentSolution != null) {
       debugPrint('🎯 CALLING _calculateScore!');
-      newScore = _calculateScore(newPlacedPieces, state.currentSolution!, state.isometryCount);
+      newScore = _calculateScore(
+        newPlacedPieces,
+        state.currentSolution!,
+        state.isometryCount,
+      );
     } else {
       debugPrint('🎯 NOT CALLING _calculateScore');
     }
@@ -436,8 +452,9 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
       clearPreview: true,
       isComplete: isComplete,
       translationCount: newTranslationCount,
-      score: newScore, // 🎯 NOUVEAU
-      currentSolution: state.currentSolution,  // 👈 AJOUTER CETTE LIGNE!
+      score: newScore,
+      // 🎯 NOUVEAU
+      currentSolution: state.currentSolution, // 👈 AJOUTER CETTE LIGNE!
     );
 
     return true;
@@ -549,46 +566,6 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
     );
   }
 
-
-
-  // ============================================================================
-  // CALCUL DU SCORE - Efficacité isométries
-  // ============================================================================
-  int _calculateScore(
-      List<PentoscopePlacedPiece> placedPieces,
-      Solution solution,
-      int actualIsometries,
-      )
-  {
-    debugPrint('🎯 _calculateScore called');
-    debugPrint('  actualIsometries = $actualIsometries');
-
-    if (actualIsometries == 0) {
-      debugPrint('  → actualIsometries=0, returning 20');
-      return 20;
-    }
-
-    int totalMinIsometries = 0;
-
-    for (final placed in placedPieces) {
-      final pento = pentominos.firstWhere((p) => p.id == placed.piece.id);
-      final optimalPlacement = solution
-          .firstWhere((p) => p.pieceId == placed.piece.id);
-
-      final minIso = pento.minIsometriesToReach(
-        placed.positionIndex,
-        optimalPlacement.positionIndex,
-      );
-
-      debugPrint('  Pièce ${placed.piece.id}: ${placed.positionIndex} → ${optimalPlacement.positionIndex}, minIso=$minIso');
-      totalMinIsometries += minIso;
-    }
-
-    debugPrint('  totalMin=$totalMinIsometries');
-    final score = ((totalMinIsometries / actualIsometries) * 20).round().clamp(0, 20);
-    debugPrint('  SCORE FINAL = $score/20');
-    return score;
-  }
   /// Helper: calcule la mastercase par défaut (première cellule normalisée)
   Point? _calculateDefaultCell(Pento piece, int positionIndex) {
     final position = piece.positions[positionIndex];
@@ -607,6 +584,52 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
     return Point(rawX - minX, rawY - minY);
   }
 
+  // ============================================================================
+  // CALCUL DU SCORE - Efficacité isométries
+  // ============================================================================
+  int _calculateScore(
+    List<PentoscopePlacedPiece> placedPieces,
+    Solution solution,
+    int actualIsometries,
+  ) {
+    debugPrint('🎯 _calculateScore called');
+    debugPrint('  actualIsometries = $actualIsometries');
+
+    if (actualIsometries == 0) {
+      debugPrint('  → actualIsometries=0, returning 20');
+      return 20;
+    }
+
+    int totalMinIsometries = 0;
+
+    for (final placed in placedPieces) {
+      final pento = pentominos.firstWhere((p) => p.id == placed.piece.id);
+      final optimalPlacement = solution.firstWhere(
+        (p) => p.pieceId == placed.piece.id,
+      );
+
+// ✅ BON (ce qu'il faut):
+      final initialPos = state.piecePositionIndices[placed.piece.id] ?? 0;
+      final minIso = pento.minIsometriesToReach(
+        initialPos,                      // ← Position INITIALE aléatoire!
+        optimalPlacement.positionIndex,
+      );
+
+      debugPrint(
+        '  Pièce ${placed.piece.id}: ${placed.positionIndex} → ${optimalPlacement.positionIndex}, minIso=$minIso',
+      );
+      totalMinIsometries += minIso;
+    }
+
+    debugPrint('  totalMin=$totalMinIsometries');
+    final score = ((totalMinIsometries / actualIsometries) * 20).round().clamp(
+      0,
+      20,
+    );
+    debugPrint('  SCORE FINAL = $score/20');
+    return score;
+  }
+
   /// Annule le mode "pièce placée en main" (sélection sur plateau) en
   /// reconstruisant le plateau complet à partir des pièces placées.
   /// À appeler avant de sélectionner une pièce du slider.
@@ -619,8 +642,6 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
       clearPreview: true,
     );
   }
-
-
 
   /// Vérifie si une pièce placée peut occuper sa position sans chevauchement
   bool _canPlacePieceWithoutChecker(PentoscopePlacedPiece placed) {
@@ -897,7 +918,7 @@ class PentoscopeState {
           ? null
           : (selectedPiece ?? this.selectedPiece),
       selectedPositionIndex:
-      selectedPositionIndex ?? this.selectedPositionIndex,
+          selectedPositionIndex ?? this.selectedPositionIndex,
       piecePositionIndices: piecePositionIndices ?? this.piecePositionIndices,
       selectedPlacedPiece: clearSelectedPlacedPiece
           ? null
@@ -913,7 +934,8 @@ class PentoscopeState {
       isComplete: isComplete ?? this.isComplete,
       isometryCount: isometryCount ?? this.isometryCount,
       translationCount: translationCount ?? this.translationCount,
-      score: score ?? this.score, // 🎯 NOUVEAU
+      score: score ?? this.score,
+      // 🎯 NOUVEAU
       isSnapped: isSnapped ?? this.isSnapped,
       showSolution: showSolution ?? this.showSolution,
       // ✅ NOUVEAU

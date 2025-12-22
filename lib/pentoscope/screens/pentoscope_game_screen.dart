@@ -48,17 +48,38 @@ class PentoscopeGameScreen extends ConsumerWidget {
           leading: isPlacedPieceSelected
               ? null  // Pas de croix quand icônes isométrie actifs
               : IconButton(
-                  icon: const Icon(Icons.close, color: Colors.red),
-                  onPressed: () => Navigator.pop(context),
-                ),
+            icon: const Icon(Icons.close, color: Colors.red),
+            onPressed: () => Navigator.pop(context),
+          ),
           // EXCLUSIF:
           // 1. Actions isométrie si pièce PLATEAU sélectionnée
           // 2. Reset si pièce SLIDER sélectionnée
           // 3. Solution count si AUCUNE pièce sélectionnée
           title: isPlacedPieceSelected
               ? null
-       //       : _buildSolutionCountWidget(state),
-          :null,
+              : state.isComplete
+              ? TweenAnimationBuilder<double>(
+            tween: Tween(begin: 0.0, end: 1.0),
+            duration: const Duration(milliseconds: 2500),
+            curve: Curves.elasticOut,
+            builder: (context, value, child) {
+              return Transform.scale(
+                scale: value,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                  child: Text(
+                    '${state.score}/20',
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.green,
+                    ),
+                  ),
+                ),
+              );
+            },
+          )
+              : null,
           actions: isPlacedPieceSelected
               ? [
             _buildIsometryActionsBar(
