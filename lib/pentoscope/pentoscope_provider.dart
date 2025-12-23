@@ -18,9 +18,9 @@ import 'package:pentapol/pentoscope/pentoscope_solver.dart'
 // ============================================================================
 
 final pentoscopeProvider =
-    NotifierProvider<PentoscopeNotifier, PentoscopeState>(
-      PentoscopeNotifier.new,
-    );
+NotifierProvider<PentoscopeNotifier, PentoscopeState>(
+  PentoscopeNotifier.new,
+);
 
 // ============================================================================
 // PROVIDER
@@ -62,6 +62,67 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
   }
 
   // ==========================================================================
+  // ✨ NOUVELLE FONCTION: Générer tous les placements valides
+  // ==========================================================================
+
+  /// Génère TOUS les placements possibles pour une pièce à une positionIndex donnée
+  /// Retourne une liste de Point (gridX, gridY) où la pièce peut être placée
+  List<Point> _generateValidPlacements(
+      Pento piece,
+      int positionIndex,
+      ) {
+    final validPlacements = <Point>[];
+
+    // Balayer tout le plateau
+    for (int gridX = 0; gridX < state.plateau.width; gridX++) {
+      for (int gridY = 0; gridY < state.plateau.height; gridY++) {
+        if (state.canPlacePiece(piece, positionIndex, gridX, gridY)) {
+          validPlacements.add(Point(gridX, gridY));
+        }
+      }
+    }
+
+    return validPlacements;
+  }
+
+  // ==========================================================================
+  // ✨ NOUVELLE FONCTION: Trouver la position la plus proche
+  // ==========================================================================
+
+  /// Trouve la position valide la plus proche du doigt (en tenant compte de la mastercase)
+  /// dragGridX/Y = position du doigt
+  /// Retourne la position d'ancre valide la plus proche
+  Point? _findClosestValidPlacement(int dragGridX, int dragGridY) {
+    if (state.validPlacements.isEmpty) return null;
+
+    // 🔑 CRUCIAL: Appliquer la mastercase pour trouver l'ancre théorique
+    int theoreticalAnchorX = dragGridX;
+    int theoreticalAnchorY = dragGridY;
+
+    if (state.selectedCellInPiece != null) {
+      theoreticalAnchorX -= state.selectedCellInPiece!.x;
+      theoreticalAnchorY -= state.selectedCellInPiece!.y;
+    }
+
+    // Chercher le placement valide le plus proche de cette ancre théorique
+    Point closest = state.validPlacements[0];
+    double minDistance = double.infinity;
+
+    for (final placement in state.validPlacements) {
+      final dx = (theoreticalAnchorX - placement.x).toDouble();
+      final dy = (theoreticalAnchorY - placement.y).toDouble();
+      final distance = dx * dx + dy * dy;
+
+      if (distance < minDistance) {
+        minDistance = distance;
+        closest = placement;
+      }
+    }
+
+    return closest;
+  }
+
+  // ==========================================================================
   // CORRECTION 1: cancelSelection - reconstruire le plateau
   // ==========================================================================
 
@@ -85,6 +146,7 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
         clearSelectedPlacedPiece: true,
         clearSelectedCellInPiece: true,
         clearPreview: true,
+        validPlacements: [], // ✨ NOUVEAU
       );
     } else {
       state = state.copyWith(
@@ -92,6 +154,7 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
         clearSelectedPlacedPiece: true,
         clearSelectedCellInPiece: true,
         clearPreview: true,
+        validPlacements: [], // ✨ NOUVEAU
       );
     }
   }
@@ -110,10 +173,14 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
     final newIndices = Map<int, int>.from(state.piecePositionIndices);
     newIndices[piece.id] = newIndex;
 
+    // ✨ NOUVEAU: Régénérer les placements valides après rotation
+    final newValidPlacements = _generateValidPlacements(piece, newIndex);
+
     state = state.copyWith(
       selectedPositionIndex: newIndex,
       piecePositionIndices: newIndices,
       selectedCellInPiece: newCell,
+      validPlacements: newValidPlacements, // ✨ Mettre à jour
     );
   }
 
@@ -154,6 +221,7 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
       clearSelectedPlacedPiece: true,
       clearSelectedCellInPiece: true,
       isComplete: false,
+      validPlacements: [], // ✨ Réinitialiser
     );
   }
 
@@ -192,6 +260,7 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
       showSolution: state.showSolution,
       // ✅ Récupérer de state
       currentSolution: firstSolution, // ✅ Stocker la solution
+      validPlacements: [], // ✨ NOUVEAU
     );
   }
 
@@ -214,6 +283,7 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
       }
     }
 
+    // ✨ BUGFIX: Mettre à jour le plateau EN PREMIER
     state = state.copyWith(
       plateau: newPlateau,
       // ← CLÉ!
@@ -222,6 +292,13 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
       clearSelectedPlacedPiece: true,
       selectedCellInPiece: defaultCell,
     );
+
+    // ✨ PUIS générer les placements valides avec le NOUVEAU plateau
+    final newValidPlacements = _generateValidPlacements(piece, positionIndex);
+
+    state = state.copyWith(
+      validPlacements: newValidPlacements,
+    );
   }
 
   // ==========================================================================
@@ -229,10 +306,10 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
   // ==========================================================================
 
   void selectPlacedPiece(
-    PentoscopePlacedPiece placed,
-    int absoluteX,
-    int absoluteY,
-  ) {
+      PentoscopePlacedPiece placed,
+      int absoluteX,
+      int absoluteY,
+      ) {
     if (state.isComplete) return;  // ← Bloquer si puzzle complet
 
     // Calculer la cellule locale cliquée (mastercase)
@@ -251,6 +328,8 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
       }
     }
 
+    // ✨ BUGFIX: Mettre à jour le plateau dans l'état EN PREMIER
+    // Sinon _generateValidPlacements() utilise l'ancien plateau!
     state = state.copyWith(
       plateau: newPlateau,
       selectedPiece: placed.piece,
@@ -258,6 +337,13 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
       selectedPositionIndex: placed.positionIndex,
       selectedCellInPiece: Point(localX, localY),
       clearPreview: true,
+    );
+
+    // ✨ PUIS générer les placements valides avec le NOUVEAU plateau
+    final validPlacements = _generateValidPlacements(placed.piece, placed.positionIndex);
+
+    state = state.copyWith(
+      validPlacements: validPlacements,
     );
   }
 
@@ -277,10 +363,10 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
   // ==========================================================================
 
   Future<void> startPuzzle(
-    PentoscopeSize size, {
-    PentoscopeDifficulty difficulty = PentoscopeDifficulty.random,
-    bool showSolution = false,
-  }) async {
+      PentoscopeSize size, {
+        PentoscopeDifficulty difficulty = PentoscopeDifficulty.random,
+        bool showSolution = false,
+      }) async {
     final puzzle = await switch (difficulty) {
       PentoscopeDifficulty.easy => _generator.generateEasy(size),
       PentoscopeDifficulty.hard => _generator.generateHard(size),
@@ -339,6 +425,7 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
       showSolution: showSolution,
       // ✅ Flag pour contrôler l'AFFICHAGE
       currentSolution: firstSolution, // ✅ TOUJOURS fournie (pour le SCORE)
+      validPlacements: [], // ✨ NOUVEAU
     );
   }
 
@@ -455,6 +542,7 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
       score: newScore,
       // 🎯 NOUVEAU
       currentSolution: state.currentSolution, // 👈 AJOUTER CETTE LIGNE!
+      validPlacements: [], // ✨ Réinitialiser après placement
     );
 
     return true;
@@ -472,28 +560,42 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
       return;
     }
 
-    final piece = state.selectedPiece!;
-    final positionIndex = state.selectedPositionIndex;
+    // ✨ CAS 1 - AUCUN PLACEMENT POSSIBLE → ROUGE PARTOUT
+    if (state.validPlacements.isEmpty) {
+      // Calculer où serait l'ancre si la mastercase était au doigt
+      int previewX = gridX;
+      int previewY = gridY;
 
-    int anchorX = gridX;
-    int anchorY = gridY;
+      if (state.selectedCellInPiece != null) {
+        previewX -= state.selectedCellInPiece!.x;
+        previewY -= state.selectedCellInPiece!.y;
+      }
 
-    if (state.selectedCellInPiece != null) {
-      anchorX = gridX - state.selectedCellInPiece!.x;
-      anchorY = gridY - state.selectedCellInPiece!.y;
-    }
-
-    final isValid = state.canPlacePiece(piece, positionIndex, anchorX, anchorY);
-
-    if (state.previewX != anchorX ||
-        state.previewY != anchorY ||
-        state.isPreviewValid != isValid) {
       state = state.copyWith(
-        previewX: anchorX,
-        previewY: anchorY,
-        isPreviewValid: isValid,
+        previewX: previewX,
+        previewY: previewY,
+        isPreviewValid: false, // 🔴 ROUGE
       );
+      return;
     }
+
+    // ✨ CAS 2 - PLACEMENTS POSSIBLES → SNAPPING VERT
+    final snappedPlacement = _findClosestValidPlacement(gridX, gridY);
+
+    if (snappedPlacement == null) {
+      if (state.previewX != null || state.previewY != null) {
+        state = state.copyWith(clearPreview: true);
+      }
+      return;
+    }
+
+    // 🔑 Le snappedPlacement est déjà une position d'ancre valide
+    // Pas besoin d'appliquer la mastercase, c'est déjà dedans
+    state = state.copyWith(
+      previewX: snappedPlacement.x,
+      previewY: snappedPlacement.y,
+      isPreviewValid: true, // 🟢 VERT
+    );
   }
 
   // ============================================================================
@@ -588,10 +690,10 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
   // CALCUL DU SCORE - Efficacité isométries
   // ============================================================================
   int _calculateScore(
-    List<PentoscopePlacedPiece> placedPieces,
-    Solution solution,
-    int actualIsometries,
-  ) {
+      List<PentoscopePlacedPiece> placedPieces,
+      Solution solution,
+      int actualIsometries,
+      ) {
     debugPrint('🎯 _calculateScore called');
     debugPrint('  actualIsometries = $actualIsometries');
 
@@ -605,7 +707,7 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
     for (final placed in placedPieces) {
       final pento = pentominos.firstWhere((p) => p.id == placed.piece.id);
       final optimalPlacement = solution.firstWhere(
-        (p) => p.pieceId == placed.piece.id,
+            (p) => p.pieceId == placed.piece.id,
       );
 
 // ✅ BON (ce qu'il faut):
@@ -810,6 +912,9 @@ class PentoscopeState {
   final int? previewY;
   final bool isPreviewValid;
 
+  // ✨ NOUVEAU: Liste des placements valides pour la pièce sélectionnée
+  final List<Point> validPlacements;
+
   // État du jeu
   final bool isComplete;
   final int isometryCount;
@@ -834,6 +939,7 @@ class PentoscopeState {
     this.previewX,
     this.previewY,
     this.isPreviewValid = false,
+    this.validPlacements = const [], // ✨ NOUVEAU
     this.isComplete = false,
     this.isometryCount = 0,
     this.translationCount = 0,
@@ -900,6 +1006,7 @@ class PentoscopeState {
     int? previewY,
     bool? isPreviewValid,
     bool clearPreview = false,
+    List<Point>? validPlacements, // ✨ NOUVEAU
     bool? isComplete,
     int? isometryCount,
     int? translationCount,
@@ -918,7 +1025,7 @@ class PentoscopeState {
           ? null
           : (selectedPiece ?? this.selectedPiece),
       selectedPositionIndex:
-          selectedPositionIndex ?? this.selectedPositionIndex,
+      selectedPositionIndex ?? this.selectedPositionIndex,
       piecePositionIndices: piecePositionIndices ?? this.piecePositionIndices,
       selectedPlacedPiece: clearSelectedPlacedPiece
           ? null
@@ -931,6 +1038,7 @@ class PentoscopeState {
       isPreviewValid: clearPreview
           ? false
           : (isPreviewValid ?? this.isPreviewValid),
+      validPlacements: validPlacements ?? this.validPlacements, // ✨ NOUVEAU
       isComplete: isComplete ?? this.isComplete,
       isometryCount: isometryCount ?? this.isometryCount,
       translationCount: translationCount ?? this.translationCount,

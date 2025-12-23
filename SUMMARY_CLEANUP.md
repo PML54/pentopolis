@@ -177,3 +177,6 @@ Les tables `races`, `race_participants`, `race_results` peuvent être supprimée
 
 L'application est maintenant plus claire, plus simple, et plus maintenable ! 🎉
 
+
+
+

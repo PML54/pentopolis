@@ -290,3 +290,6 @@ Toutes les références au système Race sont supprimées, le nouveau HomeScreen
 **Créé le** : 1er décembre 2025 à 01:15  
 **Auteur** : Documentation générée avec Claude Sonnet 4.5
 
+
+
+

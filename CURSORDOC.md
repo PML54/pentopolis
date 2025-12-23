@@ -16,7 +16,8 @@
 5. [Écrans](#écrans)
 6. [Providers (Riverpod)](#providers-riverpod)
 7. [Système de solutions](#système-de-solutions)
-8. [Configuration](#configuration)
+8. [Déplacement des pièces](#déplacement-des-pièces)
+9. [Configuration](#configuration)
 
 ---
 
@@ -806,6 +807,70 @@ isCompatible = (solution & maskBits) == piecesBits;
 
 ---
 
+## 🎮 Déplacement des pièces
+
+### Vue d'ensemble
+
+Le système de déplacement des pièces du slider vers le plateau utilise le mécanisme **Drag & Drop** de Flutter avec une architecture en 3 couches :
+
+1. **DraggablePieceWidget** : Gère le drag & drop
+2. **GameBoard** : Plateau avec DragTarget
+3. **PentominoGameProvider** : Logique métier et validation
+
+### Flux simplifié
+
+```
+1. User TAP pièce → Sélection (selectedPiece = index)
+2. User DRAG → Feedback visuel (pièce suit le doigt)
+3. Survol plateau → Preview (vert=valide, rouge=invalide)
+4. User DROP → Validation + Placement (ajout à placedPieces)
+```
+
+### Système de coordonnées
+
+Le système utilise **3 types de coordonnées** :
+
+- **Shape** : Grille 5×5 de la pièce (numéros 1-25)
+- **Relative** : Origine au coin de la pièce (Point x,y)
+- **Absolute** : Position sur le plateau (gridX, gridY)
+
+**Cellule de référence** : Toujours le coin supérieur gauche de la pièce, calculée à la sélection.
+
+### Validation du placement
+
+```dart
+bool canPlacePiece(int pieceIndex, int gridX, int gridY) {
+  // Vérifications :
+  // 1. Dans les limites du plateau
+  // 2. Pas sur case cachée (-1)
+  // 3. Pas sur case occupée
+  // 4. Pas de collision avec pièces placées
+  return true/false;
+}
+```
+
+### Haptic feedback
+
+- **Selection** : `selectionClick()`
+- **Placement réussi** : `mediumImpact()`
+- **Placement échoué** : `heavyImpact()`
+- **Victoire** : `heavyImpact()`
+
+### Composants clés
+
+| Composant | Fichier | Lignes | Rôle |
+|-----------|---------|--------|------|
+| DraggablePieceWidget | `draggable_piece_widget.dart` | 134 | Drag & drop |
+| GameBoard | `game_board.dart` | 388 | DragTarget + plateau |
+| PieceSlider | `piece_slider.dart` | 176 | Liste pièces |
+| PieceRenderer | `piece_renderer.dart` | 108 | Affichage pièce |
+
+### Documentation complète
+
+Pour les détails complets du mécanisme (diagrammes de séquence, code détaillé, cas particuliers), consulter **[MOVEPIECE.md](MOVEPIECE.md)**.
+
+---
+
 ## ⚙️ Configuration
 
 ### `pubspec.yaml`
@@ -1002,10 +1067,18 @@ final color = GameColors.masterCellBorderColor;
 
 ### 🔗 Liens utiles
 
+**Documentation externe** :
 - Flutter : https://flutter.dev
 - Riverpod : https://riverpod.dev
 - Supabase : https://supabase.com
 - Pentominos : https://en.wikipedia.org/wiki/Pentomino
+
+**Documentation projet** :
+- **DOCIA.md** : Documentation opérationnelle (résumé)
+- **MOVEPIECE.md** : Mécanisme drag & drop détaillé
+- **TUTORIAL_ARCHITECTURE.md** : Architecture système tutoriel
+- **CODE_STANDARDS.md** : Standards de code
+- **CLEANUP_RACE_SYSTEM.md** : Historique suppression système Race
 
 ---
 

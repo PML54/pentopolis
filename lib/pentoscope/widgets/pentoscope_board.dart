@@ -74,8 +74,9 @@ class PentoscopeBoard extends ConsumerWidget {
                 plateauX >= gridWidth ||
                 plateauY < 0 ||
                 plateauY >= gridHeight) {
-              notifier.clearPreview();
-              return;
+              // ✨ OPTION 1: Garder le dernier preview même quand on sort
+              // La pièce reste affichée à sa dernière position valide
+              return;  // ← Ne pas appeler clearPreview()
             }
 
             final visualX = (plateauX / cellSize).floor().clamp(
@@ -108,43 +109,31 @@ class PentoscopeBoard extends ConsumerWidget {
               return;
             }
 
-            final localOffset = renderBox.globalToLocal(details.offset);
-            final plateauX = localOffset.dx - offsetX;
-            final plateauY = localOffset.dy - offsetY;
-
-            if (plateauX < 0 ||
-                plateauX >= gridWidth ||
-                plateauY < 0 ||
-                plateauY >= gridHeight) {
+            // ✨ NOUVEAU: Utiliser les coordonnées snappées du preview
+            // (pas les coordonnées brutes du drop)
+            if (state.previewX == null || state.previewY == null) {
               notifier.clearPreview();
               return;
             }
 
-            final visualX = (plateauX / cellSize).floor().clamp(
-              0,
-              visualCols - 1,
-            );
-            final visualY = (plateauY / cellSize).floor().clamp(
-              0,
-              visualRows - 1,
-            );
+            // ✨ BUGFIX: tryPlacePiece() s'attend à la position du DOIGT, pas l'ancre
+            // previewX/Y sont l'ancre snappée
+            // Donc reconstruire: doigt = ancre + mastercase
+            int reconstructedDragX = state.previewX!;
+            int reconstructedDragY = state.previewY!;
 
-            int logicalX, logicalY;
-            if (isLandscape) {
-              logicalX = (visualRows - 1) - visualY;
-              logicalY = visualX;
-            } else {
-              logicalX = visualX;
-              logicalY = visualY;
+            if (state.selectedCellInPiece != null) {
+              reconstructedDragX += state.selectedCellInPiece!.x;  // ✅ Ajouter mastercase
+              reconstructedDragY += state.selectedCellInPiece!.y;
             }
 
-            final success = notifier.tryPlacePiece(logicalX, logicalY);
+            final success = notifier.tryPlacePiece(reconstructedDragX, reconstructedDragY);
 
             if (success) {
               HapticFeedback.mediumImpact();
               final newState = ref.read(pentoscopeProvider);
               if (newState.isComplete) {
-         //       _showVictoryDialog(context, ref);
+                //       _showVictoryDialog(context, ref);
               }
             } else {
               HapticFeedback.heavyImpact();
