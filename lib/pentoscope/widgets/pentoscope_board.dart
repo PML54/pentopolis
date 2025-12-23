@@ -100,7 +100,9 @@ class PentoscopeBoard extends ConsumerWidget {
             notifier.updatePreview(logicalX, logicalY);
           },
           onLeave: (data) {
-            notifier.clearPreview();
+            // ✨ BUGFIX: Ne pas appeler clearPreview()
+            // Garder le preview quand on sort du DragTarget
+            // La pièce reste affichée à sa dernière position valide
           },
           onAcceptWithDetails: (details) {
             final renderBox = context.findRenderObject() as RenderBox?;

@@ -268,7 +268,13 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
   // SÉLECTION PIÈCE (SLIDER)
   // ==========================================================================
   void selectPiece(Pento piece) {
-    final positionIndex = state.getPiecePositionIndex(piece.id);
+    // ✨ BUGFIX: Si la pièce est déjà sélectionnée, utiliser selectedPositionIndex
+    // (qui a été mis à jour par l'isométrie)
+    // Sinon, récupérer l'index depuis piecePositionIndices
+    final positionIndex = state.selectedPiece?.id == piece.id
+        ? state.selectedPositionIndex
+        : state.getPiecePositionIndex(piece.id);
+
     final defaultCell = _calculateDefaultCell(piece, positionIndex);
     _cancelSelectedPlacedPieceIfAny();
 
@@ -627,6 +633,12 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
         ),
         clearPreview: true,
         isometryCount: state.isometryCount + 1,
+      );
+
+      // ✨ BUGFIX: Régénérer validPlacements avec le NOUVEAU positionIndex
+      final newValidPlacements = _generateValidPlacements(piece, newIdx);
+      state = state.copyWith(
+        validPlacements: newValidPlacements,
       );
       return;
     }
