@@ -94,7 +94,7 @@ class PentoscopePieceSlider extends ConsumerWidget {
               : null,
         ),
         child: Transform.rotate(
-          angle: isLandscape ? math.pi / 2 : 0.0, // ✅ rotation visuelle du slider en paysage
+          angle: isLandscape ? -math.pi / 2 : 0.0, // ✅ rotation visuelle du slider en paysage
           child: DraggablePieceWidget(
             piece: piece,
             positionIndex: displayPositionIndex,
