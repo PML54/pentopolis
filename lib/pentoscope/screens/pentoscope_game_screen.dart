@@ -80,29 +80,15 @@ class PentoscopeGameScreen extends ConsumerWidget {
             },
           )
               : null,
-          actions: isPlacedPieceSelected
-              ? [
-            _buildIsometryActionsBar(
-              state,
-              ref.read(pentoscopeProvider.notifier),
-              settings,
-              Axis.horizontal,
-            ),
-          ]
-              : isSliderPieceSelected
-              ? [
-            // Rien en AppBar si pièce slider (actions au-dessus slider)
-          ]
-              : [
-            // Reset en mode général
-            IconButton(
-              icon: const Icon(Icons.games),
-              onPressed: () {
-                HapticFeedback.mediumImpact();
-                notifier.reset();
-              },
-              tooltip: 'Recommencer',
-            ),
+          actions: [
+            // ✨ Afficher isométries SEULEMENT si pièce sélectionnée
+            if (isSliderPieceSelected || isPlacedPieceSelected)
+              _buildIsometryActionsBar(
+                state,
+                ref.read(pentoscopeProvider.notifier),
+                settings,
+                Axis.horizontal,
+              ),
           ],
         ),
       ),
@@ -318,19 +304,6 @@ class PentoscopeGameScreen extends ConsumerWidget {
         // Plateau de jeu
         const Expanded(flex: 3, child: PentoscopeBoard(isLandscape: false)),
 
-        // 🎯 Actions isométrie UNIQUEMENT si pièce du SLIDER sélectionnée
-        // (exclue si pièce plateau sélectionnée)
-        if (isSliderPieceSelected && !isPlacedPieceSelected)
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            child: _buildIsometryActionsBar(
-              state,
-              notifier,
-              settings,
-              Axis.horizontal,
-            ),
-          ),
-
         // Slider de pièces horizontal
         _buildSliderWithDragTarget(
           ref: ref,
@@ -385,9 +358,9 @@ class PentoscopeGameScreen extends ConsumerWidget {
               ),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
-                children: isPlacedPieceSelected
+                children: isPlacedPieceSelected || isSliderPieceSelected
                     ? [
-                  // Actions isométrie si pièce plateau sélectionnée
+                  // ✨ Isométries si pièce sélectionnée (slider OU plateau)
                   _buildIsometryActionsBar(
                     state,
                     notifier,
@@ -396,7 +369,7 @@ class PentoscopeGameScreen extends ConsumerWidget {
                   ),
                 ]
                     : [
-                  // Actions générales
+                  // Actions générales (reset, close)
                   IconButton(
                     icon: const Icon(Icons.games),
                     onPressed: () {
