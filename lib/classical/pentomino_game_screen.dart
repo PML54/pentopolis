@@ -31,6 +31,14 @@ class PentominoGameScreen extends ConsumerStatefulWidget {
 
 class _PentominoGameScreenState extends ConsumerState<PentominoGameScreen> {
 
+
+  String _formatTime(int seconds) {
+    int minutes = seconds ~/ 60;
+    int secs = seconds % 60;
+    return '${minutes.toString().padLeft(2, '0')}:${secs.toString().padLeft(2, '0')}';
+  }
+
+
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(pentominoGameProvider);
@@ -51,9 +59,34 @@ class _PentominoGameScreenState extends ConsumerState<PentominoGameScreen> {
         child: AppBar(
           toolbarHeight: 56.0,
           backgroundColor: Colors.white,
-          // LEADING : SUPPRIMÉ (Settings + Duel retirés)
-          leadingWidth: 0,
-          leading: null,
+
+          // ✨ NOUVEAU: Chrono à gauche
+          leading: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  _formatTime(state.elapsedSeconds),
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
+                ),
+                // ✨ Afficher la note seulement si puzzle complet
+                if (state.availablePieces.isEmpty)
+                  Text(
+                    '⭐ ${notifier.calculateScore(state.elapsedSeconds)}',
+                    style: const TextStyle(
+                      fontSize: 10,
+                      color: Colors.orange,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          leadingWidth: 60,
           // TITLE : Bouton Solutions uniquement
           title: state.solutionsCount != null
               ? FittedBox(
@@ -139,7 +172,14 @@ class _PentominoGameScreenState extends ConsumerState<PentominoGameScreen> {
   @override
   void initState() {
     super.initState();
+    // ✨ Réinitialiser le jeu au lancement
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final notifier = ref.read(pentominoGameProvider.notifier);  // ← Ajouter cette ligne
+      notifier.reset();
+      notifier.startTimer();
+    });
   }
+
 
   /// Layout paysage : plateau à gauche, actions + slider vertical à droite
   Widget _buildLandscapeLayout(
@@ -198,7 +238,7 @@ class _PentominoGameScreenState extends ConsumerState<PentominoGameScreen> {
       notifier,
       )
   {
-    debugPrint("🔥 _buildPortraitLayout CALLED");
+
     return Column(
       children: [
         // Plateau de jeu

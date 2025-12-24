@@ -65,63 +65,6 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
   // ✨ NOUVELLE FONCTION: Générer tous les placements valides
   // ==========================================================================
 
-  /// Génère TOUS les placements possibles pour une pièce à une positionIndex donnée
-  /// Retourne une liste de Point (gridX, gridY) où la pièce peut être placée
-  List<Point> _generateValidPlacements(
-      Pento piece,
-      int positionIndex,
-      ) {
-    final validPlacements = <Point>[];
-
-    // Balayer tout le plateau
-    for (int gridX = 0; gridX < state.plateau.width; gridX++) {
-      for (int gridY = 0; gridY < state.plateau.height; gridY++) {
-        if (state.canPlacePiece(piece, positionIndex, gridX, gridY)) {
-          validPlacements.add(Point(gridX, gridY));
-        }
-      }
-    }
-
-    return validPlacements;
-  }
-
-  // ==========================================================================
-  // ✨ NOUVELLE FONCTION: Trouver la position la plus proche
-  // ==========================================================================
-
-  /// Trouve la position valide la plus proche du doigt (en tenant compte de la mastercase)
-  /// dragGridX/Y = position du doigt
-  /// Retourne la position d'ancre valide la plus proche
-  Point? _findClosestValidPlacement(int dragGridX, int dragGridY) {
-    if (state.validPlacements.isEmpty) return null;
-
-    // 🔑 CRUCIAL: Appliquer la mastercase pour trouver l'ancre théorique
-    int theoreticalAnchorX = dragGridX;
-    int theoreticalAnchorY = dragGridY;
-
-    if (state.selectedCellInPiece != null) {
-      theoreticalAnchorX -= state.selectedCellInPiece!.x;
-      theoreticalAnchorY -= state.selectedCellInPiece!.y;
-    }
-
-    // Chercher le placement valide le plus proche de cette ancre théorique
-    Point closest = state.validPlacements[0];
-    double minDistance = double.infinity;
-
-    for (final placement in state.validPlacements) {
-      final dx = (theoreticalAnchorX - placement.x).toDouble();
-      final dy = (theoreticalAnchorY - placement.y).toDouble();
-      final distance = dx * dx + dy * dy;
-
-      if (distance < minDistance) {
-        minDistance = distance;
-        closest = placement;
-      }
-    }
-
-    return closest;
-  }
-
   // ==========================================================================
   // CORRECTION 1: cancelSelection - reconstruire le plateau
   // ==========================================================================
@@ -158,6 +101,10 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
       );
     }
   }
+
+  // ==========================================================================
+  // ✨ NOUVELLE FONCTION: Trouver la position la plus proche
+  // ==========================================================================
 
   void clearPreview() {
     state = state.copyWith(clearPreview: true);
@@ -792,6 +739,59 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
       final localY = (cellNum - 1) ~/ 5 - minLocalY;
       return [piece.gridX + localX, piece.gridY + localY];
     }).toList();
+  }
+
+  /// Trouve la position valide la plus proche du doigt (en tenant compte de la mastercase)
+  /// dragGridX/Y = position du doigt
+  /// Retourne la position d'ancre valide la plus proche
+  Point? _findClosestValidPlacement(int dragGridX, int dragGridY) {
+    if (state.validPlacements.isEmpty) return null;
+
+    // 🔑 CRUCIAL: Appliquer la mastercase pour trouver l'ancre théorique
+    int theoreticalAnchorX = dragGridX;
+    int theoreticalAnchorY = dragGridY;
+
+    if (state.selectedCellInPiece != null) {
+      theoreticalAnchorX -= state.selectedCellInPiece!.x;
+      theoreticalAnchorY -= state.selectedCellInPiece!.y;
+    }
+
+    // Chercher le placement valide le plus proche de cette ancre théorique
+    Point closest = state.validPlacements[0];
+    double minDistance = double.infinity;
+
+    for (final placement in state.validPlacements) {
+      final dx = (theoreticalAnchorX - placement.x).toDouble();
+      final dy = (theoreticalAnchorY - placement.y).toDouble();
+      final distance = dx * dx + dy * dy;
+
+      if (distance < minDistance) {
+        minDistance = distance;
+        closest = placement;
+      }
+    }
+
+    return closest;
+  }
+
+  /// Génère TOUS les placements possibles pour une pièce à une positionIndex donnée
+  /// Retourne une liste de Point (gridX, gridY) où la pièce peut être placée
+  List<Point> _generateValidPlacements(
+      Pento piece,
+      int positionIndex,
+      ) {
+    final validPlacements = <Point>[];
+
+    // Balayer tout le plateau
+    for (int gridX = 0; gridX < state.plateau.width; gridX++) {
+      for (int gridY = 0; gridY < state.plateau.height; gridY++) {
+        if (state.canPlacePiece(piece, positionIndex, gridX, gridY)) {
+          validPlacements.add(Point(gridX, gridY));
+        }
+      }
+    }
+
+    return validPlacements;
   }
 
   Plateau _rebuildPlateauFromPlacedPieces() {

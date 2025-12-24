@@ -46,16 +46,12 @@ class PentoscopeGameScreen extends ConsumerWidget {
           backgroundColor: Colors.white,
           automaticallyImplyLeading: !isPlacedPieceSelected,
           leading: isPlacedPieceSelected
-              ? null  // Pas de croix quand icônes isométrie actifs
+              ? null
               : IconButton(
             icon: const Icon(Icons.close, color: Colors.red),
             onPressed: () => Navigator.pop(context),
           ),
-          // EXCLUSIF:
-          // 1. Actions isométrie si pièce PLATEAU sélectionnée
-          // 2. Reset si pièce SLIDER sélectionnée
-          // 3. Solution count si AUCUNE pièce sélectionnée
-          title: isPlacedPieceSelected
+          title: (isPlacedPieceSelected || isSliderPieceSelected)
               ? null
               : state.isComplete
               ? TweenAnimationBuilder<double>(
@@ -79,9 +75,17 @@ class PentoscopeGameScreen extends ConsumerWidget {
               );
             },
           )
+              : !state.showSolution
+              ? IconButton(
+            icon: const Icon(Icons.games),
+            onPressed: () {
+              HapticFeedback.mediumImpact();
+              notifier.reset();
+            },
+            tooltip: 'Recommencer',
+          )
               : null,
           actions: [
-            // ✨ Afficher isométries SEULEMENT si pièce sélectionnée
             if (isSliderPieceSelected || isPlacedPieceSelected)
               _buildIsometryActionsBar(
                 state,
@@ -308,7 +312,7 @@ class PentoscopeGameScreen extends ConsumerWidget {
         _buildSliderWithDragTarget(
           ref: ref,
           isLandscape: false,
-          height: 140,
+          height: 160,
           decoration: BoxDecoration(
             color: Colors.grey.shade100,
             boxShadow: [

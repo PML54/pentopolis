@@ -73,10 +73,25 @@ class HomeScreen extends ConsumerWidget {
                   child: SingleChildScrollView(
                     child: Column(
                       children: [
+                        const SizedBox(height: 12),
+                        _MenuCard(
+                          icon: Icons.search,
+                          title: 'Pentominos Speed',
+                          subtitle: 'Placer de 3 à 6 pieces',
+                          color: colorScheme.secondary,
+                          onTap: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => const PentoscopeMenuScreen(),
+                              ),
+                            );
+                          },
+                        ),
+                        const SizedBox(height: 12),
                         _MenuCard(
                           icon: Icons.extension,
                           title: 'Pentominos Classique',
-                          subtitle: 'Placer les 12 pièces sur la grille',
+                          subtitle: '9356 Solutions',
                           color: colorScheme.primary,
                           onTap: () {
                             Navigator.of(context).push(
@@ -101,23 +116,9 @@ class HomeScreen extends ConsumerWidget {
                           },
                         ),
 
-                        const SizedBox(height: 12),
 
-                        const SizedBox(height: 12),
-                        _MenuCard(
-                          icon: Icons.search,
-                          title: 'Pentominos Junior',
-                          subtitle: 'Petits Plateaux',
-                          color: colorScheme.secondary,
-                          onTap: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (_) => const PentoscopeMenuScreen(),
-                              ),
-                            );
-                          },
-                        ),
-                        const SizedBox(height: 12),
+
+
 
                         const SizedBox(height: 12),
                         _MenuCard(

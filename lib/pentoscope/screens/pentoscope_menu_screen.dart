@@ -26,6 +26,7 @@ class _PentoscopeMenuScreenState extends ConsumerState<PentoscopeMenuScreen> {
         centerTitle: true,
       ),
       body: SafeArea(
+        child: SingleChildScrollView(  // ← Rendre scrollable
         child: Padding(
           padding: const EdgeInsets.all(24.0),
           child: Column(
@@ -47,8 +48,9 @@ class _PentoscopeMenuScreenState extends ConsumerState<PentoscopeMenuScreen> {
               const SizedBox(height: 12),
               _buildSizeSelector(),
 
-              const SizedBox(height: 24),
 
+
+/*
               // Sélection de la difficulté
               const Text(
                 'Difficulté',
@@ -56,8 +58,8 @@ class _PentoscopeMenuScreenState extends ConsumerState<PentoscopeMenuScreen> {
               ),
               const SizedBox(height: 12),
               _buildDifficultySelector(),
+*/
 
-              const SizedBox(height: 12),
 
               // ✅ NOUVEAU: Toggle "Afficher la solution"
               Container(
@@ -121,6 +123,7 @@ class _PentoscopeMenuScreenState extends ConsumerState<PentoscopeMenuScreen> {
               const SizedBox(height: 16),
             ],
           ),
+        ),
         ),
       ),
     );

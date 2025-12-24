@@ -74,9 +74,9 @@ class PentoscopePieceSlider extends ConsumerWidget {
     final isSelected = state.selectedPiece?.id == piece.id;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 8),
       child: Container(
-        padding: const EdgeInsets.all(10),
+        padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: isSelected ? Colors.amber.shade100 : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
@@ -95,35 +95,40 @@ class PentoscopePieceSlider extends ConsumerWidget {
         ),
         child: Transform.rotate(
           angle: isLandscape ? -math.pi / 2 : 0.0, // ✅ rotation visuelle du slider en paysage
-          child: DraggablePieceWidget(
-            piece: piece,
-            positionIndex: displayPositionIndex,
-            isSelected: isSelected,
-            selectedPositionIndex: isSelected ? displayPositionIndex : state.selectedPositionIndex,
-            longPressDuration: Duration(milliseconds: settings.game.longPressDuration),
-            onSelect: () {
-              if (settings.game.enableHaptics) {
-                HapticFeedback.selectionClick();
-              }
-              notifier.selectPiece(piece);
-            },
-            onCycle: () {},  // ← Fonction vide, fait rien
-            onCancel: () {
-              if (settings.game.enableHaptics) {
-                HapticFeedback.lightImpact();
-              }
-              notifier.cancelSelection();
-            },
-            childBuilder: (isDragging) => PieceRenderer(
+          child:
+
+          Transform.scale( scale:1.5 ,
+            child: DraggablePieceWidget(
               piece: piece,
               positionIndex: displayPositionIndex,
-              isDragging: isDragging,
-              getPieceColor: (pieceId) => settings.ui.getPieceColor(pieceId),
+              isSelected: isSelected,
+              selectedPositionIndex: isSelected ? displayPositionIndex : state.selectedPositionIndex,
+              longPressDuration: Duration(milliseconds: settings.game.longPressDuration),
+              onSelect: () {
+                if (settings.game.enableHaptics) {
+                  HapticFeedback.selectionClick();
+                }
+                notifier.selectPiece(piece);
+              },
+              onCycle: () {},  // ← Fonction vide, fait rien
+              onCancel: () {
+                if (settings.game.enableHaptics) {
+                  HapticFeedback.lightImpact();
+                }
+                notifier.cancelSelection();
+              },
+              childBuilder: (isDragging) => PieceRenderer(
+                piece: piece,
+                positionIndex: displayPositionIndex,
+                isDragging: isDragging,
+                getPieceColor: (pieceId) => settings.ui.getPieceColor(pieceId),
+              ),
             ),
+          ),
           ),
         ),
 
-      ),
+
     );
   }
 }

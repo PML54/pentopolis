@@ -2,87 +2,25 @@
 // lib/providers/pentomino_game_state.dart
 // État du jeu de pentominos (mode libre + mode tutoriel)
 
-
 import 'package:flutter/material.dart';
 import 'package:pentapol/common/pentominos.dart';
 import 'package:pentapol/common/plateau.dart';
 import 'package:pentapol/common/point.dart';
-
-/// Orientation de la vue (repère écran)
-enum ViewOrientation { portrait, landscape }
-
-/// Représente une pièce placée sur le plateau
-class PlacedPiece
-{
-  final Pento piece;
-  final int positionIndex; // Index dans piece.positions
-  final int gridX; // Position X sur le plateau (0-5)
-  final int gridY; // Position Y sur le plateau (0-9)
-
-  PlacedPiece({
-    required this.piece,
-    required this.positionIndex,
-    required this.gridX,
-    required this.gridY,
-  });
-
-  /// Obtient les cellules occupées par cette pièce sur le plateau
-  List<int> getOccupiedCells() {
-    final position = piece.positions[positionIndex];
-    final cells = <int>[];
-
-    for (final cellNum in position) {
-      // Convertir cellNum (1-25 sur grille 5×5) en coordonnées (x, y)
-      final localX = (cellNum - 1) % 5;
-      final localY = (cellNum - 1) ~/ 5;
-
-      // Position absolue sur le plateau
-      final x = gridX + localX;
-      final y = gridY + localY;
-
-      // Vérifier que c'est dans les limites
-      if (x >= 0 && x < 6 && y >= 0 && y < 10) {
-        cells.add(y * 6 + x + 1); // cellNum de 1 à 60
-      }
-    }
-
-    return cells;
-  }
-
-  PlacedPiece copyWith({
-    Pento? piece,
-    int? positionIndex,
-    int? gridX,
-    int? gridY,
-  }) {
-    return PlacedPiece(
-      piece: piece ?? this.piece,
-      positionIndex: positionIndex ?? this.positionIndex,
-      gridX: gridX ?? this.gridX,
-      gridY: gridY ?? this.gridY,
-    );
-  }
-
-  Iterable<Point> get absoluteCells sync* {
-    final position = piece.positions[positionIndex];
-    for (final cellNum in position) {
-      final localX = (cellNum - 1) % 5;
-      final localY = (cellNum - 1) ~/ 5;
-      yield Point(gridX + localX, gridY + localY);
-    }
-  }
-}
 
 /// État du jeu de pentominos
 class PentominoGameState {
   final Plateau plateau;
   final List<Pento> availablePieces; // Pièces encore disponibles dans le slider
   final List<PlacedPiece> placedPieces; // Pièces déjà placées sur le plateau
-  final Pento? selectedPiece; // Pièce actuellement sélectionnée (en cours de drag)
+  final Pento?
+  selectedPiece; // Pièce actuellement sélectionnée (en cours de drag)
   final int selectedPositionIndex; // Position de la pièce sélectionnée
-  final PlacedPiece? selectedPlacedPiece; // Référence à la pièce placée sélectionnée
-  final Map<int, int> piecePositionIndices; // Index de position pour chaque pièce (par ID)
-  final Point? selectedCellInPiece; // Case sélectionnée dans la pièce (point de référence pour le drag)
+  final PlacedPiece?
+  selectedPlacedPiece; // Référence à la pièce placée sélectionnée
+  final Map<int, int>
+  piecePositionIndices; // Index de position pour chaque pièce (par ID)
+  final Point?
+  selectedCellInPiece; // Case sélectionnée dans la pièce (point de référence pour le drag)
 
   // Prévisualisation du placement
   final int? previewX; // Position X de la preview
@@ -92,32 +30,41 @@ class PentominoGameState {
 
   // Validation du plateau
   final bool boardIsValid; // true si pas de chevauchement ni débordement
-  final Set<Point> overlappingCells; // Cases où au moins 2 pièces se chevauchent
+  final Set<Point>
+  overlappingCells; // Cases où au moins 2 pièces se chevauchent
   final Set<Point> offBoardCells; // Cases de pièces en dehors du plateau
 
   // Nombre de solutions possibles
   final int? solutionsCount; // Nombre de solutions possibles avec l'état actuel
 
   // Mode isométries
-  final bool isIsometriesMode; // true = mode isométries, false = mode jeu normal
-  final PentominoGameState? savedGameState; // État du jeu sauvegardé (isométries OU tutoriel)
+  final bool
+  isIsometriesMode; // true = mode isométries, false = mode jeu normal
+  final PentominoGameState?
+  savedGameState; // État du jeu sauvegardé (isométries OU tutoriel)
 
   // 🆕 MODE TUTORIEL
   final bool isInTutorial; // true = en mode tutoriel, false = jeu normal
 
   // 🆕 HIGHLIGHTS TUTORIEL
-  final int? highlightedSliderPiece; // ID de la pièce surlignée dans le slider (null = aucune)
-  final int? highlightedBoardPiece; // ID de la pièce surlignée sur le plateau (null = aucune)
-  final Point? highlightedMastercase; // Position de la mastercase surlignée (null = aucune)
-  final Map<Point, Color> cellHighlights; // Highlights de cases individuelles avec couleur
-  final String? highlightedIsometryIcon; // Icône d'isométrie surlignée ('rotation', 'rotation_cw', 'symmetry_h', 'symmetry_v')
+  final int?
+  highlightedSliderPiece; // ID de la pièce surlignée dans le slider (null = aucune)
+  final int?
+  highlightedBoardPiece; // ID de la pièce surlignée sur le plateau (null = aucune)
+  final Point?
+  highlightedMastercase; // Position de la mastercase surlignée (null = aucune)
+  final Map<Point, Color>
+  cellHighlights; // Highlights de cases individuelles avec couleur
+  final String?
+  highlightedIsometryIcon; // Icône d'isométrie surlignée ('rotation', 'rotation_cw', 'symmetry_h', 'symmetry_v')
 
   // 🆕 SLIDER POSITION
-  final int sliderOffset; // Offset de défilement du slider (0 = position initiale)
+  final int
+  sliderOffset; // Offset de défilement du slider (0 = position initiale)
 
   // 🆕 ORIENTATION
   final ViewOrientation viewOrientation; // portrait ou landscape
-
+  final int elapsedSeconds; // ✨ NOUVEAU
   PentominoGameState({
     required this.plateau,
     required this.availablePieces,
@@ -149,10 +96,11 @@ class PentominoGameState {
     this.sliderOffset = 0,
     this.highlightedIsometryIcon,
     this.viewOrientation = ViewOrientation.portrait,
-  })  : piecePositionIndices = piecePositionIndices ?? {},
-        overlappingCells = overlappingCells ?? <Point>{},
-        offBoardCells = offBoardCells ?? <Point>{},
-        cellHighlights = cellHighlights ?? <Point, Color>{};
+    this.elapsedSeconds = 0, // ✨ NOUVEAU
+  }) : piecePositionIndices = piecePositionIndices ?? {},
+       overlappingCells = overlappingCells ?? <Point>{},
+       offBoardCells = offBoardCells ?? <Point>{},
+       cellHighlights = cellHighlights ?? <Point, Color>{};
 
   /// État initial du jeu
   factory PentominoGameState.initial() {
@@ -170,12 +118,8 @@ class PentominoGameState {
       sliderOffset: 0,
       cellHighlights: <Point, Color>{},
       viewOrientation: ViewOrientation.portrait,
+      elapsedSeconds: 0, // ✨ NOUVEAU
     );
-  }
-
-  /// Obtient l'index de position pour une pièce (par défaut 0)
-  int getPiecePositionIndex(int pieceId) {
-    return piecePositionIndices[pieceId] ?? 0;
   }
 
   /// Vérifie si une pièce peut être placée à une position donnée
@@ -247,23 +191,38 @@ class PentominoGameState {
     String? highlightedIsometryIcon,
     bool clearHighlightedIsometryIcon = false,
     ViewOrientation? viewOrientation,
+
+    // ✨ NOUVEAU: Timer
+    int? elapsedSeconds,
   }) {
     return PentominoGameState(
       plateau: plateau ?? this.plateau,
       availablePieces: availablePieces ?? this.availablePieces,
       placedPieces: placedPieces ?? this.placedPieces,
-      selectedPiece: clearSelectedPiece ? null : (selectedPiece ?? this.selectedPiece),
-      selectedPositionIndex: selectedPositionIndex ?? this.selectedPositionIndex,
-      selectedPlacedPiece: clearSelectedPlacedPiece ? null : (selectedPlacedPiece ?? this.selectedPlacedPiece),
+      selectedPiece: clearSelectedPiece
+          ? null
+          : (selectedPiece ?? this.selectedPiece),
+      selectedPositionIndex:
+          selectedPositionIndex ?? this.selectedPositionIndex,
+      selectedPlacedPiece: clearSelectedPlacedPiece
+          ? null
+          : (selectedPlacedPiece ?? this.selectedPlacedPiece),
       piecePositionIndices: piecePositionIndices ?? this.piecePositionIndices,
-      selectedCellInPiece: clearSelectedCellInPiece ? null : (selectedCellInPiece ?? this.selectedCellInPiece),
+      selectedCellInPiece: clearSelectedCellInPiece
+          ? null
+          : (selectedCellInPiece ?? this.selectedCellInPiece),
       previewX: clearPreview ? null : (previewX ?? this.previewX),
       previewY: clearPreview ? null : (previewY ?? this.previewY),
-      isPreviewValid: clearPreview ? false : (isPreviewValid ?? this.isPreviewValid),
-      isSnapped: clearPreview ? false : (isSnapped ?? this.isSnapped), // 🆕
+      isPreviewValid: clearPreview
+          ? false
+          : (isPreviewValid ?? this.isPreviewValid),
+      isSnapped: clearPreview ? false : (isSnapped ?? this.isSnapped),
+      // 🆕
       solutionsCount: solutionsCount ?? this.solutionsCount,
       isIsometriesMode: isIsometriesMode ?? this.isIsometriesMode,
-      savedGameState: clearSavedGameState ? null : (savedGameState ?? this.savedGameState),
+      savedGameState: clearSavedGameState
+          ? null
+          : (savedGameState ?? this.savedGameState),
 
       // Validation
       boardIsValid: boardIsValid ?? this.boardIsValid,
@@ -272,13 +231,95 @@ class PentominoGameState {
 
       // 🆕 Tutoriel
       isInTutorial: isInTutorial ?? this.isInTutorial,
-      highlightedSliderPiece: clearHighlightedSliderPiece ? null : (highlightedSliderPiece ?? this.highlightedSliderPiece),
-      highlightedBoardPiece: clearHighlightedBoardPiece ? null : (highlightedBoardPiece ?? this.highlightedBoardPiece),
-      highlightedMastercase: clearHighlightedMastercase ? null : (highlightedMastercase ?? this.highlightedMastercase),
-      cellHighlights: clearCellHighlights ? <Point, Color>{} : (cellHighlights ?? this.cellHighlights),
+      highlightedSliderPiece: clearHighlightedSliderPiece
+          ? null
+          : (highlightedSliderPiece ?? this.highlightedSliderPiece),
+      highlightedBoardPiece: clearHighlightedBoardPiece
+          ? null
+          : (highlightedBoardPiece ?? this.highlightedBoardPiece),
+      highlightedMastercase: clearHighlightedMastercase
+          ? null
+          : (highlightedMastercase ?? this.highlightedMastercase),
+      cellHighlights: clearCellHighlights
+          ? <Point, Color>{}
+          : (cellHighlights ?? this.cellHighlights),
       sliderOffset: sliderOffset ?? this.sliderOffset,
-      highlightedIsometryIcon: clearHighlightedIsometryIcon ? null : (highlightedIsometryIcon ?? this.highlightedIsometryIcon),
+      highlightedIsometryIcon: clearHighlightedIsometryIcon
+          ? null
+          : (highlightedIsometryIcon ?? this.highlightedIsometryIcon),
       viewOrientation: viewOrientation ?? this.viewOrientation,
+
+      // ✨ NOUVEAU: Timer
+      elapsedSeconds: elapsedSeconds ?? this.elapsedSeconds,
     );
   }
+
+  /// Obtient l'index de position pour une pièce (par défaut 0)
+  int getPiecePositionIndex(int pieceId) {
+    return piecePositionIndices[pieceId] ?? 0;
+  }
 }
+
+/// Représente une pièce placée sur le plateau
+class PlacedPiece {
+  final Pento piece;
+  final int positionIndex; // Index dans piece.positions
+  final int gridX; // Position X sur le plateau (0-5)
+  final int gridY; // Position Y sur le plateau (0-9)
+
+  PlacedPiece({
+    required this.piece,
+    required this.positionIndex,
+    required this.gridX,
+    required this.gridY,
+  });
+
+  Iterable<Point> get absoluteCells sync* {
+    final position = piece.positions[positionIndex];
+    for (final cellNum in position) {
+      final localX = (cellNum - 1) % 5;
+      final localY = (cellNum - 1) ~/ 5;
+      yield Point(gridX + localX, gridY + localY);
+    }
+  }
+
+  PlacedPiece copyWith({
+    Pento? piece,
+    int? positionIndex,
+    int? gridX,
+    int? gridY,
+  }) {
+    return PlacedPiece(
+      piece: piece ?? this.piece,
+      positionIndex: positionIndex ?? this.positionIndex,
+      gridX: gridX ?? this.gridX,
+      gridY: gridY ?? this.gridY,
+    );
+  }
+
+  /// Obtient les cellules occupées par cette pièce sur le plateau
+  List<int> getOccupiedCells() {
+    final position = piece.positions[positionIndex];
+    final cells = <int>[];
+
+    for (final cellNum in position) {
+      // Convertir cellNum (1-25 sur grille 5×5) en coordonnées (x, y)
+      final localX = (cellNum - 1) % 5;
+      final localY = (cellNum - 1) ~/ 5;
+
+      // Position absolue sur le plateau
+      final x = gridX + localX;
+      final y = gridY + localY;
+
+      // Vérifier que c'est dans les limites
+      if (x >= 0 && x < 6 && y >= 0 && y < 10) {
+        cells.add(y * 6 + x + 1); // cellNum de 1 à 60
+      }
+    }
+
+    return cells;
+  }
+}
+
+/// Orientation de la vue (repère écran)
+enum ViewOrientation { portrait, landscape }

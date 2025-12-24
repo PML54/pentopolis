@@ -2,17 +2,19 @@
 // Modified: 251209157
 // Corrections: (1) Toujours calculer solutions même si plateau vide, (2) Afficher 9356 à l'initialisation
 
+import 'dart:async';
+
 import 'package:flutter/material.dart' show Color, debugPrint;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
+import 'package:pentapol/classical/pentomino_game_state.dart';
 import 'package:pentapol/common/pentominos.dart';
 import 'package:pentapol/common/plateau.dart';
 import 'package:pentapol/common/point.dart';
-import 'package:pentapol/common/isometry_transforms.dart';
-import 'package:pentapol/services/plateau_solution_counter.dart' show PlateauSolutionCounter;
 import 'package:pentapol/common/shape_recognizer.dart';
-import 'package:pentapol/classical/pentomino_game_state.dart';
+import 'package:pentapol/services/plateau_solution_counter.dart' show PlateauSolutionCounter;
 
+
+// ← C'est peut-être différent
 
 final pentominoGameProvider =
 NotifierProvider<PentominoGameNotifier, PentominoGameState>(
@@ -22,70 +24,17 @@ NotifierProvider<PentominoGameNotifier, PentominoGameState>(
 class PentominoGameNotifier extends Notifier<PentominoGameState> {
   static const int _snapRadius = 2;
 
+  Timer? _gameTimer;  // ✨ NOUVEAU
+  DateTime? _startTime;  // ✨ NOUVEAU
 
 
-  // ========================================================================
-  // 🆕 GESTION ORIENTATION + ISOMÉTRIES LOOKUP (Pentoscope approach)
-  // ========================================================================
 
-  /// Enregistre l'orientation de la vue (portrait/landscape)
-  void setViewOrientation(bool isLandscape) {
-    final orientation =
-    isLandscape ? ViewOrientation.landscape : ViewOrientation.portrait;
-    state = state.copyWith(viewOrientation: orientation);
-  }
-
-  /// Remapping de la cellule de référence lors d'une isométrie
-  Point? _remapSelectedCell({
-    required Pento piece,
-    required int oldIndex,
-    required int newIndex,
-    required Point? oldCell,
-  }) {
-    if (oldCell == null) return null;
-
-    final oldPos = piece.positions[oldIndex];
-    final newPos = piece.positions[newIndex];
-
-    // Trouver la cellule correspondante dans la nouvelle position
-    if (oldPos.isNotEmpty && newPos.isNotEmpty) {
-      final cellNum = oldPos[0]; // Référence : première cellule
-      if (newPos.contains(cellNum)) {
-        final localX = (cellNum - 1) % 5;
-        final localY = (cellNum - 1) ~/ 5;
-        return Point(localX, localY);
-      }
-    }
-    return null;
-  }
-
-  /// Applique une transformation isométrique via lookup
-  void _applyIsoUsingLookup(int Function(Pento p, int idx) f) {
-    final piece = state.selectedPiece;
-    if (piece == null) return;
-    final oldIdx = state.selectedPositionIndex;
-    final newIdx = f(piece, oldIdx);
-
-    // Vérifier si l'index a vraiment changé
-    final didChange = oldIdx != newIdx;
-
-    state = state.copyWith(
-      selectedPositionIndex: newIdx,
-      selectedCellInPiece: _remapSelectedCell(
-        piece: piece,
-        oldIndex: oldIdx,
-        newIndex: newIdx,
-        oldCell: state.selectedCellInPiece,
-      ),
-      clearPreview: true,
+  /// Applique une rotation 90° horaire
+  void applyIsometryRotationCW() {
+    debugPrint(
+      "ISO: RotCW (view=${state.viewOrientation}) idx=${state.selectedPositionIndex} piece=${state.selectedPiece?.id}",
     );
-
-    final sp = state.selectedPlacedPiece;
-    if (sp != null) {
-      state = state.copyWith(
-        selectedPlacedPiece: sp.copyWith(positionIndex: newIdx),
-      );
-    }
+    _applyIsoUsingLookup((p, idx) => p.rotationCW(idx));
   }
 
   /// Applique une rotation 90° anti-horaire
@@ -94,14 +43,6 @@ class PentominoGameNotifier extends Notifier<PentominoGameState> {
       "ISO: RotTW (view=${state.viewOrientation}) idx=${state.selectedPositionIndex} piece=${state.selectedPiece?.id}",
     );
     _applyIsoUsingLookup((p, idx) => p.rotationTW(idx));
-  }
-
-  /// Applique une rotation 90° horaire
-  void applyIsometryRotationCW() {
-    debugPrint(
-      "ISO: RotCW (view=${state.viewOrientation}) idx=${state.selectedPositionIndex} piece=${state.selectedPiece?.id}",
-    );
-    _applyIsoUsingLookup((p, idx) => p.rotationCW(idx));
   }
 
   /// Applique une symétrie (H/V swap en paysage)
@@ -127,8 +68,9 @@ class PentominoGameNotifier extends Notifier<PentominoGameState> {
       _applyIsoUsingLookup((p, idx) => p.symmetryV(idx));
     }
   }
-
-
+  // ========================================================================
+  // 🆕 GESTION ORIENTATION + ISOMÉTRIES LOOKUP (Pentoscope approach)
+  // ========================================================================
 
   @override
   PentominoGameState build() {
@@ -136,6 +78,13 @@ class PentominoGameNotifier extends Notifier<PentominoGameState> {
     // Calculer le total de solutions au démarrage (plateau vide = 9356)
     final totalSolutions = Plateau.allVisible(6, 10).countPossibleSolutions();
     return initialState.copyWith(solutionsCount: totalSolutions);
+  }
+
+  int calculateScore(int elapsedSeconds) {
+    // Score basé sur rapidité : 100 - (secondes / 2)
+    // Max 100 (< 10 sec), Min 0 (> 200 sec)
+    int score = 100 - (elapsedSeconds ~/ 2);
+    return score.clamp(0, 100);
   }
 
   /// Annule la sélection en cours
@@ -189,7 +138,7 @@ class PentominoGameNotifier extends Notifier<PentominoGameState> {
         clearSelectedCellInPiece: true,
       );
       _recomputeBoardValidity();
-      print('[GAME] ❌ Sélection annulée, pièce replacée sur le plateau');
+
     } else {
       // C'est une pièce du slider, juste annuler la sélection
       state = state.copyWith(
@@ -197,7 +146,7 @@ class PentominoGameNotifier extends Notifier<PentominoGameState> {
         clearSelectedPlacedPiece: true,
         clearSelectedCellInPiece: true,
       );
-      print('[GAME] ❌ Sélection annulée');
+
     }
   }
 
@@ -209,25 +158,27 @@ class PentominoGameNotifier extends Notifier<PentominoGameState> {
   /// Efface la surbrillance du plateau
   void clearBoardHighlight() {
     state = state.copyWith(clearHighlightedBoardPiece: true);
-    print('[TUTORIAL] Surbrillance plateau effacée');
+
   }
 
   /// Efface toutes les surbrillances de cases
   void clearCellHighlights() {
     state = state.copyWith(clearCellHighlights: true);
-    print('[TUTORIAL] Toutes les surbrillances de cases effacées');
+
   }
 
   /// 🆕 Efface la surbrillance des icônes d'isométrie
   void clearIsometryIconHighlight() {
     state = state.copyWith(clearHighlightedIsometryIcon: true);
-    print('[TUTORIAL] Surbrillance icône isométrie effacée');
+
   }
+
+
 
   /// Efface la surbrillance de la mastercase
   void clearMastercaseHighlight() {
     state = state.copyWith(clearHighlightedMastercase: true);
-    print('[TUTORIAL] Surbrillance mastercase effacée');
+
   }
 
   /// Efface la prévisualisation
@@ -240,7 +191,7 @@ class PentominoGameNotifier extends Notifier<PentominoGameState> {
   /// Efface la surbrillance du slider
   void clearSliderHighlight() {
     state = state.copyWith(clearHighlightedSliderPiece: true);
-    print('[TUTORIAL] Surbrillance slider effacée');
+
   }
 
   /// Cycle vers l'orientation suivante de la pièce sélectionnée
@@ -252,9 +203,6 @@ class PentominoGameNotifier extends Notifier<PentominoGameState> {
       final currentIndex = state.selectedPositionIndex;
       final nextIndex = (currentIndex + 1) % piece.numPositions;
 
-      print(
-        '[GAME] 🔄 Cycle orientation : $currentIndex → $nextIndex (sur ${piece.numPositions} positions)',
-      );
 
       // Sauvegarder le nouvel index dans le Map
       final newIndices = Map<int, int>.from(state.piecePositionIndices);
@@ -275,9 +223,6 @@ class PentominoGameNotifier extends Notifier<PentominoGameState> {
       final currentIndex = selectedPiece.positionIndex;
       final nextIndex = (currentIndex + 1) % selectedPiece.piece.numPositions;
 
-      print(
-        '[GAME] 🔄 Cycle orientation pièce placée : $currentIndex → $nextIndex (sur ${selectedPiece.piece.numPositions} positions)',
-      );
 
       // Créer la pièce avec la nouvelle orientation
       final transformedPiece = selectedPiece.copyWith(positionIndex: nextIndex);
@@ -298,14 +243,12 @@ class PentominoGameNotifier extends Notifier<PentominoGameState> {
       return;
     }
 
-    print('[GAME] ⚠️ Aucune pièce sélectionnée pour le cycle');
   }
 
   /// Entre en mode isométries (sauvegarde l'état actuel)
   void enterIsometriesMode() {
     if (state.isIsometriesMode) return; // Déjà en mode isométries
 
-    print('[GAME] 🎓 Entrée en mode isométries');
 
     // Sauvegarder l'état actuel (sans le savedGameState pour éviter la récursion)
     final savedState = PentominoGameState(
@@ -348,20 +291,17 @@ class PentominoGameNotifier extends Notifier<PentominoGameState> {
     // Marquer comme mode tutoriel avec sauvegarde
     state = state.copyWith(savedGameState: savedState, isInTutorial: true);
 
-    print('[TUTORIAL] Mode tutoriel activé, état sauvegardé');
   }
 
   /// Sort du mode isométries (restaure l'état sauvegardé)
   void exitIsometriesMode() {
     if (!state.isIsometriesMode) return; // Pas en mode isométries
     if (state.savedGameState == null) {
-      print(
-        '[GAME] ⚠️ Impossible de sortir du mode isométries : pas d\'état sauvegardé',
-      );
+
       return;
     }
 
-    print('[GAME] 🎓 Sortie du mode isométries');
+
 
     // Restaurer l'état sauvegardé
     state = state.savedGameState!;
@@ -388,7 +328,7 @@ class PentominoGameNotifier extends Notifier<PentominoGameState> {
         clearCellHighlights: true,
         sliderOffset: 0,
       );
-      print('[TUTORIAL] Mode tutoriel quitté, état restauré');
+
     } else {
       // Garder le plateau actuel, juste enlever le flag tutoriel
       state = state.copyWith(
@@ -400,7 +340,7 @@ class PentominoGameNotifier extends Notifier<PentominoGameState> {
         clearCellHighlights: true,
         sliderOffset: 0,
       );
-      print('[TUTORIAL] Mode tutoriel quitté, plateau conservé');
+
     }
   }
 
@@ -422,6 +362,11 @@ class PentominoGameNotifier extends Notifier<PentominoGameState> {
     } catch (e) {
       return null;
     }
+  }
+
+  int getElapsedSeconds() {
+    if (_startTime == null) return 0;
+    return DateTime.now().difference(_startTime!).inSeconds;
   }
 
   /// Trouve la pièce placée à une position donnée
@@ -513,10 +458,6 @@ class PentominoGameNotifier extends Notifier<PentominoGameState> {
     state = state.copyWith(highlightedBoardPiece: pieceNumber);
     print('[TUTORIAL] Pièce $pieceNumber surlignée sur le plateau');
   }
-
-  // ============================================================
-  // 🆕 MÉTHODES TUTORIEL - Ajoutées pour le système Scratch-Pentapol
-  // ============================================================
 
   /// Surligne toutes les positions valides pour la pièce sélectionnée
   void highlightValidPositions(Pento piece, int positionIndex, Color color) {
@@ -680,12 +621,11 @@ class PentominoGameNotifier extends Notifier<PentominoGameState> {
     }
   }
 
-  // ============================================================
-  // HIGHLIGHTS SLIDER
-  // ============================================================
-
   /// Réinitialise le jeu
   void reset() {
+    stopTimer();  // ✨ Arrêter le timer
+    _startTime = null;  // ✨ Réinitialiser
+    _gameTimer = null;  // ✨ Réinitialiser
     state = PentominoGameState.initial();
   }
 
@@ -696,7 +636,7 @@ class PentominoGameNotifier extends Notifier<PentominoGameState> {
   }
 
   // ============================================================
-  // HIGHLIGHTS PLATEAU
+  // 🆕 MÉTHODES TUTORIEL - Ajoutées pour le système Scratch-Pentapol
   // ============================================================
 
   /// 🆕 Restaure un état sauvegardé (utilisé par TutorialProvider au quit)
@@ -730,6 +670,10 @@ class PentominoGameNotifier extends Notifier<PentominoGameState> {
     state = state.copyWith(sliderOffset: targetOffset);
     print('[TUTORIAL] Slider centré sur pièce $pieceNumber');
   }
+
+  // ============================================================
+  // HIGHLIGHTS SLIDER
+  // ============================================================
 
   /// Sélectionne une pièce du slider (commence le drag)
   void selectPiece(Pento piece) {
@@ -797,10 +741,6 @@ class PentominoGameNotifier extends Notifier<PentominoGameState> {
     _recomputeBoardValidity();
   }
 
-  // ============================================================
-  // HIGHLIGHTS DE CASES
-  // ============================================================
-
   /// Sélectionne une pièce du slider avec mastercase explicite
   /// (pour compatibilité Scratch SELECT_PIECE_FROM_SLIDER)
   void selectPieceFromSliderForTutorial(int pieceNumber) {
@@ -813,6 +753,10 @@ class PentominoGameNotifier extends Notifier<PentominoGameState> {
 
     print('[TUTORIAL] Pièce $pieceNumber sélectionnée depuis le slider');
   }
+
+  // ============================================================
+  // HIGHLIGHTS PLATEAU
+  // ============================================================
 
   /// Sélectionne une pièce déjà placée pour la déplacer
   /// [cellX] et [cellY] sont les coordonnées de la case touchée sur le plateau
@@ -977,9 +921,33 @@ class PentominoGameNotifier extends Notifier<PentominoGameState> {
     );
   }
 
+  /// Enregistre l'orientation de la vue (portrait/landscape)
+  void setViewOrientation(bool isLandscape) {
+    final orientation =
+    isLandscape ? ViewOrientation.landscape : ViewOrientation.portrait;
+    state = state.copyWith(viewOrientation: orientation);
+  }
+
   // ============================================================
-  // CONTRÔLE DU SLIDER
+  // HIGHLIGHTS DE CASES
   // ============================================================
+
+  void startTimer() {
+    if (_startTime != null) return;
+    print('🚀 TIMER STARTED!');  // ← AJOUTER
+    _startTime = DateTime.now();
+    _gameTimer = Timer.periodic(Duration(milliseconds: 100), (_) {
+      // ✨ Mettre à jour elapsedSeconds
+      state = state.copyWith(
+        elapsedSeconds: getElapsedSeconds(),
+      );
+    });
+  }
+
+  void stopTimer() {
+    _gameTimer?.cancel();
+    _gameTimer = null;
+  }
 
   /// Tente de placer la pièce sélectionnée sur le plateau
   /// [gridX] et [gridY] sont les coordonnées où on lâche la pièce (position du doigt)
@@ -1143,6 +1111,12 @@ class PentominoGameNotifier extends Notifier<PentominoGameState> {
       print('[GAME] ✅ Pièce ${piece.id} placée à ($anchorX, $anchorY)');
       print('[GAME] Pièces restantes: ${newAvailable.length}');
       print('[GAME] 🎯 Solutions possibles: $solutionsCount');
+
+      // ✨ NOUVEAU: Si puzzle complet, arrêter le timer
+      if (newAvailable.isEmpty) {
+        stopTimer();
+        print('[GAME] 🎉 Puzzle complété! Temps: ${getElapsedSeconds()} secondes');
+      }
     }
 
     return true;
@@ -1201,6 +1175,10 @@ class PentominoGameNotifier extends Notifier<PentominoGameState> {
     }
   }
 
+  // ============================================================
+  // CONTRÔLE DU SLIDER
+  // ============================================================
+
   /// Met à jour la prévisualisation du placement pendant le drag
   /// AVEC SNAP INTELLIGENT
   void updatePreview(int gridX, int gridY) {
@@ -1241,10 +1219,34 @@ class PentominoGameNotifier extends Notifier<PentominoGameState> {
     }
   }
 
-  // ============================================================
-  // UTILITAIRES TUTORIEL
-  // ============================================================
+  /// Applique une transformation isométrique via lookup
+  void _applyIsoUsingLookup(int Function(Pento p, int idx) f) {
+    final piece = state.selectedPiece;
+    if (piece == null) return;
+    final oldIdx = state.selectedPositionIndex;
+    final newIdx = f(piece, oldIdx);
 
+    // Vérifier si l'index a vraiment changé
+    final didChange = oldIdx != newIdx;
+
+    state = state.copyWith(
+      selectedPositionIndex: newIdx,
+      selectedCellInPiece: _remapSelectedCell(
+        piece: piece,
+        oldIndex: oldIdx,
+        newIndex: newIdx,
+        oldCell: state.selectedCellInPiece,
+      ),
+      clearPreview: true,
+    );
+
+    final sp = state.selectedPlacedPiece;
+    if (sp != null) {
+      state = state.copyWith(
+        selectedPlacedPiece: sp.copyWith(positionIndex: newIdx),
+      );
+    }
+  }
 
   /// Calcule la nouvelle position locale de la master case après une transformation
   /// [centerX], [centerY] : coordonnées absolues de la master case (fixe)
@@ -1259,6 +1261,12 @@ class PentominoGameNotifier extends Notifier<PentominoGameState> {
     final newLocalY = centerY - newGridY;
     return Point(newLocalX, newLocalY);
   }
+
+  // ============================================================
+  // UTILITAIRES TUTORIEL
+  // ============================================================
+
+
   /// Vérifie si une pièce peut être placée à une position donnée
   /// Utilisé après une transformation géométrique
   bool _canPlacePieceAt(ShapeMatch match, PlacedPiece? excludePiece) {
@@ -1285,7 +1293,6 @@ class PentominoGameNotifier extends Notifier<PentominoGameState> {
 
     return true;
   }
-
   /// Calcule le nombre de solutions possibles avec une pièce transformée
   /// Crée temporairement un plateau avec toutes les pièces incluant la transformée
   int? _computeSolutionsWithTransformedPiece(PlacedPiece transformedPiece) {
@@ -1397,6 +1404,30 @@ class PentominoGameNotifier extends Notifier<PentominoGameState> {
       overlappingCells: overlapping,
       offBoardCells: offBoard,
     );
+  }
+
+  /// Remapping de la cellule de référence lors d'une isométrie
+  Point? _remapSelectedCell({
+    required Pento piece,
+    required int oldIndex,
+    required int newIndex,
+    required Point? oldCell,
+  }) {
+    if (oldCell == null) return null;
+
+    final oldPos = piece.positions[oldIndex];
+    final newPos = piece.positions[newIndex];
+
+    // Trouver la cellule correspondante dans la nouvelle position
+    if (oldPos.isNotEmpty && newPos.isNotEmpty) {
+      final cellNum = oldPos[0]; // Référence : première cellule
+      if (newPos.contains(cellNum)) {
+        final localX = (cellNum - 1) % 5;
+        final localY = (cellNum - 1) ~/ 5;
+        return Point(localX, localY);
+      }
+    }
+    return null;
   }
 
 
