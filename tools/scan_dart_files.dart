@@ -11,15 +11,15 @@ class DartFilesScanner {
   final List<Map<String, String>> dartFiles = [];
 
   Future<void> run() async {
-    printf('${COLOR_BOLD}=== Scanner des fichiers .dart ===${COLOR_RESET}\n\n');
+    printf('$COLOR_BOLD=== Scanner des fichiers .dart ===$COLOR_RESET\n\n');
 
     final libDir = Directory(LIB_PATH);
     if (!libDir.existsSync()) {
-      printf('${COLOR_RED}✗ Répertoire $LIB_PATH/ non trouvé${COLOR_RESET}\n');
+      printf('$COLOR_RED✗ Répertoire $LIB_PATH/ non trouvé$COLOR_RESET\n');
       exit(1);
     }
 
-    printf('${COLOR_YELLOW}Scanning...${COLOR_RESET}\n');
+    printf('${COLOR_YELLOW}Scanning...$COLOR_RESET\n');
 
     final allFiles = libDir
         .listSync(recursive: true, followLinks: false)
@@ -47,14 +47,14 @@ class DartFilesScanner {
       });
     }
 
-    printf('${COLOR_GREEN}✓ ${dartFiles.length} fichiers trouvés${COLOR_RESET}\n\n');
+    printf('$COLOR_GREEN✓ ${dartFiles.length} fichiers trouvés$COLOR_RESET\n\n');
 
     _printSummary();
     await _exportCsv();
   }
 
   void _printSummary() {
-    printf('${COLOR_BOLD}=== Résumé par répertoire ===${COLOR_RESET}\n\n');
+    printf('$COLOR_BOLD=== Résumé par répertoire ===$COLOR_RESET\n\n');
 
     final byDir = <String, List<Map<String, String>>>{};
     int totalSize = 0;
@@ -68,12 +68,12 @@ class DartFilesScanner {
     for (final dir in byDir.keys.toList()..sort()) {
       final files = byDir[dir]!;
       final dirSize = files.fold<int>(0, (sum, f) => sum + int.parse(f['sizeBytes']!));
-      printf('${COLOR_YELLOW}$dir${COLOR_RESET}: ${files.length} fichiers (${_formatSize(dirSize)})\n');
+      printf('$COLOR_YELLOW$dir$COLOR_RESET: ${files.length} fichiers (${_formatSize(dirSize)})\n');
     }
 
-    printf('\n${COLOR_BOLD}=== Total ===${COLOR_RESET}\n');
-    printf('Fichiers: ${COLOR_BOLD}${dartFiles.length}${COLOR_RESET}\n');
-    printf('Taille: ${COLOR_BOLD}${_formatSize(totalSize)}${COLOR_RESET}\n\n');
+    printf('\n$COLOR_BOLD=== Total ===$COLOR_RESET\n');
+    printf('Fichiers: $COLOR_BOLD${dartFiles.length}$COLOR_RESET\n');
+    printf('Taille: $COLOR_BOLD${_formatSize(totalSize)}$COLOR_RESET\n\n');
   }
 
   Future<void> _exportCsv() async {
@@ -87,7 +87,7 @@ class DartFilesScanner {
     }
 
     await File(CSV_DARTFILES).writeAsString(buffer.toString());
-    printf('${COLOR_GREEN}✓ Export CSV: ${COLOR_BOLD}$CSV_DARTFILES${COLOR_RESET}\n');
+    printf('$COLOR_GREEN✓ Export CSV: $COLOR_BOLD$CSV_DARTFILES$COLOR_RESET\n');
   }
 
   String _formatSize(int bytes) {
@@ -103,7 +103,7 @@ Future<void> main(List<String> args) async {
   try {
     await DartFilesScanner().run();
   } catch (e) {
-    printf('${COLOR_RED}✗ Erreur: $e${COLOR_RESET}\n');
+    printf('$COLOR_RED✗ Erreur: $e$COLOR_RESET\n');
     exit(1);
   }
 }

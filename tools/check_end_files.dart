@@ -11,19 +11,19 @@ class EndFilesChecker {
   final List<Map<String, String>> endFiles = [];
 
   Future<void> run() async {
-    printf('${COLOR_BOLD}=== Vérification des fichiers sans dépendances internes ===${COLOR_RESET}\n\n');
+    printf('$COLOR_BOLD=== Vérification des fichiers sans dépendances internes ===$COLOR_RESET\n\n');
 
     if (!File(DB_FULL_PATH).existsSync()) {
-      printf('${COLOR_RED}✗ Base de données non trouvée: $DB_FULL_PATH${COLOR_RESET}\n');
+      printf('$COLOR_RED✗ Base de données non trouvée: $DB_FULL_PATH$COLOR_RESET\n');
       exit(1);
     }
 
-    printf('${COLOR_YELLOW}Interrogation de la base de données...${COLOR_RESET}\n');
+    printf('${COLOR_YELLOW}Interrogation de la base de données...$COLOR_RESET\n');
 
     final result = await _querySqlite();
 
     if (result.isEmpty) {
-      printf('${COLOR_GREEN}✓ Tous les fichiers importent au moins un dart${COLOR_RESET}\n');
+      printf('$COLOR_GREEN✓ Tous les fichiers importent au moins un dart$COLOR_RESET\n');
       exit(0);
     }
 
@@ -40,7 +40,7 @@ class EndFilesChecker {
       });
     }
 
-    printf('${COLOR_GREEN}✓ ${endFiles.length} fichier(s) sans dépendances${COLOR_RESET}\n\n');
+    printf('$COLOR_GREEN✓ ${endFiles.length} fichier(s) sans dépendances$COLOR_RESET\n\n');
 
     _printByDirectory();
     await _exportCsv();
@@ -69,19 +69,19 @@ ORDER BY df.first_dir, df.filename;
       );
 
       if (process.exitCode != 0) {
-        printf('${COLOR_RED}✗ Erreur sqlite3: ${process.stderr}${COLOR_RESET}\n');
+        printf('$COLOR_RED✗ Erreur sqlite3: ${process.stderr}$COLOR_RESET\n');
         exit(1);
       }
 
       return process.stdout as String;
     } catch (e) {
-      printf('${COLOR_RED}✗ Erreur: $e${COLOR_RESET}\n');
+      printf('$COLOR_RED✗ Erreur: $e$COLOR_RESET\n');
       exit(1);
     }
   }
 
   void _printByDirectory() {
-    printf('${COLOR_BOLD}=== Fichiers sans dépendances par répertoire ===${COLOR_RESET}\n\n');
+    printf('$COLOR_BOLD=== Fichiers sans dépendances par répertoire ===$COLOR_RESET\n\n');
 
     final byDir = <String, List<Map<String, String>>>{};
     for (final file in endFiles) {
@@ -91,15 +91,15 @@ ORDER BY df.first_dir, df.filename;
 
     for (final dir in byDir.keys.toList()..sort()) {
       final files = byDir[dir]!;
-      printf('${COLOR_YELLOW}$dir${COLOR_RESET} (${files.length} fichiers)\n');
+      printf('$COLOR_YELLOW$dir$COLOR_RESET (${files.length} fichiers)\n');
       for (final file in files) {
         printf('  • [${file['dart_id']}] ${file['relative_path']}\n');
       }
       printf('\n');
     }
 
-    printf('${COLOR_BOLD}=== Total ===${COLOR_RESET}\n');
-    printf('Fichiers sans dépendances: ${COLOR_BOLD}${endFiles.length}${COLOR_RESET}\n\n');
+    printf('$COLOR_BOLD=== Total ===$COLOR_RESET\n');
+    printf('Fichiers sans dépendances: $COLOR_BOLD${endFiles.length}$COLOR_RESET\n\n');
   }
 
   Future<void> _exportCsv() async {
@@ -113,7 +113,7 @@ ORDER BY df.first_dir, df.filename;
     }
 
     await File(CSV_ENDFILES).writeAsString(buffer.toString());
-    printf('${COLOR_GREEN}✓ Export CSV: ${COLOR_BOLD}$CSV_ENDFILES${COLOR_RESET}\n');
+    printf('$COLOR_GREEN✓ Export CSV: $COLOR_BOLD$CSV_ENDFILES$COLOR_RESET\n');
   }
 }
 
@@ -123,7 +123,7 @@ Future<void> main(List<String> args) async {
   try {
     await EndFilesChecker().run();
   } catch (e) {
-    printf('${COLOR_RED}✗ Erreur: $e${COLOR_RESET}\n');
+    printf('$COLOR_RED✗ Erreur: $e$COLOR_RESET\n');
     exit(1);
   }
 }

@@ -186,7 +186,7 @@ List<String> _extractPublicApiStrict(
 
   // Une signature "int foo(" ou "foo(" ou "Future<T> foo(" etc.
   // On capture le dernier identifiant avant '('
-  final callLikeRegex = RegExp(r'([A-Za-z_$][A-Za-z0-9_$]*)\s*\(');
+
 
   // Getter
   final getterRegex = RegExp(r'\bget\s+([A-Za-z_$][A-Za-z0-9_$]*)\b');
@@ -394,8 +394,8 @@ class _Args {
     }
 
     return _Args(
-      dbPath: db!,
-      rootPath: root!,
+      dbPath: db,
+      rootPath: root,
       outCsvPath: out,
       includeGenerated: includeGen,
       includeCtors: includeCtors,

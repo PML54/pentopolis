@@ -7,8 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pentapol/common/pentominos.dart';
 import 'package:pentapol/pentoscope/pentoscope_provider.dart';
-import 'package:pentapol/pentoscope/pentoscope_solver.dart'
-    show SolverPlacement, Solution;
+
 import 'package:pentapol/providers/settings_provider.dart';
 import 'package:pentapol/screens/pentomino_game/widgets/shared/piece_border_calculator.dart';
 import 'package:pentapol/screens/pentomino_game/widgets/shared/piece_renderer.dart';
@@ -693,7 +692,7 @@ class PentoscopeBoard extends ConsumerWidget {
     return _getSolutionPieceIdAt(state, logicalX, logicalY) != null;
   }
   void _showVictoryDialog(BuildContext context, WidgetRef ref) {
-    final state = ref.read(pentoscopeProvider);
+
 
     showDialog(
       context: context,

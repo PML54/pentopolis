@@ -11,21 +11,21 @@ class OrphanFilesChecker {
   final List<Map<String, String>> orphanFiles = [];
 
   Future<void> run() async {
-    printf('${COLOR_BOLD}=== Vérification des fichiers orphelins ===${COLOR_RESET}\n\n');
+    printf('$COLOR_BOLD=== Vérification des fichiers orphelins ===$COLOR_RESET\n\n');
 
     // Vérifier que la DB existe
     if (!File(DB_FULL_PATH).existsSync()) {
-      printf('${COLOR_RED}✗ Base de données non trouvée: $DB_FULL_PATH${COLOR_RESET}\n');
+      printf('$COLOR_RED✗ Base de données non trouvée: $DB_FULL_PATH$COLOR_RESET\n');
       exit(1);
     }
 
-    printf('${COLOR_YELLOW}Interrogation de la base de données...${COLOR_RESET}\n');
+    printf('${COLOR_YELLOW}Interrogation de la base de données...$COLOR_RESET\n');
 
     // Lancer la requête SQL
     final result = await _querySqlite();
 
     if (result.isEmpty) {
-      printf('${COLOR_GREEN}✓ Aucun fichier orphelin détecté${COLOR_RESET}\n');
+      printf('$COLOR_GREEN✓ Aucun fichier orphelin détecté$COLOR_RESET\n');
       exit(0);
     }
 
@@ -44,7 +44,7 @@ class OrphanFilesChecker {
       });
     }
 
-    printf('${COLOR_GREEN}✓ ${orphanFiles.length} fichier(s) orphelin(s) trouvé(s)${COLOR_RESET}\n\n');
+    printf('$COLOR_GREEN✓ ${orphanFiles.length} fichier(s) orphelin(s) trouvé(s)$COLOR_RESET\n\n');
 
     // Afficher par répertoire
     _printByDirectory();
@@ -80,19 +80,19 @@ ORDER BY df.first_dir, df.filename;
       );
 
       if (process.exitCode != 0) {
-        printf('${COLOR_RED}✗ Erreur sqlite3: ${process.stderr}${COLOR_RESET}\n');
+        printf('$COLOR_RED✗ Erreur sqlite3: ${process.stderr}$COLOR_RESET\n');
         exit(1);
       }
 
       return process.stdout as String;
     } catch (e) {
-      printf('${COLOR_RED}✗ Erreur: $e${COLOR_RESET}\n');
+      printf('$COLOR_RED✗ Erreur: $e$COLOR_RESET\n');
       exit(1);
     }
   }
 
   void _printByDirectory() {
-    printf('${COLOR_BOLD}=== Fichiers orphelins par répertoire ===${COLOR_RESET}\n\n');
+    printf('$COLOR_BOLD=== Fichiers orphelins par répertoire ===$COLOR_RESET\n\n');
 
     final byDir = <String, List<Map<String, String>>>{};
     for (final file in orphanFiles) {
@@ -103,7 +103,7 @@ ORDER BY df.first_dir, df.filename;
     for (final dir in byDir.keys.toList()..sort()) {
       final files = byDir[dir]!;
 
-      printf('${COLOR_YELLOW}$dir${COLOR_RESET} (${files.length} fichiers)\n');
+      printf('$COLOR_YELLOW$dir$COLOR_RESET (${files.length} fichiers)\n');
       for (final file in files) {
         final path = file['relative_path'];
         final dartId = file['dart_id'];
@@ -112,8 +112,8 @@ ORDER BY df.first_dir, df.filename;
       printf('\n');
     }
 
-    printf('${COLOR_BOLD}=== Total ===${COLOR_RESET}\n');
-    printf('Fichiers orphelins: ${COLOR_BOLD}${orphanFiles.length}${COLOR_RESET}\n\n');
+    printf('$COLOR_BOLD=== Total ===$COLOR_RESET\n');
+    printf('Fichiers orphelins: $COLOR_BOLD${orphanFiles.length}$COLOR_RESET\n\n');
   }
 
   Future<void> _exportCsv() async {
@@ -139,7 +139,7 @@ ORDER BY df.first_dir, df.filename;
     }
 
     await csvFile.writeAsString(buffer.toString());
-    printf('${COLOR_GREEN}✓ Export CSV: ${COLOR_BOLD}$CSV_ORPHANFILES${COLOR_RESET}\n');
+    printf('$COLOR_GREEN✓ Export CSV: $COLOR_BOLD$CSV_ORPHANFILES$COLOR_RESET\n');
   }
 }
 
@@ -152,7 +152,7 @@ Future<void> main(List<String> args) async {
     final checker = OrphanFilesChecker();
     await checker.run();
   } catch (e) {
-    printf('${COLOR_RED}✗ Erreur: $e${COLOR_RESET}\n');
+    printf('$COLOR_RED✗ Erreur: $e$COLOR_RESET\n');
     exit(1);
   }
 }

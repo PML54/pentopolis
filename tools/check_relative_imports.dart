@@ -12,15 +12,15 @@ class RelativeImportsChecker {
   int totalRelative = 0;
 
   Future<void> run() async {
-    printf('${COLOR_BOLD}=== Vérification des imports relatifs ===${COLOR_RESET}\n\n');
+    printf('$COLOR_BOLD=== Vérification des imports relatifs ===$COLOR_RESET\n\n');
 
     final libDir = Directory(LIB_PATH);
     if (!libDir.existsSync()) {
-      printf('${COLOR_RED}✗ Répertoire $LIB_PATH/ non trouvé${COLOR_RESET}\n');
+      printf('$COLOR_RED✗ Répertoire $LIB_PATH/ non trouvé$COLOR_RESET\n');
       exit(1);
     }
 
-    printf('${COLOR_YELLOW}Scanning des imports relatifs...${COLOR_RESET}\n\n');
+    printf('${COLOR_YELLOW}Scanning des imports relatifs...$COLOR_RESET\n\n');
 
     final allFiles = libDir
         .listSync(recursive: true, followLinks: false)
@@ -32,11 +32,11 @@ class RelativeImportsChecker {
     }
 
     if (relativeImports.isEmpty) {
-      printf('${COLOR_GREEN}✓ Aucun import relatif détecté - Parfait !${COLOR_RESET}\n');
+      printf('$COLOR_GREEN✓ Aucun import relatif détecté - Parfait !$COLOR_RESET\n');
       return;
     }
 
-    printf('${COLOR_RED}✗ ${totalRelative} import(s) relatif(s) trouvé(s)${COLOR_RESET}\n\n');
+    printf('$COLOR_RED✗ $totalRelative import(s) relatif(s) trouvé(s)$COLOR_RESET\n\n');
 
     _printByFile();
     await _exportCsv();
@@ -80,27 +80,27 @@ class RelativeImportsChecker {
   }
 
   void _printByFile() {
-    printf('${COLOR_BOLD}=== Imports relatifs par fichier ===${COLOR_RESET}\n\n');
+    printf('$COLOR_BOLD=== Imports relatifs par fichier ===$COLOR_RESET\n\n');
 
     for (final entry in relativeImports.entries.toList()..sort((a, b) => a.key.compareTo(b.key))) {
       final filePath = entry.key;
       final imports = entry.value;
 
-      printf('${COLOR_RED}${filePath}${COLOR_RESET} (${imports.length} relatif(s))\n');
+      printf('$COLOR_RED$filePath$COLOR_RESET (${imports.length} relatif(s))\n');
       for (final imp in imports) {
         final line = imp['line_number'];
         final path = imp['import_path'];
-        printf('  ${COLOR_YELLOW}⚠${COLOR_RESET} Ligne $line: $path\n');
+        printf('  $COLOR_YELLOW⚠$COLOR_RESET Ligne $line: $path\n');
       }
       printf('\n');
     }
 
-    printf('${COLOR_BOLD}=== Total ===${COLOR_RESET}\n');
-    printf('Fichiers affectés: ${COLOR_BOLD}${relativeImports.length}${COLOR_RESET}\n');
-    printf('Imports relatifs: ${COLOR_BOLD}$totalRelative${COLOR_RESET}\n\n');
+    printf('$COLOR_BOLD=== Total ===$COLOR_RESET\n');
+    printf('Fichiers affectés: $COLOR_BOLD${relativeImports.length}$COLOR_RESET\n');
+    printf('Imports relatifs: $COLOR_BOLD$totalRelative$COLOR_RESET\n\n');
 
-    printf('${COLOR_YELLOW}💡 Conseil: Remplacer les imports relatifs par des imports absolus package:$PACKAGE_NAME/${COLOR_RESET}\n');
-    printf("${COLOR_YELLOW}   Exemple: import 'package:$PACKAGE_NAME/pentoscope/game.dart';${COLOR_RESET}\n\n");
+    printf('$COLOR_YELLOW💡 Conseil: Remplacer les imports relatifs par des imports absolus package:$PACKAGE_NAME/$COLOR_RESET\n');
+    printf("$COLOR_YELLOW   Exemple: import 'package:$PACKAGE_NAME/pentoscope/game.dart';$COLOR_RESET\n\n");
   }
 
   Future<void> _exportCsv() async {
@@ -119,9 +119,9 @@ class RelativeImportsChecker {
       }
     }
 
-    final csvFile = File('${CSV_PATH}/pentapol_relative_imports.csv');
+    final csvFile = File('$CSV_PATH/pentapol_relative_imports.csv');
     await csvFile.writeAsString(buffer.toString());
-    printf('${COLOR_GREEN}✓ Export CSV: ${COLOR_BOLD}${CSV_PATH}/pentapol_relative_imports.csv${COLOR_RESET}\n');
+    printf('$COLOR_GREEN✓ Export CSV: $COLOR_BOLD$CSV_PATH/pentapol_relative_imports.csv$COLOR_RESET\n');
   }
 }
 
@@ -131,7 +131,7 @@ Future<void> main(List<String> args) async {
   try {
     await RelativeImportsChecker().run();
   } catch (e) {
-    printf('${COLOR_RED}✗ Erreur: $e${COLOR_RESET}\n');
+    printf('$COLOR_RED✗ Erreur: $e$COLOR_RESET\n');
     exit(1);
   }
 }

@@ -11,23 +11,23 @@ class DartDocumentationGenerator {
   final Map<String, DartFileDoc> fileDocumentation = {};
 
   Future<void> run() async {
-    printf('${COLOR_BOLD}=== Génération de la documentation ===${COLOR_RESET}\n\n');
+    printf('$COLOR_BOLD=== Génération de la documentation ===$COLOR_RESET\n\n');
 
     final libDir = Directory(LIB_PATH);
     if (!libDir.existsSync()) {
-      printf('${COLOR_RED}✗ Répertoire $LIB_PATH/ non trouvé${COLOR_RESET}\n');
+      printf('$COLOR_RED✗ Répertoire $LIB_PATH/ non trouvé$COLOR_RESET\n');
       exit(1);
     }
 
     // Nettoyer le répertoire docs s'il existe
     final docsDir = Directory(DOCS_PATH);
     if (docsDir.existsSync()) {
-      printf('${COLOR_YELLOW}Nettoyage des anciens fichiers...${COLOR_RESET}\n');
+      printf('${COLOR_YELLOW}Nettoyage des anciens fichiers...$COLOR_RESET\n');
       docsDir.deleteSync(recursive: true);
-      printf('${COLOR_GREEN}✓ Répertoire $DOCS_PATH/ vidé${COLOR_RESET}\n\n');
+      printf('$COLOR_GREEN✓ Répertoire $DOCS_PATH/ vidé$COLOR_RESET\n\n');
     }
 
-    printf('${COLOR_YELLOW}Scan des fichiers .dart...${COLOR_RESET}\n');
+    printf('${COLOR_YELLOW}Scan des fichiers .dart...$COLOR_RESET\n');
 
     final dartFiles = libDir
         .listSync(recursive: true, followLinks: false)
@@ -38,7 +38,7 @@ class DartDocumentationGenerator {
       await extractDocumentation(dartFile);
     }
 
-    printf('${COLOR_GREEN}✓ ${fileDocumentation.length} fichiers documentés${COLOR_RESET}\n\n');
+    printf('$COLOR_GREEN✓ ${fileDocumentation.length} fichiers documentés$COLOR_RESET\n\n');
 
     docsDir.createSync(recursive: true);
 
@@ -103,7 +103,7 @@ class DartDocumentationGenerator {
   }
 
   Future<void> _generateMarkdownFiles() async {
-    printf('${COLOR_YELLOW}Génération des fichiers Markdown...${COLOR_RESET}\n\n');
+    printf('${COLOR_YELLOW}Génération des fichiers Markdown...$COLOR_RESET\n\n');
 
     for (final entry in fileDocumentation.entries) {
       final relativePath = entry.key;
@@ -116,14 +116,14 @@ class DartDocumentationGenerator {
       mdFile.parent.createSync(recursive: true);
       await mdFile.writeAsString(mdContent);
 
-      printf('  ${COLOR_GREEN}✓${COLOR_RESET} $relativePath\n');
+      printf('  $COLOR_GREEN✓$COLOR_RESET $relativePath\n');
     }
 
     printf('\n');
   }
 
   Future<void> _generateIndex() async {
-    printf('${COLOR_YELLOW}Génération de l\'INDEX...${COLOR_RESET}\n');
+    printf('${COLOR_YELLOW}Génération de l\'INDEX...$COLOR_RESET\n');
 
     final buffer = StringBuffer();
     buffer.writeln('# $APP_NAME - Documentation\n');
@@ -159,7 +159,7 @@ class DartDocumentationGenerator {
     }
 
     await File('$DOCS_PATH/INDEX.md').writeAsString(buffer.toString());
-    printf('${COLOR_GREEN}✓ INDEX.md généré${COLOR_RESET}\n\n');
+    printf('$COLOR_GREEN✓ INDEX.md généré$COLOR_RESET\n\n');
   }
 }
 
@@ -210,7 +210,7 @@ Future<void> main(List<String> args) async {
   try {
     await DartDocumentationGenerator().run();
   } catch (e) {
-    printf('${COLOR_RED}✗ Erreur: $e${COLOR_RESET}\n');
+    printf('$COLOR_RED✗ Erreur: $e$COLOR_RESET\n');
     exit(1);
   }
 }

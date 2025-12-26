@@ -12,15 +12,15 @@ class ImportsExtractor {
   int totalImports = 0;
 
   Future<void> run() async {
-    printf('${COLOR_BOLD}=== Extraction des imports ===${COLOR_RESET}\n\n');
+    printf('$COLOR_BOLD=== Extraction des imports ===$COLOR_RESET\n\n');
 
     final libDir = Directory(LIB_PATH);
     if (!libDir.existsSync()) {
-      printf('${COLOR_RED}✗ Répertoire $LIB_PATH/ non trouvé${COLOR_RESET}\n');
+      printf('$COLOR_RED✗ Répertoire $LIB_PATH/ non trouvé$COLOR_RESET\n');
       exit(1);
     }
 
-    printf('${COLOR_YELLOW}Scanning des imports...${COLOR_RESET}\n');
+    printf('${COLOR_YELLOW}Scanning des imports...$COLOR_RESET\n');
 
     final allFiles = libDir
         .listSync(recursive: true, followLinks: false)
@@ -31,8 +31,8 @@ class ImportsExtractor {
       await extractImportsFromFile(file);
     }
 
-    printf('${COLOR_GREEN}✓ ${importsByFile.length} fichiers avec imports${COLOR_RESET}\n');
-    printf('${COLOR_GREEN}✓ ${totalImports} imports trouvés${COLOR_RESET}\n\n');
+    printf('$COLOR_GREEN✓ ${importsByFile.length} fichiers avec imports$COLOR_RESET\n');
+    printf('$COLOR_GREEN✓ $totalImports imports trouvés$COLOR_RESET\n\n');
 
     _printSummary();
     await _exportCsv();
@@ -70,7 +70,7 @@ class ImportsExtractor {
   }
 
   void _printSummary() {
-    printf('${COLOR_BOLD}=== Top 10 des fichiers les plus importants ===${COLOR_RESET}\n\n');
+    printf('$COLOR_BOLD=== Top 10 des fichiers les plus importants ===$COLOR_RESET\n\n');
 
     final sorted = importsByFile.entries.toList()
       ..sort((a, b) => b.value.length.compareTo(a.value.length));
@@ -78,7 +78,7 @@ class ImportsExtractor {
     int count = 0;
     for (final entry in sorted) {
       if (count >= 10) break;
-      printf('${COLOR_YELLOW}${entry.key}${COLOR_RESET} (${entry.value.length} imports)\n');
+      printf('$COLOR_YELLOW${entry.key}$COLOR_RESET (${entry.value.length} imports)\n');
       for (final imp in entry.value.take(3)) {
         printf('  → $imp\n');
       }
@@ -89,10 +89,10 @@ class ImportsExtractor {
       count++;
     }
 
-    printf('${COLOR_BOLD}=== Total ===${COLOR_RESET}\n');
-    printf('Fichiers: ${COLOR_BOLD}${importsByFile.length}${COLOR_RESET}\n');
-    printf('Imports: ${COLOR_BOLD}$totalImports${COLOR_RESET}\n');
-    printf('Moyenne: ${COLOR_BOLD}${(totalImports / importsByFile.length).toStringAsFixed(1)}${COLOR_RESET}\n\n');
+    printf('$COLOR_BOLD=== Total ===$COLOR_RESET\n');
+    printf('Fichiers: $COLOR_BOLD${importsByFile.length}$COLOR_RESET\n');
+    printf('Imports: $COLOR_BOLD$totalImports$COLOR_RESET\n');
+    printf('Moyenne: $COLOR_BOLD${(totalImports / importsByFile.length).toStringAsFixed(1)}$COLOR_RESET\n\n');
   }
 
   Future<void> _exportCsv() async {
@@ -108,7 +108,7 @@ class ImportsExtractor {
     }
 
     await File(CSV_IMPORTS).writeAsString(buffer.toString());
-    printf('${COLOR_GREEN}✓ Export CSV: ${COLOR_BOLD}$CSV_IMPORTS${COLOR_RESET}\n');
+    printf('$COLOR_GREEN✓ Export CSV: $COLOR_BOLD$CSV_IMPORTS$COLOR_RESET\n');
   }
 }
 
@@ -118,7 +118,7 @@ Future<void> main(List<String> args) async {
   try {
     await ImportsExtractor().run();
   } catch (e) {
-    printf('${COLOR_RED}✗ Erreur: $e${COLOR_RESET}\n');
+    printf('$COLOR_RED✗ Erreur: $e$COLOR_RESET\n');
     exit(1);
   }
 }

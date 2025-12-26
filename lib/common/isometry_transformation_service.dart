@@ -3,11 +3,10 @@
 // Service de transformation pour isométries (rotations, symétries)
 // CHANGEMENTS: (1) Service réutilisable pour Isopento et Pentoscope
 
-import 'package:pentapol/common/placed_piece.dart';
+
 import 'package:pentapol/common/pentominos.dart';
 import 'package:pentapol/common/plateau.dart';
-import 'package:pentapol/common/point.dart';
-import 'package:pentapol/common/shape_recognizer.dart';
+
 
 /// Service de transformation des isométries (rotations, symétries)
 ///

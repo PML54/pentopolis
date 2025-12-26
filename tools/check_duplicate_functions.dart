@@ -13,19 +13,19 @@ class DuplicateFunctionsChecker {
   int totalDuplicates = 0;
 
   Future<void> run() async {
-    printf('${COLOR_BOLD}=== Détection des fonctions dupliquées ===${COLOR_RESET}\n\n');
+    printf('$COLOR_BOLD=== Détection des fonctions dupliquées ===$COLOR_RESET\n\n');
 
     if (!File(DB_FULL_PATH).existsSync()) {
-      printf('${COLOR_RED}✗ Base de données non trouvée: $DB_FULL_PATH${COLOR_RESET}\n');
+      printf('$COLOR_RED✗ Base de données non trouvée: $DB_FULL_PATH$COLOR_RESET\n');
       exit(1);
     }
 
-    printf('${COLOR_YELLOW}Interrogation de la base de données...${COLOR_RESET}\n');
+    printf('${COLOR_YELLOW}Interrogation de la base de données...$COLOR_RESET\n');
 
     final result = await _querySqlite();
 
     if (result.isEmpty) {
-      printf('${COLOR_GREEN}✓ Aucune fonction dupliquée détectée${COLOR_RESET}\n');
+      printf('$COLOR_GREEN✓ Aucune fonction dupliquée détectée$COLOR_RESET\n');
       exit(0);
     }
 
@@ -52,8 +52,8 @@ class DuplicateFunctionsChecker {
       totalDuplicates++;
     }
 
-    printf('${COLOR_GREEN}✓ ${functionsByName.length} fonction(s) dupliquée(s) trouvée(s)${COLOR_RESET}\n');
-    printf('${COLOR_GREEN}✓ ${totalDuplicates} occurrence(s) totales${COLOR_RESET}\n\n');
+    printf('$COLOR_GREEN✓ ${functionsByName.length} fonction(s) dupliquée(s) trouvée(s)$COLOR_RESET\n');
+    printf('$COLOR_GREEN✓ $totalDuplicates occurrence(s) totales$COLOR_RESET\n\n');
 
     _printSummary();
     await _insertIntoDb();
@@ -81,23 +81,23 @@ ORDER BY f.function_name, df.relative_path;
       );
 
       if (process.exitCode != 0) {
-        printf('${COLOR_RED}✗ Erreur sqlite3: ${process.stderr}${COLOR_RESET}\n');
+        printf('$COLOR_RED✗ Erreur sqlite3: ${process.stderr}$COLOR_RESET\n');
         exit(1);
       }
 
       return process.stdout as String;
     } catch (e) {
-      printf('${COLOR_RED}✗ Erreur: $e${COLOR_RESET}\n');
+      printf('$COLOR_RED✗ Erreur: $e$COLOR_RESET\n');
       exit(1);
     }
   }
 
   void _printSummary() {
-    printf('${COLOR_BOLD}=== Fonctions dupliquées ===${COLOR_RESET}\n\n');
+    printf('$COLOR_BOLD=== Fonctions dupliquées ===$COLOR_RESET\n\n');
 
     for (final funcName in functionsByName.keys.toList()..sort()) {
       final occurrences = functionsByName[funcName]!;
-      printf('${COLOR_YELLOW}$funcName${COLOR_RESET} (${occurrences.length} fichiers)\n');
+      printf('$COLOR_YELLOW$funcName$COLOR_RESET (${occurrences.length} fichiers)\n');
 
       for (final occ in occurrences) {
         printf('  • [${occ['dart_id']}] ${occ['relative_path']}\n');
@@ -105,13 +105,13 @@ ORDER BY f.function_name, df.relative_path;
       printf('\n');
     }
 
-    printf('${COLOR_BOLD}=== Total ===${COLOR_RESET}\n');
-    printf('Fonctions avec doublons: ${COLOR_BOLD}${functionsByName.length}${COLOR_RESET}\n');
-    printf('Occurrences totales: ${COLOR_BOLD}$totalDuplicates${COLOR_RESET}\n\n');
+    printf('$COLOR_BOLD=== Total ===$COLOR_RESET\n');
+    printf('Fonctions avec doublons: $COLOR_BOLD${functionsByName.length}$COLOR_RESET\n');
+    printf('Occurrences totales: $COLOR_BOLD$totalDuplicates$COLOR_RESET\n\n');
   }
 
   Future<void> _insertIntoDb() async {
-    printf('${COLOR_YELLOW}Insertion dans la table duplicate_functions...${COLOR_RESET}\n');
+    printf('${COLOR_YELLOW}Insertion dans la table duplicate_functions...$COLOR_RESET\n');
 
     // Construire les INSERT
     final buffer = StringBuffer();
@@ -145,13 +145,13 @@ VALUES ('$funcName', $dartId, '$relativePath', '$firstDir', $count);''');
       final exitCode = await process.exitCode;
       if (exitCode != 0) {
         final error = await process.stderr.transform(const Utf8Decoder()).join();
-        printf('${COLOR_RED}✗ Erreur insertion: $error${COLOR_RESET}\n');
+        printf('$COLOR_RED✗ Erreur insertion: $error$COLOR_RESET\n');
         exit(1);
       }
 
-      printf('${COLOR_GREEN}✓ Table duplicate_functions remplie${COLOR_RESET}\n');
+      printf('$COLOR_GREEN✓ Table duplicate_functions remplie$COLOR_RESET\n');
     } catch (e) {
-      printf('${COLOR_RED}✗ Erreur: $e${COLOR_RESET}\n');
+      printf('$COLOR_RED✗ Erreur: $e$COLOR_RESET\n');
       exit(1);
     }
   }
@@ -163,7 +163,7 @@ Future<void> main(List<String> args) async {
   try {
     await DuplicateFunctionsChecker().run();
   } catch (e) {
-    printf('${COLOR_RED}✗ Erreur: $e${COLOR_RESET}\n');
+    printf('$COLOR_RED✗ Erreur: $e$COLOR_RESET\n');
     exit(1);
   }
 }
