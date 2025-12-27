@@ -12,6 +12,8 @@ import 'package:pentapol/common/plateau.dart';
 import 'package:pentapol/common/point.dart';
 import 'package:pentapol/common/shape_recognizer.dart';
 import 'package:pentapol/services/plateau_solution_counter.dart' show PlateauSolutionCounter;
+import 'package:pentapol/database/settings_database.dart';  // ✨ AJOUT
+import 'package:pentapol/common/services/puzzle_numbering_service.dart';  // ✨ AJOUT
 
 
 // ← C'est peut-être différent
@@ -26,6 +28,20 @@ class PentominoGameNotifier extends Notifier<PentominoGameState> {
 
   Timer? _gameTimer;  // ✨ NOUVEAU
   DateTime? _startTime;  // ✨ NOUVEAU
+
+  // ✨ AJOUT: Base de données pour sauvegarder les sessions
+  final SettingsDatabase database = SettingsDatabase();
+
+  // ✨ AJOUT: Helper - Trouver le numéro de solution
+  int? findSolutionNumber(BigInt finalBoard) {
+    // Chercher dans la liste des solutions du solutionMatcher
+    // (tu dois avoir accès à solutionMatcher depuis ton app)
+    // Si solutionMatcher n'est pas accessible ici, passe-le en paramètre
+    // Pour l'instant, retourne null si pas disponible
+    debugPrint('⚠️  findSolutionNumber: solutionMatcher non disponible dans le provider');
+    return null;
+    // TODO: Récupérer solutionMatcher.solutions et chercher finalBoard
+  }
 
 
 
@@ -153,6 +169,42 @@ class PentominoGameNotifier extends Notifier<PentominoGameState> {
   /// Annule le tutoriel (toujours restaurer)
   void cancelTutorial() {
     exitTutorialMode(restore: true);
+  }
+
+  // ✨ AJOUT: Appelé quand le puzzle est complété (12 pièces placées)
+  Future<void> onPuzzleCompleted() async {
+    _gameTimer?.cancel();  // Arrêter le timer
+
+    final elapsedSeconds = state.elapsedSeconds;
+
+    debugPrint('✅ PUZZLE COMPLÉTÉ!');
+    debugPrint('   Pièces placées: ${state.placedPieces.length}');
+    debugPrint('   Temps écoulé: ${elapsedSeconds}s');
+
+    // TODO: Implémenter trouvez le numéro de solution
+    // Pour l'instant, on utilise un placeholder
+    const solutionNumber = 42;  // À remplacer par findSolutionNumber()
+
+    // Calculer le score
+    final score = (1000 - elapsedSeconds).clamp(0, 1000);
+
+    // Sauvegarder la session
+    try {
+      await database.saveGameSession(
+        solutionNumber: solutionNumber,
+        elapsedSeconds: elapsedSeconds,
+        score: score,
+        piecesPlaced: 12,
+        numUndos: 0,  // À calculer si tu tracks les annulations
+      );
+
+      debugPrint('✅ Session sauvegardée');
+      debugPrint('   Solution #$solutionNumber');
+      debugPrint('   Score: $score');
+
+    } catch (e) {
+      debugPrint('❌ Erreur sauvegarde: $e');
+    }
   }
 
   /// Efface la surbrillance du plateau

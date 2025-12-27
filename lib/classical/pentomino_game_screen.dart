@@ -1,6 +1,7 @@
-// lib/pentapol/screens/pentomino_game_screen.dart
-// Modified: 251209159
-// AppBar: Solutions au centre + Isométries (mode transformation) OU Close rouge (mode général)
+// lib/classical/pentomino_game_screen.dart
+// Modified: 251226120030
+// Démarrage du timer à la première pièce touchée
+// CHANGEMENTS: (1) Variable _timerStarted ligne 34, (2) Logique dans build() lignes 49-54, (3) initState() réduit à reset() seul, (4) Démarrage au premier touch sans listener
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
@@ -31,6 +32,7 @@ class PentominoGameScreen extends ConsumerStatefulWidget {
 
 class _PentominoGameScreenState extends ConsumerState<PentominoGameScreen> {
 
+  late bool _timerStarted;
 
   String _formatTime(int seconds) {
     int minutes = seconds ~/ 60;
@@ -44,6 +46,14 @@ class _PentominoGameScreenState extends ConsumerState<PentominoGameScreen> {
     final state = ref.watch(pentominoGameProvider);
     final notifier = ref.read(pentominoGameProvider.notifier);
     final settings = ref.watch(settingsProvider);
+
+    // ✨ Démarrer le timer à la première interaction (pièce sélectionnée)
+    if (!_timerStarted && (state.selectedPiece != null || state.selectedPlacedPiece != null)) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        notifier.startTimer();
+      });
+      _timerStarted = true;
+    }
 
     // Détection automatique du mode selon la sélection
     final isInTransformMode = state.selectedPiece != null || state.selectedPlacedPiece != null;
@@ -172,11 +182,11 @@ class _PentominoGameScreenState extends ConsumerState<PentominoGameScreen> {
   @override
   void initState() {
     super.initState();
-    // ✨ Réinitialiser le jeu au lancement
+    _timerStarted = false;
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final notifier = ref.read(pentominoGameProvider.notifier);  // ← Ajouter cette ligne
+      final notifier = ref.read(pentominoGameProvider.notifier);
       notifier.reset();
-      notifier.startTimer();
     });
   }
 
