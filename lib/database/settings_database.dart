@@ -90,7 +90,7 @@ class SettingsDatabase extends _$SettingsDatabase {
   SettingsDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 2;  // Incrémenter la version pour migration
+  int get schemaVersion => 1;
 
   // ============================================================================
   // SETTINGS - Paramètres de l'application (ancien code, intacte)

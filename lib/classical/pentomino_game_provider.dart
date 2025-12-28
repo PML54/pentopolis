@@ -12,11 +12,8 @@ import 'package:pentapol/common/plateau.dart';
 import 'package:pentapol/common/point.dart';
 import 'package:pentapol/common/shape_recognizer.dart';
 import 'package:pentapol/services/plateau_solution_counter.dart' show PlateauSolutionCounter;
-import 'package:pentapol/database/settings_database.dart';  // ✨ AJOUT
-import 'package:pentapol/common/services/puzzle_numbering_service.dart';  // ✨ AJOUT
-
-
-// ← C'est peut-être différent
+import 'package:pentapol/services/solution_matcher.dart' show SolutionInfo;
+import 'package:pentapol/providers/settings_provider.dart' show settingsDatabaseProvider;
 
 final pentominoGameProvider =
 NotifierProvider<PentominoGameNotifier, PentominoGameState>(
@@ -29,19 +26,8 @@ class PentominoGameNotifier extends Notifier<PentominoGameState> {
   Timer? _gameTimer;  // ✨ NOUVEAU
   DateTime? _startTime;  // ✨ NOUVEAU
 
-  // ✨ AJOUT: Base de données pour sauvegarder les sessions
-  final SettingsDatabase database = SettingsDatabase();
 
-  // ✨ AJOUT: Helper - Trouver le numéro de solution
-  int? findSolutionNumber(BigInt finalBoard) {
-    // Chercher dans la liste des solutions du solutionMatcher
-    // (tu dois avoir accès à solutionMatcher depuis ton app)
-    // Si solutionMatcher n'est pas accessible ici, passe-le en paramètre
-    // Pour l'instant, retourne null si pas disponible
-    debugPrint('⚠️  findSolutionNumber: solutionMatcher non disponible dans le provider');
-    return null;
-    // TODO: Récupérer solutionMatcher.solutions et chercher finalBoard
-  }
+
 
 
 
@@ -181,15 +167,17 @@ class PentominoGameNotifier extends Notifier<PentominoGameState> {
     debugPrint('   Pièces placées: ${state.placedPieces.length}');
     debugPrint('   Temps écoulé: ${elapsedSeconds}s');
 
-    // TODO: Implémenter trouvez le numéro de solution
-    // Pour l'instant, on utilise un placeholder
-    const solutionNumber = 42;  // À remplacer par findSolutionNumber()
+    // Utiliser le numéro de solution identifié (+1 pour affichage human-friendly 1-9356)
+    final solutionNumber = state.solvedSolutionIndex != null 
+        ? state.solvedSolutionIndex! + 1 
+        : -1;
 
     // Calculer le score
     final score = (1000 - elapsedSeconds).clamp(0, 1000);
 
-    // Sauvegarder la session
+    // Sauvegarder la session via le provider de base de données
     try {
+      final database = ref.read(settingsDatabaseProvider);
       await database.saveGameSession(
         solutionNumber: solutionNumber,
         elapsedSeconds: elapsedSeconds,
@@ -678,7 +666,9 @@ class PentominoGameNotifier extends Notifier<PentominoGameState> {
     stopTimer();  // ✨ Arrêter le timer
     _startTime = null;  // ✨ Réinitialiser
     _gameTimer = null;  // ✨ Réinitialiser
-    state = PentominoGameState.initial();
+    final initialState = PentominoGameState.initial();
+    final totalSolutions = Plateau.allVisible(6, 10).countPossibleSolutions();
+    state = initialState.copyWith(solutionsCount: totalSolutions);
   }
 
   /// Remet le slider à sa position initiale
@@ -1164,10 +1154,20 @@ class PentominoGameNotifier extends Notifier<PentominoGameState> {
       print('[GAME] Pièces restantes: ${newAvailable.length}');
       print('[GAME] 🎯 Solutions possibles: $solutionsCount');
 
-      // ✨ NOUVEAU: Si puzzle complet, arrêter le timer
+      // ✨ Si puzzle complet, identifier la solution et arrêter le timer
       if (newAvailable.isEmpty) {
         stopTimer();
-        print('[GAME] 🎉 Puzzle complété! Temps: ${getElapsedSeconds()} secondes');
+        final solutionIndex = newPlateau.findExactSolutionIndex();
+        if (solutionIndex >= 0) {
+          final info = SolutionInfo(solutionIndex);
+          state = state.copyWith(solvedSolutionIndex: solutionIndex);
+          print('[GAME] 🎉 Puzzle complété! Solution #${info.index}');
+          print('[GAME]    (canonique ${info.canonicalIndex}, ${info.variantName})');
+          print('[GAME]    Temps: ${getElapsedSeconds()} secondes');
+        } else {
+          print('[GAME] 🎉 Puzzle complété! Temps: ${getElapsedSeconds()} secondes');
+          print('[GAME] ⚠️  Solution non identifiée dans la base');
+        }
       }
     }
 
@@ -1219,6 +1219,7 @@ class PentominoGameNotifier extends Notifier<PentominoGameState> {
       availablePieces: newAvailable,
       placedPieces: newPlaced,
       solutionsCount: solutionsCount,
+      clearSolvedSolutionIndex: true, // 🆕 Réinitialiser si on retire une pièce
     );
 
     print('[GAME] ↩️ Undo: Pièce ${lastPlaced.piece.id} retirée');

@@ -75,7 +75,7 @@ extension PlateauSolutionCounter on Plateau {
   }
 
   /// Retourne la liste des solutions compatibles (BigInt) pour le plateau courant.
-  /// Renvoie [] en cas d’erreur.
+  /// Renvoie [] en cas d'erreur.
   List<BigInt> getCompatibleSolutionsBigInt() {
     final mask = _toBigIntMask();
     if (mask == null) return const [];
@@ -89,6 +89,46 @@ extension PlateauSolutionCounter on Plateau {
       print('[PlateauSolutionCounter] Erreur getCompatibleSolutionsBigInt: $e');
       print(st);
       return const [];
+    }
+  }
+
+  /// Retourne les indices des solutions compatibles (0-9355).
+  /// Utile pour stocker/identifier les solutions possibles.
+  List<int> getCompatibleSolutionIndices() {
+    final mask = _toBigIntMask();
+    if (mask == null) return const [];
+
+    try {
+      return solutionMatcher.getCompatibleSolutionIndices(
+        mask.pieces,
+        mask.mask,
+      );
+    } catch (e, st) {
+      print('[PlateauSolutionCounter] Erreur getCompatibleSolutionIndices: $e');
+      print(st);
+      return const [];
+    }
+  }
+
+  /// Retourne l'index de la solution si le plateau est complet et correspond
+  /// exactement à une solution connue. Retourne -1 sinon.
+  int findExactSolutionIndex() {
+    final mask = _toBigIntMask();
+    if (mask == null) return -1;
+
+    // Vérifier que toutes les cases sont occupées (plateau complet)
+    // mask.mask doit avoir tous les bits à 1 (60 cases × 6 bits = 360 bits)
+    final fullMask = (BigInt.one << 360) - BigInt.one;
+    if (mask.mask != fullMask) {
+      return -1; // Plateau incomplet
+    }
+
+    try {
+      return solutionMatcher.findSolutionIndex(mask.pieces);
+    } catch (e, st) {
+      print('[PlateauSolutionCounter] Erreur findExactSolutionIndex: $e');
+      print(st);
+      return -1;
     }
   }
 }

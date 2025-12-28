@@ -8,6 +8,9 @@ import 'package:pentapol/classical/pentomino_game_screen.dart';
 import 'package:pentapol/duel/screens/duel_home_screen.dart';
 import 'package:pentapol/pentoscope/screens/pentoscope_menu_screen.dart';
 import 'package:pentapol/screens/settings_screen.dart';
+import 'package:pentapol/debug/database_debug_screen.dart';
+
+
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -136,6 +139,17 @@ class HomeScreen extends ConsumerWidget {
                           },
                         ),
                         const SizedBox(height: 8),
+                        FloatingActionButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const DatabaseDebugScreen(),
+                              ),
+                            );
+                          },
+                          child: const Icon(Icons.bug_report),
+                        )
                       ],
                     ),
                   ),

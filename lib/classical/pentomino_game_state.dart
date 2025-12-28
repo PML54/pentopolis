@@ -37,6 +37,9 @@ class PentominoGameState {
   // Nombre de solutions possibles
   final int? solutionsCount; // Nombre de solutions possibles avec l'état actuel
 
+  // 🆕 Index de la solution trouvée (quand puzzle complété)
+  final int? solvedSolutionIndex; // null = non résolu, 0-9355 = index de la solution
+
   // Mode isométries
   final bool
   isIsometriesMode; // true = mode isométries, false = mode jeu normal
@@ -79,6 +82,7 @@ class PentominoGameState {
     this.isPreviewValid = false,
     this.isSnapped = false, // 🆕
     this.solutionsCount,
+    this.solvedSolutionIndex, // 🆕
     this.isIsometriesMode = false,
     this.savedGameState,
 
@@ -168,6 +172,8 @@ class PentominoGameState {
     bool? isSnapped, // 🆕
     bool clearPreview = false,
     int? solutionsCount,
+    int? solvedSolutionIndex, // 🆕
+    bool clearSolvedSolutionIndex = false, // 🆕
     bool? isIsometriesMode,
     PentominoGameState? savedGameState,
     bool clearSavedGameState = false,
@@ -219,6 +225,9 @@ class PentominoGameState {
       isSnapped: clearPreview ? false : (isSnapped ?? this.isSnapped),
       // 🆕
       solutionsCount: solutionsCount ?? this.solutionsCount,
+      solvedSolutionIndex: clearSolvedSolutionIndex
+          ? null
+          : (solvedSolutionIndex ?? this.solvedSolutionIndex), // 🆕
       isIsometriesMode: isIsometriesMode ?? this.isIsometriesMode,
       savedGameState: clearSavedGameState
           ? null

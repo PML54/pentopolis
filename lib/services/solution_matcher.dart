@@ -14,8 +14,42 @@
 //   - miroir horizontal
 //   - miroir vertical
 // -> au total ~9356 solutions utilisées pour la comparaison.
+//
+// Numérotation des solutions (0-9355) :
+//   index = canonicalIndex * 4 + variantType
+//   où variantType: 0=identité, 1=rot180, 2=mirrorH, 3=mirrorV
 
 import 'package:flutter/foundation.dart';
+
+/// Information détaillée sur une solution identifiée.
+/// 
+/// Permet de retrouver l'origine d'une solution :
+/// - Son index absolu (0-9355)
+/// - Sa solution canonique d'origine (0-2338)
+/// - Le type de variante appliquée
+class SolutionInfo {
+  /// Index absolu de la solution (0-9355)
+  final int index;
+  
+  /// Index de la solution canonique d'origine (0-2338)
+  int get canonicalIndex => index ~/ 4;
+  
+  /// Type de variante : 0=identité, 1=rot180, 2=mirrorH, 3=mirrorV
+  int get variantType => index % 4;
+  
+  /// Nom lisible de la variante
+  String get variantName => const [
+    'identité',
+    'rotation 180°',
+    'miroir horizontal',
+    'miroir vertical',
+  ][variantType];
+  
+  const SolutionInfo(this.index);
+  
+  @override
+  String toString() => 'Solution #$index (canonique $canonicalIndex, $variantName)';
+}
 
 class SolutionMatcher {
   /// Toutes les solutions utilisées (BigInt 360 bits chacune).
@@ -213,6 +247,38 @@ class SolutionMatcher {
       }
     }
     return out;
+  }
+
+  /// Retourne les indices des solutions compatibles (0..9355).
+  /// Utile pour stocker/identifier les solutions trouvées.
+  List<int> getCompatibleSolutionIndices(BigInt piecesBits, BigInt maskBits) {
+    _checkInitialized();
+    final indices = <int>[];
+    for (int i = 0; i < _solutions.length; i++) {
+      if (_isCompatibleBigInt(piecesBits, maskBits, _solutions[i])) {
+        indices.add(i);
+      }
+    }
+    return indices;
+  }
+
+  /// Retourne l'index d'une solution exacte (ou -1 si non trouvée).
+  /// Utile quand le plateau est complet.
+  int findSolutionIndex(BigInt completeSolution) {
+    _checkInitialized();
+    for (int i = 0; i < _solutions.length; i++) {
+      if (_solutions[i] == completeSolution) {
+        return i;
+      }
+    }
+    return -1;
+  }
+
+  /// Récupère une solution par son index.
+  BigInt? getSolutionByIndex(int index) {
+    _checkInitialized();
+    if (index < 0 || index >= _solutions.length) return null;
+    return _solutions[index];
   }
 }
 

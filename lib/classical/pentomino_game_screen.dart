@@ -19,6 +19,7 @@ import 'package:pentapol/screens/solutions_browser_screen.dart';
 
 import 'package:pentapol/tutorial/tutorial.dart';
 import 'package:pentapol/tutorial/widgets/highlighted_icon_button.dart';
+import 'package:pentapol/services/solution_matcher.dart' show SolutionInfo;
 
 
 
@@ -33,6 +34,7 @@ class PentominoGameScreen extends ConsumerStatefulWidget {
 class _PentominoGameScreenState extends ConsumerState<PentominoGameScreen> {
 
   late bool _timerStarted;
+  bool _completionProcessed = false;  // ✨ Flag pour ne pas répéter
 
   String _formatTime(int seconds) {
     int minutes = seconds ~/ 60;
@@ -53,6 +55,102 @@ class _PentominoGameScreenState extends ConsumerState<PentominoGameScreen> {
         notifier.startTimer();
       });
       _timerStarted = true;
+    }
+
+    // ✨ AJOUT: Détecter la complétion du puzzle (12 pièces placées)
+    // Vérifier aussi que le timer a tourné (elapsedSeconds > 0) pour éviter
+    // les faux positifs lors de la réinitialisation
+    if (state.placedPieces.length == 12 && 
+        !_completionProcessed && 
+        state.elapsedSeconds > 0 &&
+        _timerStarted) {
+      _completionProcessed = true;
+      debugPrint('🎉 PUZZLE COMPLÉTÉ! 12 pièces placées');
+      
+      // Capturer les valeurs avant le callback
+      final elapsedSeconds = state.elapsedSeconds;
+      final score = notifier.calculateScore(elapsedSeconds);
+      
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        notifier.onPuzzleCompleted();
+
+        // Récupérer l'état mis à jour pour avoir solvedSolutionIndex
+        final updatedState = ref.read(pentominoGameProvider);
+        final solutionIndex = updatedState.solvedSolutionIndex;
+        final solutionInfo = solutionIndex != null ? SolutionInfo(solutionIndex) : null;
+
+        // ✨ Afficher une dialog "Bravo!" avec le numéro de solution
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => AlertDialog(
+            title: const Text('🎉 Bravo!'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Puzzle complété en ${_formatTime(elapsedSeconds)}!',
+                  style: const TextStyle(fontSize: 16),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Score: $score ⭐',
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.orange,
+                  ),
+                ),
+                if (solutionInfo != null) ...[
+                  const SizedBox(height: 16),
+                  const Divider(),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Solution #${solutionInfo.index + 1}',
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.blue,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Famille ${solutionInfo.canonicalIndex + 1} • ${solutionInfo.variantName}',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context); // Fermer dialog
+                  _completionProcessed = false; // Reset pour rejouer
+                  _timerStarted = false;
+                  notifier.reset(); // Recommencer
+                },
+                child: const Text('Rejouer'),
+              ),
+              ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.pop(context); // Fermer dialog
+                  Navigator.pop(context); // Quitter le jeu
+                },
+                icon: const Icon(Icons.check_circle),
+                label: const Text('Terminer'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                  foregroundColor: Colors.white,
+                ),
+              ),
+            ],
+          ),
+        );
+      });
     }
 
     // Détection automatique du mode selon la sélection
@@ -183,11 +281,28 @@ class _PentominoGameScreenState extends ConsumerState<PentominoGameScreen> {
   void initState() {
     super.initState();
     _timerStarted = false;
+    _completionProcessed = false;
 
+    // Réinitialiser le jeu immédiatement à l'entrée de l'écran
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final notifier = ref.read(pentominoGameProvider.notifier);
-      notifier.reset();
+      if (mounted) {
+        final notifier = ref.read(pentominoGameProvider.notifier);
+        notifier.reset();
+        // Forcer la réinitialisation des flags locaux après le reset
+        setState(() {
+          _timerStarted = false;
+          _completionProcessed = false;
+        });
+      }
     });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // S'assurer que les flags sont réinitialisés si on revient sur cet écran
+    _timerStarted = false;
+    _completionProcessed = false;
   }
 
 
