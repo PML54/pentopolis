@@ -104,6 +104,8 @@ class _DatabaseDebugScreenState extends State<DatabaseDebugScreen> {
                               _sessionRow('Temps:', '${session.elapsedSeconds}s'),
                               _sessionRow('Score:', '${session.score ?? 0}'),
                               _sessionRow('Pièces:', '${session.piecesPlaced ?? 12}'),
+                              _sessionRow('Isométries:', '${session.isometriesCount ?? 0}'),
+                              _sessionRow('Visu solutions:', '${session.solutionsViewCount ?? 0}'),
                               _sessionRow('Complété:', session.completedAt.toString().split('.')[0]),
                             ],
                           ),
@@ -216,9 +218,11 @@ class _DatabaseDebugScreenState extends State<DatabaseDebugScreen> {
       await database.saveGameSession(
         solutionNumber: 42,
         elapsedSeconds: 225,
-        score: 775,
+        score: 0,
         piecesPlaced: 12,
         numUndos: 0,
+        isometriesCount: 15,
+        solutionsViewCount: 3,
       );
 
       if (mounted) {

@@ -67,7 +67,11 @@ class PentominoGameState {
 
   // 🆕 ORIENTATION
   final ViewOrientation viewOrientation; // portrait ou landscape
-  final int elapsedSeconds; // ✨ NOUVEAU
+  final int elapsedSeconds;
+
+  // 🆕 COMPTEURS DE SESSION
+  final int isometriesCount; // Nombre d'isométries appliquées pendant la session
+  final int solutionsViewCount; // Nombre de fois où le user a consulté les solutions
   PentominoGameState({
     required this.plateau,
     required this.availablePieces,
@@ -100,7 +104,9 @@ class PentominoGameState {
     this.sliderOffset = 0,
     this.highlightedIsometryIcon,
     this.viewOrientation = ViewOrientation.portrait,
-    this.elapsedSeconds = 0, // ✨ NOUVEAU
+    this.elapsedSeconds = 0,
+    this.isometriesCount = 0,
+    this.solutionsViewCount = 0,
   }) : piecePositionIndices = piecePositionIndices ?? {},
        overlappingCells = overlappingCells ?? <Point>{},
        offBoardCells = offBoardCells ?? <Point>{},
@@ -198,8 +204,10 @@ class PentominoGameState {
     bool clearHighlightedIsometryIcon = false,
     ViewOrientation? viewOrientation,
 
-    // ✨ NOUVEAU: Timer
+    // Timer et compteurs
     int? elapsedSeconds,
+    int? isometriesCount,
+    int? solutionsViewCount,
   }) {
     return PentominoGameState(
       plateau: plateau ?? this.plateau,
@@ -258,8 +266,10 @@ class PentominoGameState {
           : (highlightedIsometryIcon ?? this.highlightedIsometryIcon),
       viewOrientation: viewOrientation ?? this.viewOrientation,
 
-      // ✨ NOUVEAU: Timer
+      // Timer et compteurs
       elapsedSeconds: elapsedSeconds ?? this.elapsedSeconds,
+      isometriesCount: isometriesCount ?? this.isometriesCount,
+      solutionsViewCount: solutionsViewCount ?? this.solutionsViewCount,
     );
   }
 

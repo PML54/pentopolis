@@ -280,6 +280,27 @@ class $GameSessionsTable extends GameSessions
     type: DriftSqlType.int,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _isometriesCountMeta = const VerificationMeta(
+    'isometriesCount',
+  );
+  @override
+  late final GeneratedColumn<int> isometriesCount = GeneratedColumn<int>(
+    'isometries_count',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _solutionsViewCountMeta =
+      const VerificationMeta('solutionsViewCount');
+  @override
+  late final GeneratedColumn<int> solutionsViewCount = GeneratedColumn<int>(
+    'solutions_view_count',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _completedAtMeta = const VerificationMeta(
     'completedAt',
   );
@@ -311,6 +332,8 @@ class $GameSessionsTable extends GameSessions
     score,
     piecesPlaced,
     numUndos,
+    isometriesCount,
+    solutionsViewCount,
     completedAt,
     playerNotes,
   ];
@@ -372,6 +395,24 @@ class $GameSessionsTable extends GameSessions
         numUndos.isAcceptableOrUnknown(data['num_undos']!, _numUndosMeta),
       );
     }
+    if (data.containsKey('isometries_count')) {
+      context.handle(
+        _isometriesCountMeta,
+        isometriesCount.isAcceptableOrUnknown(
+          data['isometries_count']!,
+          _isometriesCountMeta,
+        ),
+      );
+    }
+    if (data.containsKey('solutions_view_count')) {
+      context.handle(
+        _solutionsViewCountMeta,
+        solutionsViewCount.isAcceptableOrUnknown(
+          data['solutions_view_count']!,
+          _solutionsViewCountMeta,
+        ),
+      );
+    }
     if (data.containsKey('completed_at')) {
       context.handle(
         _completedAtMeta,
@@ -423,6 +464,14 @@ class $GameSessionsTable extends GameSessions
         DriftSqlType.int,
         data['${effectivePrefix}num_undos'],
       ),
+      isometriesCount: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}isometries_count'],
+      ),
+      solutionsViewCount: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}solutions_view_count'],
+      ),
       completedAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}completed_at'],
@@ -447,6 +496,8 @@ class GameSession extends DataClass implements Insertable<GameSession> {
   final int? score;
   final int? piecesPlaced;
   final int? numUndos;
+  final int? isometriesCount;
+  final int? solutionsViewCount;
   final DateTime completedAt;
   final String? playerNotes;
   const GameSession({
@@ -456,6 +507,8 @@ class GameSession extends DataClass implements Insertable<GameSession> {
     this.score,
     this.piecesPlaced,
     this.numUndos,
+    this.isometriesCount,
+    this.solutionsViewCount,
     required this.completedAt,
     this.playerNotes,
   });
@@ -473,6 +526,12 @@ class GameSession extends DataClass implements Insertable<GameSession> {
     }
     if (!nullToAbsent || numUndos != null) {
       map['num_undos'] = Variable<int>(numUndos);
+    }
+    if (!nullToAbsent || isometriesCount != null) {
+      map['isometries_count'] = Variable<int>(isometriesCount);
+    }
+    if (!nullToAbsent || solutionsViewCount != null) {
+      map['solutions_view_count'] = Variable<int>(solutionsViewCount);
     }
     map['completed_at'] = Variable<DateTime>(completedAt);
     if (!nullToAbsent || playerNotes != null) {
@@ -495,6 +554,12 @@ class GameSession extends DataClass implements Insertable<GameSession> {
       numUndos: numUndos == null && nullToAbsent
           ? const Value.absent()
           : Value(numUndos),
+      isometriesCount: isometriesCount == null && nullToAbsent
+          ? const Value.absent()
+          : Value(isometriesCount),
+      solutionsViewCount: solutionsViewCount == null && nullToAbsent
+          ? const Value.absent()
+          : Value(solutionsViewCount),
       completedAt: Value(completedAt),
       playerNotes: playerNotes == null && nullToAbsent
           ? const Value.absent()
@@ -514,6 +579,8 @@ class GameSession extends DataClass implements Insertable<GameSession> {
       score: serializer.fromJson<int?>(json['score']),
       piecesPlaced: serializer.fromJson<int?>(json['piecesPlaced']),
       numUndos: serializer.fromJson<int?>(json['numUndos']),
+      isometriesCount: serializer.fromJson<int?>(json['isometriesCount']),
+      solutionsViewCount: serializer.fromJson<int?>(json['solutionsViewCount']),
       completedAt: serializer.fromJson<DateTime>(json['completedAt']),
       playerNotes: serializer.fromJson<String?>(json['playerNotes']),
     );
@@ -528,6 +595,8 @@ class GameSession extends DataClass implements Insertable<GameSession> {
       'score': serializer.toJson<int?>(score),
       'piecesPlaced': serializer.toJson<int?>(piecesPlaced),
       'numUndos': serializer.toJson<int?>(numUndos),
+      'isometriesCount': serializer.toJson<int?>(isometriesCount),
+      'solutionsViewCount': serializer.toJson<int?>(solutionsViewCount),
       'completedAt': serializer.toJson<DateTime>(completedAt),
       'playerNotes': serializer.toJson<String?>(playerNotes),
     };
@@ -540,6 +609,8 @@ class GameSession extends DataClass implements Insertable<GameSession> {
     Value<int?> score = const Value.absent(),
     Value<int?> piecesPlaced = const Value.absent(),
     Value<int?> numUndos = const Value.absent(),
+    Value<int?> isometriesCount = const Value.absent(),
+    Value<int?> solutionsViewCount = const Value.absent(),
     DateTime? completedAt,
     Value<String?> playerNotes = const Value.absent(),
   }) => GameSession(
@@ -549,6 +620,12 @@ class GameSession extends DataClass implements Insertable<GameSession> {
     score: score.present ? score.value : this.score,
     piecesPlaced: piecesPlaced.present ? piecesPlaced.value : this.piecesPlaced,
     numUndos: numUndos.present ? numUndos.value : this.numUndos,
+    isometriesCount: isometriesCount.present
+        ? isometriesCount.value
+        : this.isometriesCount,
+    solutionsViewCount: solutionsViewCount.present
+        ? solutionsViewCount.value
+        : this.solutionsViewCount,
     completedAt: completedAt ?? this.completedAt,
     playerNotes: playerNotes.present ? playerNotes.value : this.playerNotes,
   );
@@ -566,6 +643,12 @@ class GameSession extends DataClass implements Insertable<GameSession> {
           ? data.piecesPlaced.value
           : this.piecesPlaced,
       numUndos: data.numUndos.present ? data.numUndos.value : this.numUndos,
+      isometriesCount: data.isometriesCount.present
+          ? data.isometriesCount.value
+          : this.isometriesCount,
+      solutionsViewCount: data.solutionsViewCount.present
+          ? data.solutionsViewCount.value
+          : this.solutionsViewCount,
       completedAt: data.completedAt.present
           ? data.completedAt.value
           : this.completedAt,
@@ -584,6 +667,8 @@ class GameSession extends DataClass implements Insertable<GameSession> {
           ..write('score: $score, ')
           ..write('piecesPlaced: $piecesPlaced, ')
           ..write('numUndos: $numUndos, ')
+          ..write('isometriesCount: $isometriesCount, ')
+          ..write('solutionsViewCount: $solutionsViewCount, ')
           ..write('completedAt: $completedAt, ')
           ..write('playerNotes: $playerNotes')
           ..write(')'))
@@ -598,6 +683,8 @@ class GameSession extends DataClass implements Insertable<GameSession> {
     score,
     piecesPlaced,
     numUndos,
+    isometriesCount,
+    solutionsViewCount,
     completedAt,
     playerNotes,
   );
@@ -611,6 +698,8 @@ class GameSession extends DataClass implements Insertable<GameSession> {
           other.score == this.score &&
           other.piecesPlaced == this.piecesPlaced &&
           other.numUndos == this.numUndos &&
+          other.isometriesCount == this.isometriesCount &&
+          other.solutionsViewCount == this.solutionsViewCount &&
           other.completedAt == this.completedAt &&
           other.playerNotes == this.playerNotes);
 }
@@ -622,6 +711,8 @@ class GameSessionsCompanion extends UpdateCompanion<GameSession> {
   final Value<int?> score;
   final Value<int?> piecesPlaced;
   final Value<int?> numUndos;
+  final Value<int?> isometriesCount;
+  final Value<int?> solutionsViewCount;
   final Value<DateTime> completedAt;
   final Value<String?> playerNotes;
   const GameSessionsCompanion({
@@ -631,6 +722,8 @@ class GameSessionsCompanion extends UpdateCompanion<GameSession> {
     this.score = const Value.absent(),
     this.piecesPlaced = const Value.absent(),
     this.numUndos = const Value.absent(),
+    this.isometriesCount = const Value.absent(),
+    this.solutionsViewCount = const Value.absent(),
     this.completedAt = const Value.absent(),
     this.playerNotes = const Value.absent(),
   });
@@ -641,6 +734,8 @@ class GameSessionsCompanion extends UpdateCompanion<GameSession> {
     this.score = const Value.absent(),
     this.piecesPlaced = const Value.absent(),
     this.numUndos = const Value.absent(),
+    this.isometriesCount = const Value.absent(),
+    this.solutionsViewCount = const Value.absent(),
     this.completedAt = const Value.absent(),
     this.playerNotes = const Value.absent(),
   }) : solutionNumber = Value(solutionNumber),
@@ -652,6 +747,8 @@ class GameSessionsCompanion extends UpdateCompanion<GameSession> {
     Expression<int>? score,
     Expression<int>? piecesPlaced,
     Expression<int>? numUndos,
+    Expression<int>? isometriesCount,
+    Expression<int>? solutionsViewCount,
     Expression<DateTime>? completedAt,
     Expression<String>? playerNotes,
   }) {
@@ -662,6 +759,9 @@ class GameSessionsCompanion extends UpdateCompanion<GameSession> {
       if (score != null) 'score': score,
       if (piecesPlaced != null) 'pieces_placed': piecesPlaced,
       if (numUndos != null) 'num_undos': numUndos,
+      if (isometriesCount != null) 'isometries_count': isometriesCount,
+      if (solutionsViewCount != null)
+        'solutions_view_count': solutionsViewCount,
       if (completedAt != null) 'completed_at': completedAt,
       if (playerNotes != null) 'player_notes': playerNotes,
     });
@@ -674,6 +774,8 @@ class GameSessionsCompanion extends UpdateCompanion<GameSession> {
     Value<int?>? score,
     Value<int?>? piecesPlaced,
     Value<int?>? numUndos,
+    Value<int?>? isometriesCount,
+    Value<int?>? solutionsViewCount,
     Value<DateTime>? completedAt,
     Value<String?>? playerNotes,
   }) {
@@ -684,6 +786,8 @@ class GameSessionsCompanion extends UpdateCompanion<GameSession> {
       score: score ?? this.score,
       piecesPlaced: piecesPlaced ?? this.piecesPlaced,
       numUndos: numUndos ?? this.numUndos,
+      isometriesCount: isometriesCount ?? this.isometriesCount,
+      solutionsViewCount: solutionsViewCount ?? this.solutionsViewCount,
       completedAt: completedAt ?? this.completedAt,
       playerNotes: playerNotes ?? this.playerNotes,
     );
@@ -710,6 +814,12 @@ class GameSessionsCompanion extends UpdateCompanion<GameSession> {
     if (numUndos.present) {
       map['num_undos'] = Variable<int>(numUndos.value);
     }
+    if (isometriesCount.present) {
+      map['isometries_count'] = Variable<int>(isometriesCount.value);
+    }
+    if (solutionsViewCount.present) {
+      map['solutions_view_count'] = Variable<int>(solutionsViewCount.value);
+    }
     if (completedAt.present) {
       map['completed_at'] = Variable<DateTime>(completedAt.value);
     }
@@ -728,6 +838,8 @@ class GameSessionsCompanion extends UpdateCompanion<GameSession> {
           ..write('score: $score, ')
           ..write('piecesPlaced: $piecesPlaced, ')
           ..write('numUndos: $numUndos, ')
+          ..write('isometriesCount: $isometriesCount, ')
+          ..write('solutionsViewCount: $solutionsViewCount, ')
           ..write('completedAt: $completedAt, ')
           ..write('playerNotes: $playerNotes')
           ..write(')'))
@@ -1424,6 +1536,8 @@ typedef $$GameSessionsTableCreateCompanionBuilder =
       Value<int?> score,
       Value<int?> piecesPlaced,
       Value<int?> numUndos,
+      Value<int?> isometriesCount,
+      Value<int?> solutionsViewCount,
       Value<DateTime> completedAt,
       Value<String?> playerNotes,
     });
@@ -1435,6 +1549,8 @@ typedef $$GameSessionsTableUpdateCompanionBuilder =
       Value<int?> score,
       Value<int?> piecesPlaced,
       Value<int?> numUndos,
+      Value<int?> isometriesCount,
+      Value<int?> solutionsViewCount,
       Value<DateTime> completedAt,
       Value<String?> playerNotes,
     });
@@ -1475,6 +1591,16 @@ class $$GameSessionsTableFilterComposer
 
   ColumnFilters<int> get numUndos => $composableBuilder(
     column: $table.numUndos,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get isometriesCount => $composableBuilder(
+    column: $table.isometriesCount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get solutionsViewCount => $composableBuilder(
+    column: $table.solutionsViewCount,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -1528,6 +1654,16 @@ class $$GameSessionsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get isometriesCount => $composableBuilder(
+    column: $table.isometriesCount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get solutionsViewCount => $composableBuilder(
+    column: $table.solutionsViewCount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get completedAt => $composableBuilder(
     column: $table.completedAt,
     builder: (column) => ColumnOrderings(column),
@@ -1571,6 +1707,16 @@ class $$GameSessionsTableAnnotationComposer
 
   GeneratedColumn<int> get numUndos =>
       $composableBuilder(column: $table.numUndos, builder: (column) => column);
+
+  GeneratedColumn<int> get isometriesCount => $composableBuilder(
+    column: $table.isometriesCount,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get solutionsViewCount => $composableBuilder(
+    column: $table.solutionsViewCount,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<DateTime> get completedAt => $composableBuilder(
     column: $table.completedAt,
@@ -1622,6 +1768,8 @@ class $$GameSessionsTableTableManager
                 Value<int?> score = const Value.absent(),
                 Value<int?> piecesPlaced = const Value.absent(),
                 Value<int?> numUndos = const Value.absent(),
+                Value<int?> isometriesCount = const Value.absent(),
+                Value<int?> solutionsViewCount = const Value.absent(),
                 Value<DateTime> completedAt = const Value.absent(),
                 Value<String?> playerNotes = const Value.absent(),
               }) => GameSessionsCompanion(
@@ -1631,6 +1779,8 @@ class $$GameSessionsTableTableManager
                 score: score,
                 piecesPlaced: piecesPlaced,
                 numUndos: numUndos,
+                isometriesCount: isometriesCount,
+                solutionsViewCount: solutionsViewCount,
                 completedAt: completedAt,
                 playerNotes: playerNotes,
               ),
@@ -1642,6 +1792,8 @@ class $$GameSessionsTableTableManager
                 Value<int?> score = const Value.absent(),
                 Value<int?> piecesPlaced = const Value.absent(),
                 Value<int?> numUndos = const Value.absent(),
+                Value<int?> isometriesCount = const Value.absent(),
+                Value<int?> solutionsViewCount = const Value.absent(),
                 Value<DateTime> completedAt = const Value.absent(),
                 Value<String?> playerNotes = const Value.absent(),
               }) => GameSessionsCompanion.insert(
@@ -1651,6 +1803,8 @@ class $$GameSessionsTableTableManager
                 score: score,
                 piecesPlaced: piecesPlaced,
                 numUndos: numUndos,
+                isometriesCount: isometriesCount,
+                solutionsViewCount: solutionsViewCount,
                 completedAt: completedAt,
                 playerNotes: playerNotes,
               ),

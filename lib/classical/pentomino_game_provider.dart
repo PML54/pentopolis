@@ -162,18 +162,22 @@ class PentominoGameNotifier extends Notifier<PentominoGameState> {
     _gameTimer?.cancel();  // Arrêter le timer
 
     final elapsedSeconds = state.elapsedSeconds;
+    final isometriesCount = state.isometriesCount;
+    final solutionsViewCount = state.solutionsViewCount;
 
     debugPrint('✅ PUZZLE COMPLÉTÉ!');
     debugPrint('   Pièces placées: ${state.placedPieces.length}');
     debugPrint('   Temps écoulé: ${elapsedSeconds}s');
+    debugPrint('   Isométries utilisées: $isometriesCount');
+    debugPrint('   Solutions consultées: $solutionsViewCount');
 
     // Utiliser le numéro de solution identifié (+1 pour affichage human-friendly 1-9356)
     final solutionNumber = state.solvedSolutionIndex != null 
         ? state.solvedSolutionIndex! + 1 
         : -1;
 
-    // Calculer le score
-    final score = (1000 - elapsedSeconds).clamp(0, 1000);
+    // Score à 0 pour l'instant (à définir plus tard)
+    const score = 0;
 
     // Sauvegarder la session via le provider de base de données
     try {
@@ -184,11 +188,12 @@ class PentominoGameNotifier extends Notifier<PentominoGameState> {
         score: score,
         piecesPlaced: 12,
         numUndos: 0,  // À calculer si tu tracks les annulations
+        isometriesCount: isometriesCount,
+        solutionsViewCount: solutionsViewCount,
       );
 
       debugPrint('✅ Session sauvegardée');
       debugPrint('   Solution #$solutionNumber');
-      debugPrint('   Score: $score');
 
     } catch (e) {
       debugPrint('❌ Erreur sauvegarde: $e');
@@ -210,7 +215,12 @@ class PentominoGameNotifier extends Notifier<PentominoGameState> {
   /// 🆕 Efface la surbrillance des icônes d'isométrie
   void clearIsometryIconHighlight() {
     state = state.copyWith(clearHighlightedIsometryIcon: true);
+  }
 
+  /// 🆕 Incrémente le compteur de consultation des solutions
+  void incrementSolutionsViewCount() {
+    state = state.copyWith(solutionsViewCount: state.solutionsViewCount + 1);
+    debugPrint('[GAME] 👁️ Solutions consultées: ${state.solutionsViewCount} fois');
   }
 
 
@@ -1279,9 +1289,7 @@ class PentominoGameNotifier extends Notifier<PentominoGameState> {
     final oldIdx = state.selectedPositionIndex;
     final newIdx = f(piece, oldIdx);
 
-    // Vérifier si l'index a vraiment changé
-    final didChange = oldIdx != newIdx;
-
+    // 🆕 Incrémenter le compteur d'isométries
     state = state.copyWith(
       selectedPositionIndex: newIdx,
       selectedCellInPiece: _remapSelectedCell(
@@ -1291,6 +1299,7 @@ class PentominoGameNotifier extends Notifier<PentominoGameState> {
         oldCell: state.selectedCellInPiece,
       ),
       clearPreview: true,
+      isometriesCount: state.isometriesCount + 1,
     );
 
     final sp = state.selectedPlacedPiece;

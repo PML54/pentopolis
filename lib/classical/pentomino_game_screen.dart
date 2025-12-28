@@ -202,6 +202,8 @@ class _PentominoGameScreenState extends ConsumerState<PentominoGameScreen> {
             child: ElevatedButton(
               onPressed: () {
                 HapticFeedback.selectionClick();
+                // 🆕 Incrémenter le compteur de consultations
+                notifier.incrementSolutionsViewCount();
                 final solutions = getCompatibleSolutionsIncludingSelected(state);
                 Navigator.of(context).push(
                   MaterialPageRoute(

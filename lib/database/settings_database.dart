@@ -49,6 +49,12 @@ class GameSessions extends Table {
   // Nombre de "mauvaises tentatives" (placements annulés)
   IntColumn get numUndos => integer().nullable()();
 
+  // 🆕 Nombre d'isométries appliquées pendant la session
+  IntColumn get isometriesCount => integer().nullable()();
+
+  // 🆕 Nombre de fois où le user a consulté les solutions
+  IntColumn get solutionsViewCount => integer().nullable()();
+
   // Timestamp de complétion
   DateTimeColumn get completedAt => dateTime().withDefault(currentDateAndTime)();
 
@@ -134,6 +140,8 @@ class SettingsDatabase extends _$SettingsDatabase {
     int? score,
     int? piecesPlaced,
     int? numUndos,
+    int? isometriesCount,
+    int? solutionsViewCount,
     String? playerNotes,
   }) async {
     await into(gameSessions).insert(
@@ -143,6 +151,8 @@ class SettingsDatabase extends _$SettingsDatabase {
         score: Value(score),
         piecesPlaced: Value(piecesPlaced),
         numUndos: Value(numUndos),
+        isometriesCount: Value(isometriesCount),
+        solutionsViewCount: Value(solutionsViewCount),
         playerNotes: Value(playerNotes),
       ),
     );
