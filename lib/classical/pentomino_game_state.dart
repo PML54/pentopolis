@@ -4,6 +4,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:pentapol/common/pentominos.dart';
+import 'package:pentapol/common/placed_piece.dart';
 import 'package:pentapol/common/plateau.dart';
 import 'package:pentapol/common/point.dart';
 
@@ -276,67 +277,6 @@ class PentominoGameState {
   /// Obtient l'index de position pour une pièce (par défaut 0)
   int getPiecePositionIndex(int pieceId) {
     return piecePositionIndices[pieceId] ?? 0;
-  }
-}
-
-/// Représente une pièce placée sur le plateau
-class PlacedPiece {
-  final Pento piece;
-  final int positionIndex; // Index dans piece.positions
-  final int gridX; // Position X sur le plateau (0-5)
-  final int gridY; // Position Y sur le plateau (0-9)
-
-  PlacedPiece({
-    required this.piece,
-    required this.positionIndex,
-    required this.gridX,
-    required this.gridY,
-  });
-
-  Iterable<Point> get absoluteCells sync* {
-    final position = piece.positions[positionIndex];
-    for (final cellNum in position) {
-      final localX = (cellNum - 1) % 5;
-      final localY = (cellNum - 1) ~/ 5;
-      yield Point(gridX + localX, gridY + localY);
-    }
-  }
-
-  PlacedPiece copyWith({
-    Pento? piece,
-    int? positionIndex,
-    int? gridX,
-    int? gridY,
-  }) {
-    return PlacedPiece(
-      piece: piece ?? this.piece,
-      positionIndex: positionIndex ?? this.positionIndex,
-      gridX: gridX ?? this.gridX,
-      gridY: gridY ?? this.gridY,
-    );
-  }
-
-  /// Obtient les cellules occupées par cette pièce sur le plateau
-  List<int> getOccupiedCells() {
-    final position = piece.positions[positionIndex];
-    final cells = <int>[];
-
-    for (final cellNum in position) {
-      // Convertir cellNum (1-25 sur grille 5×5) en coordonnées (x, y)
-      final localX = (cellNum - 1) % 5;
-      final localY = (cellNum - 1) ~/ 5;
-
-      // Position absolue sur le plateau
-      final x = gridX + localX;
-      final y = gridY + localY;
-
-      // Vérifier que c'est dans les limites
-      if (x >= 0 && x < 6 && y >= 0 && y < 10) {
-        cells.add(y * 6 + x + 1); // cellNum de 1 à 60
-      }
-    }
-
-    return cells;
   }
 }
 

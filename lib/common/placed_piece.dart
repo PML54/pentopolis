@@ -100,4 +100,21 @@ class PlacedPiece {
       gridX.hashCode ^
       gridY.hashCode ^
       isometriesUsed.hashCode;
+
+  /// Obtient les numéros de cases occupées par cette pièce sur le plateau 6×10.
+  ///
+  /// Retourne une liste de cellNum (1 à 60) correspondant aux cases occupées.
+  /// Les cases hors limites (x < 0, x >= 6, y < 0, y >= 10) sont ignorées.
+  List<int> getOccupiedCells() {
+    final cells = <int>[];
+
+    for (final point in absoluteCells) {
+      // Vérifier que c'est dans les limites du plateau 6×10
+      if (point.x >= 0 && point.x < 6 && point.y >= 0 && point.y < 10) {
+        cells.add(point.y * 6 + point.x + 1); // cellNum de 1 à 60
+      }
+    }
+
+    return cells;
+  }
 }

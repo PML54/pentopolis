@@ -119,7 +119,11 @@ return Point(rawX - minX, rawY - minY);
 Annule le mode "pièce placée en main" (sélection sur plateau) en
 reconstruisant le plateau complet à partir des pièces placées.
 À appeler avant de sélectionner une pièce du slider.
-Vérifie si une pièce placée peut occuper sa position sans chevauchement
+Trouve la position valide la plus proche du doigt (en tenant compte de la mastercase)
+dragGridX/Y = position du doigt
+Retourne la position d'ancre valide la plus proche
+Génère TOUS les placements possibles pour une pièce à une positionIndex donnée
+Retourne une liste de Point (gridX, gridY) où la pièce peut être placée
 
 
 ```dart
@@ -194,7 +198,7 @@ PentoscopeState copyWith({
 ### PentoscopeState
 
 ```dart
-return PentoscopeState( viewOrientation: viewOrientation ?? this.viewOrientation, puzzle: puzzle ?? this.puzzle, plateau: plateau ?? this.plateau, availablePieces: availablePieces ?? this.availablePieces, placedPieces: placedPieces ?? this.placedPieces, selectedPiece: clearSelectedPiece ? null : (selectedPiece ?? this.selectedPiece), selectedPositionIndex: selectedPositionIndex ?? this.selectedPositionIndex, piecePositionIndices: piecePositionIndices ?? this.piecePositionIndices, selectedPlacedPiece: clearSelectedPlacedPiece ? null : (selectedPlacedPiece ?? this.selectedPlacedPiece), selectedCellInPiece: clearSelectedCellInPiece ? null : (selectedCellInPiece ?? this.selectedCellInPiece), previewX: clearPreview ? null : (previewX ?? this.previewX), previewY: clearPreview ? null : (previewY ?? this.previewY), isPreviewValid: clearPreview ? false : (isPreviewValid ?? this.isPreviewValid), isComplete: isComplete ?? this.isComplete, isometryCount: isometryCount ?? this.isometryCount, translationCount: translationCount ?? this.translationCount, isSnapped: isSnapped ?? this.isSnapped, showSolution: showSolution ?? this.showSolution, // ✅ NOUVEAU currentSolution: currentSolution ?? this.currentSolution, // ✅ NOUVEAU );
+return PentoscopeState( viewOrientation: viewOrientation ?? this.viewOrientation, puzzle: puzzle ?? this.puzzle, plateau: plateau ?? this.plateau, availablePieces: availablePieces ?? this.availablePieces, placedPieces: placedPieces ?? this.placedPieces, selectedPiece: clearSelectedPiece ? null : (selectedPiece ?? this.selectedPiece), selectedPositionIndex: selectedPositionIndex ?? this.selectedPositionIndex, piecePositionIndices: piecePositionIndices ?? this.piecePositionIndices, selectedPlacedPiece: clearSelectedPlacedPiece ? null : (selectedPlacedPiece ?? this.selectedPlacedPiece), selectedCellInPiece: clearSelectedCellInPiece ? null : (selectedCellInPiece ?? this.selectedCellInPiece), previewX: clearPreview ? null : (previewX ?? this.previewX), previewY: clearPreview ? null : (previewY ?? this.previewY), isPreviewValid: clearPreview ? false : (isPreviewValid ?? this.isPreviewValid), validPlacements: validPlacements ?? this.validPlacements, // ✨ NOUVEAU isComplete: isComplete ?? this.isComplete, isometryCount: isometryCount ?? this.isometryCount, translationCount: translationCount ?? this.translationCount, score: score ?? this.score, // 🎯 NOUVEAU isSnapped: isSnapped ?? this.isSnapped, showSolution: showSolution ?? this.showSolution, // ✅ NOUVEAU currentSolution: currentSolution ?? this.currentSolution, // ✅ NOUVEAU );
 ```
 
 ### getPiecePositionIndex

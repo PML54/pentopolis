@@ -4,34 +4,6 @@
 
 ## Fonctions
 
-### setViewOrientation
-
-Enregistre l'orientation de la vue (portrait/landscape)
-
-
-```dart
-void setViewOrientation(bool isLandscape) {
-```
-
-### Point
-
-Remapping de la cellule de référence lors d'une isométrie
-
-
-```dart
-return Point(localX, localY);
-```
-
-### applyIsometryRotationTW
-
-Applique une transformation isométrique via lookup
-Applique une rotation 90° anti-horaire
-
-
-```dart
-void applyIsometryRotationTW() {
-```
-
 ### applyIsometryRotationCW
 
 Applique une rotation 90° horaire
@@ -39,6 +11,15 @@ Applique une rotation 90° horaire
 
 ```dart
 void applyIsometryRotationCW() {
+```
+
+### applyIsometryRotationTW
+
+Applique une rotation 90° anti-horaire
+
+
+```dart
+void applyIsometryRotationTW() {
 ```
 
 ### applyIsometrySymmetryH
@@ -65,6 +46,12 @@ void applyIsometrySymmetryV() {
 PentominoGameState build() {
 ```
 
+### calculateScore
+
+```dart
+int calculateScore(int elapsedSeconds) {
+```
+
 ### cancelSelection
 
 Annule la sélection en cours
@@ -81,6 +68,12 @@ Annule le tutoriel (toujours restaurer)
 
 ```dart
 void cancelTutorial() {
+```
+
+### onPuzzleCompleted
+
+```dart
+Future<void> onPuzzleCompleted() async {
 ```
 
 ### clearBoardHighlight
@@ -108,6 +101,15 @@ void clearCellHighlights() {
 
 ```dart
 void clearIsometryIconHighlight() {
+```
+
+### incrementSolutionsViewCount
+
+🆕 Incrémente le compteur de consultation des solutions
+
+
+```dart
+void incrementSolutionsViewCount() {
 ```
 
 ### clearMastercaseHighlight
@@ -207,10 +209,18 @@ throw StateError('Pas en mode tutoriel');
 throw StateError('Pas de sauvegarde disponible');
 ```
 
-### highlightCell
+### getElapsedSeconds
 
 Trouve une pièce placée à une position donnée
 Trouve une pièce placée par son ID
+
+
+```dart
+int getElapsedSeconds() {
+```
+
+### highlightCell
+
 Trouve la pièce placée à une position donnée
 Surligne une case individuelle avec une couleur
 
@@ -446,6 +456,27 @@ throw StateError('La pièce $pieceNumber n\'est pas sur le plateau');
 throw ArgumentError( 'La position ($mastercaseX, $mastercaseY) n\'est pas dans la pièce $pieceNumber', );
 ```
 
+### setViewOrientation
+
+Enregistre l'orientation de la vue (portrait/landscape)
+
+
+```dart
+void setViewOrientation(bool isLandscape) {
+```
+
+### startTimer
+
+```dart
+void startTimer() {
+```
+
+### stopTimer
+
+```dart
+void stopTimer() {
+```
+
 ### tryPlacePiece
 
 Tente de placer la pièce sélectionnée sur le plateau
@@ -479,6 +510,7 @@ void updatePreview(int gridX, int gridY) {
 
 ### Point
 
+Applique une transformation isométrique via lookup
 Calcule la nouvelle position locale de la master case après une transformation
 [centerX], [centerY] : coordonnées absolues de la master case (fixe)
 [newGridX], [newGridY] : nouvelle ancre de la pièce transformée
@@ -486,5 +518,22 @@ Calcule la nouvelle position locale de la master case après une transformation
 
 ```dart
 return Point(newLocalX, newLocalY);
+```
+
+### Point
+
+Vérifie si une pièce peut être placée à une position donnée
+Utilisé après une transformation géométrique
+Calcule le nombre de solutions possibles avec une pièce transformée
+Crée temporairement un plateau avec toutes les pièces incluant la transformée
+Extrait les coordonnées absolues d'une pièce placée
+Cherche la position valide la plus proche dans un rayon donné
+Utilise la distance euclidienne pour trouver vraiment la plus proche
+Recalcule la validité du plateau et les cellules problématiques
+Remapping de la cellule de référence lors d'une isométrie
+
+
+```dart
+return Point(localX, localY);
 ```
 

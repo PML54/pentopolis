@@ -19,7 +19,7 @@ Widget build(BuildContext context, WidgetRef ref) {
 ### Scaffold
 
 ```dart
-return Scaffold( backgroundColor: Colors.white, appBar: isLandscape ? null : PreferredSize( preferredSize: const Size.fromHeight(56.0), child: AppBar( toolbarHeight: 56.0, backgroundColor: Colors.white, automaticallyImplyLeading: !isPlacedPieceSelected, leading: isPlacedPieceSelected ? null  // Pas de croix quand icônes isométrie actifs : IconButton( icon: const Icon(Icons.close, color: Colors.red), onPressed: () => Navigator.pop(context), ), // EXCLUSIF: // 1. Actions isométrie si pièce PLATEAU sélectionnée // 2. Reset si pièce SLIDER sélectionnée // 3. Solution count si AUCUNE pièce sélectionnée title: isPlacedPieceSelected ? null //       : _buildSolutionCountWidget(state), :null, actions: isPlacedPieceSelected ? [ _buildIsometryActionsBar( state, ref.read(pentoscopeProvider.notifier), settings, Axis.horizontal, ), ] : isSliderPieceSelected ? [ // Rien en AppBar si pièce slider (actions au-dessus slider) ] : [ // Reset en mode général IconButton( icon: const Icon(Icons.games), onPressed: () {
+return Scaffold( backgroundColor: Colors.white, appBar: isLandscape ? null : PreferredSize( preferredSize: const Size.fromHeight(56.0), child: AppBar( toolbarHeight: 56.0, backgroundColor: Colors.white, automaticallyImplyLeading: !isPlacedPieceSelected, leading: isPlacedPieceSelected ? null : IconButton( icon: const Icon(Icons.close, color: Colors.red), onPressed: () => Navigator.pop(context), ), title: (isPlacedPieceSelected || isSliderPieceSelected) ? null : state.isComplete ? TweenAnimationBuilder<double>( tween: Tween(begin: 0.0, end: 1.0), duration: const Duration(milliseconds: 2500), curve: Curves.elasticOut, builder: (context, value, child) {
 ```
 
 ### IconButton
@@ -56,13 +56,13 @@ Layout portrait : plateau en haut, actions + slider en bas
 
 
 ```dart
-return Column( children: [ // Plateau de jeu const Expanded(flex: 3, child: PentoscopeBoard(isLandscape: false)),  // 🎯 Actions isométrie UNIQUEMENT si pièce du SLIDER sélectionnée // (exclue si pièce plateau sélectionnée) if (isSliderPieceSelected && !isPlacedPieceSelected) Padding( padding: const EdgeInsets.symmetric(vertical: 8), child: _buildIsometryActionsBar( state, notifier, settings, Axis.horizontal, ), ),  // Slider de pièces horizontal _buildSliderWithDragTarget( ref: ref, isLandscape: false, height: 140, decoration: BoxDecoration( color: Colors.grey.shade100, boxShadow: [ BoxShadow( color: Colors.black.withOpacity(0.1), blurRadius: 4, offset: const Offset(0, -2), ), ], ), sliderChild: const PentoscopePieceSlider(isLandscape: false), ), ], );
+return Column( children: [ // Plateau de jeu const Expanded(flex: 3, child: PentoscopeBoard(isLandscape: false)),  // Slider de pièces horizontal _buildSliderWithDragTarget( ref: ref, isLandscape: false, height: 160, decoration: BoxDecoration( color: Colors.grey.shade100, boxShadow: [ BoxShadow( color: Colors.black.withOpacity(0.1), blurRadius: 4, offset: const Offset(0, -2), ), ], ), sliderChild: const PentoscopePieceSlider(isLandscape: false), ), ], );
 ```
 
 ### Expanded
 
 ```dart
-const Expanded(flex: 3, child: PentoscopeBoard(isLandscape: false)),  // 🎯 Actions isométrie UNIQUEMENT si pièce du SLIDER sélectionnée // (exclue si pièce plateau sélectionnée) if (isSliderPieceSelected && !isPlacedPieceSelected) Padding( padding: const EdgeInsets.symmetric(vertical: 8), child: _buildIsometryActionsBar( state, notifier, settings, Axis.horizontal, ), ),  // Slider de pièces horizontal _buildSliderWithDragTarget( ref: ref, isLandscape: false, height: 140, decoration: BoxDecoration( color: Colors.grey.shade100, boxShadow: [ BoxShadow( color: Colors.black.withOpacity(0.1), blurRadius: 4, offset: const Offset(0, -2), ), ], ), sliderChild: const PentoscopePieceSlider(isLandscape: false), ), ], );
+const Expanded(flex: 3, child: PentoscopeBoard(isLandscape: false)),  // Slider de pièces horizontal _buildSliderWithDragTarget( ref: ref, isLandscape: false, height: 160, decoration: BoxDecoration( color: Colors.grey.shade100, boxShadow: [ BoxShadow( color: Colors.black.withOpacity(0.1), blurRadius: 4, offset: const Offset(0, -2), ), ], ), sliderChild: const PentoscopePieceSlider(isLandscape: false), ), ], );
 ```
 
 ### Row
@@ -71,12 +71,12 @@ Layout paysage : plateau à gauche, actions + slider vertical à droite
 
 
 ```dart
-return Row( children: [ // Plateau de jeu const Expanded(child: PentoscopeBoard(isLandscape: true)),  // Colonne de droite : actions + slider Row( children: [ // 🎯 Colonne d'actions (contextuelles) Container( width: 44, decoration: BoxDecoration( color: Colors.white, boxShadow: [ BoxShadow( color: Colors.black.withOpacity(0.05), blurRadius: 2, offset: const Offset(-1, 0), ), ], ), child: Column( mainAxisAlignment: MainAxisAlignment.center, children: isPlacedPieceSelected ? [ // Actions isométrie si pièce plateau sélectionnée _buildIsometryActionsBar( state, notifier, settings, Axis.vertical, ), ] : [ // Actions générales IconButton( icon: const Icon(Icons.games), onPressed: () {
+return Row( children: [ // Plateau de jeu const Expanded(child: PentoscopeBoard(isLandscape: true)),  // Colonne de droite : actions + slider Row( children: [ // 🎯 Colonne d'actions (contextuelles) Container( width: 44, decoration: BoxDecoration( color: Colors.white, boxShadow: [ BoxShadow( color: Colors.black.withOpacity(0.05), blurRadius: 2, offset: const Offset(-1, 0), ), ], ), child: Column( mainAxisAlignment: MainAxisAlignment.center, children: isPlacedPieceSelected || isSliderPieceSelected ? [ // ✨ Isométries si pièce sélectionnée (slider OU plateau) _buildIsometryActionsBar( state, notifier, settings, Axis.vertical, ), ] : [ // Actions générales (reset, close) IconButton( icon: const Icon(Icons.games), onPressed: () {
 ```
 
 ### Expanded
 
 ```dart
-const Expanded(child: PentoscopeBoard(isLandscape: true)),  // Colonne de droite : actions + slider Row( children: [ // 🎯 Colonne d'actions (contextuelles) Container( width: 44, decoration: BoxDecoration( color: Colors.white, boxShadow: [ BoxShadow( color: Colors.black.withOpacity(0.05), blurRadius: 2, offset: const Offset(-1, 0), ), ], ), child: Column( mainAxisAlignment: MainAxisAlignment.center, children: isPlacedPieceSelected ? [ // Actions isométrie si pièce plateau sélectionnée _buildIsometryActionsBar( state, notifier, settings, Axis.vertical, ), ] : [ // Actions générales IconButton( icon: const Icon(Icons.games), onPressed: () {
+const Expanded(child: PentoscopeBoard(isLandscape: true)),  // Colonne de droite : actions + slider Row( children: [ // 🎯 Colonne d'actions (contextuelles) Container( width: 44, decoration: BoxDecoration( color: Colors.white, boxShadow: [ BoxShadow( color: Colors.black.withOpacity(0.05), blurRadius: 2, offset: const Offset(-1, 0), ), ], ), child: Column( mainAxisAlignment: MainAxisAlignment.center, children: isPlacedPieceSelected || isSliderPieceSelected ? [ // ✨ Isométries si pièce sélectionnée (slider OU plateau) _buildIsometryActionsBar( state, notifier, settings, Axis.vertical, ), ] : [ // Actions générales (reset, close) IconButton( icon: const Icon(Icons.games), onPressed: () {
 ```
 

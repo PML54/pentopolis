@@ -7,13 +7,18 @@ import 'dart:async';
 import 'package:flutter/material.dart' show Color, debugPrint;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pentapol/classical/pentomino_game_state.dart';
+
 import 'package:pentapol/common/pentominos.dart';
+import 'package:pentapol/common/placed_piece.dart';
 import 'package:pentapol/common/plateau.dart';
 import 'package:pentapol/common/point.dart';
 import 'package:pentapol/common/shape_recognizer.dart';
 import 'package:pentapol/services/plateau_solution_counter.dart' show PlateauSolutionCounter;
 import 'package:pentapol/services/solution_matcher.dart' show SolutionInfo;
 import 'package:pentapol/providers/settings_provider.dart' show settingsDatabaseProvider;
+import 'dart:math';
+import 'package:pentapol/services/solution_matcher.dart' show solutionMatcher;
+import 'package:collection/collection.dart';
 
 final pentominoGameProvider =
 NotifierProvider<PentominoGameNotifier, PentominoGameState>(
@@ -151,7 +156,94 @@ class PentominoGameNotifier extends Notifier<PentominoGameState> {
 
     }
   }
+// lib/pentapol/providers/pentomino_game_provider.dart
+// Modified: 250101HHMMM
+// Apply hint from compatible solutions
+// CHANGEMENTS: (1) applyHint() method
 
+
+// ========================================================================
+// 💡 HINT SYSTEM - Appliquer un indice basé sur une solution aléatoire
+// ========================================================================
+
+  /// Applique un indice en choisissant une solution compatible aléatoire
+  /// et en plaçant une pièce du slider qui n'est pas encore posée
+  void applyHint() {
+    // 1️⃣ Récupérer les indices des solutions compatibles
+    final compatibleIndices = state.plateau.getCompatibleSolutionIndices();
+
+    if (compatibleIndices.isEmpty) {
+      debugPrint('❌ HINT: Aucune solution compatible');
+      return;
+    }
+
+    // 2️⃣ Choisir une solution au hasard
+    final random = Random();
+    final randomSolutionIndex = compatibleIndices[random.nextInt(compatibleIndices.length)];
+
+    debugPrint(
+      '💡 HINT: Solution sélectionnée #$randomSolutionIndex sur ${compatibleIndices.length} compatibles',
+    );
+
+    // 3️⃣ Décoder la solution BigInt en PlacedPiece
+    final allSolutionPieces = solutionMatcher.getPlacedPiecesByIndex(randomSolutionIndex);
+
+    if (allSolutionPieces == null || allSolutionPieces.isEmpty) {
+      debugPrint('❌ HINT: Impossible de décoder la solution');
+      return;
+    }
+
+    // 4️⃣ Trouver une pièce NON encore placée (du slider)
+    final placedPieceIds = state.placedPieces.map((p) => p.piece.id).toSet();
+    final PlacedPiece? hintPiece = allSolutionPieces.firstWhereOrNull(
+          (p) => !placedPieceIds.contains(p.piece.id),
+    );
+
+    if (hintPiece == null) {
+      debugPrint('❌ HINT: Aucune pièce nouvelle trouvée dans cette solution');
+      return;
+    }
+
+    // 5️⃣ Ajouter cette pièce au plateau
+    final newPlaced = List<PlacedPiece>.from(state.placedPieces)..add(hintPiece);
+
+    // 6️⃣ Reconstruire le plateau avec la nouvelle pièce
+    final newPlateau = Plateau.allVisible(6, 10);
+    for (final placed in newPlaced) {
+      final position = placed.piece.positions[placed.positionIndex];
+      for (final cellNum in position) {
+        final localX = (cellNum - 1) % 5;
+        final localY = (cellNum - 1) ~/ 5;
+        final x = placed.gridX + localX;
+        final y = placed.gridY + localY;
+        if (x >= 0 && x < 6 && y >= 0 && y < 10) {
+          newPlateau.setCell(x, y, placed.piece.id);
+        }
+      }
+    }
+
+    // 7️⃣ Retirer la pièce du slider
+    final newAvailable = state.availablePieces
+        .where((p) => p.id != hintPiece.piece.id)
+        .toList();
+
+    // 8️⃣ Mettre à jour l'état
+    state = state.copyWith(
+      plateau: newPlateau,
+      placedPieces: newPlaced,
+      availablePieces: newAvailable,
+      clearSelectedPiece: true,
+      clearSelectedPlacedPiece: true,
+      clearSelectedCellInPiece: true,
+      clearPreview: true,
+    );
+
+    _recomputeBoardValidity();
+
+    debugPrint(
+      '✅ HINT: Pièce ${hintPiece.piece.id} placée à (${hintPiece.gridX}, ${hintPiece.gridY}) position ${hintPiece.positionIndex}',
+    );
+  }
   /// Annule le tutoriel (toujours restaurer)
   void cancelTutorial() {
     exitTutorialMode(restore: true);
@@ -1507,4 +1599,5 @@ class PentominoGameNotifier extends Notifier<PentominoGameState> {
       );
     }
   }
+
 }

@@ -235,11 +235,20 @@ class _PentominoGameScreenState extends ConsumerState<PentominoGameScreen> {
             ),
           )
               : const SizedBox.shrink(),
-          // ACTIONS : Isométries en transformation OU Close en mode général
           actions: isInTransformMode
               ? _buildTransformActions(state, notifier, settings)
               : [
-            // Bouton fermeture (croix rouge) en mode général
+            // 💡 Bouton hint (ampoule)
+            IconButton(
+              icon: const Icon(Icons.lightbulb),
+              color: Colors.amber.shade700,
+              tooltip: 'Indice aléatoire',
+              onPressed: () {
+                HapticFeedback.selectionClick();
+                notifier.applyHint();
+              },
+            ),
+            // Bouton fermeture (croix rouge)
             IconButton(
               icon: const Icon(Icons.close),
               color: Colors.red,

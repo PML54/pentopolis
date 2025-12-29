@@ -22,10 +22,40 @@ ConsumerState<PentominoGameScreen> createState() => _PentominoGameScreenState();
 Widget build(BuildContext context) {
 ```
 
+### SizedBox
+
+```dart
+const SizedBox(height: 8), Text( 'Score: $score ⭐', style: const TextStyle( fontSize: 18, fontWeight: FontWeight.bold, color: Colors.orange, ), ), if (solutionInfo != null) ...[ const SizedBox(height: 16), const Divider(), const SizedBox(height: 8), Text( 'Solution #${solutionInfo.index + 1}',
+```
+
+### SizedBox
+
+```dart
+const SizedBox(height: 16), const Divider(), const SizedBox(height: 8), Text( 'Solution #${solutionInfo.index + 1}',
+```
+
+### Divider
+
+```dart
+const Divider(), const SizedBox(height: 8), Text( 'Solution #${solutionInfo.index + 1}',
+```
+
+### SizedBox
+
+```dart
+const SizedBox(height: 8), Text( 'Solution #${solutionInfo.index + 1}',
+```
+
+### SizedBox
+
+```dart
+const SizedBox(height: 4), Text( 'Famille ${solutionInfo.canonicalIndex + 1} • ${solutionInfo.variantName}',
+```
+
 ### Scaffold
 
 ```dart
-return Scaffold( backgroundColor: Colors.white, // AppBar uniquement en mode portrait appBar: isLandscape ? null : PreferredSize( preferredSize: const Size.fromHeight(56.0), child: AppBar( toolbarHeight: 56.0, backgroundColor: Colors.white, // LEADING : SUPPRIMÉ (Settings + Duel retirés) leadingWidth: 0, leading: null, // TITLE : Bouton Solutions uniquement title: state.solutionsCount != null ? FittedBox( fit: BoxFit.scaleDown, child: ElevatedButton( onPressed: () {
+return Scaffold( backgroundColor: Colors.white, // AppBar uniquement en mode portrait appBar: isLandscape ? null : PreferredSize( preferredSize: const Size.fromHeight(56.0), child: AppBar( toolbarHeight: 56.0, backgroundColor: Colors.white,  // ✨ NOUVEAU: Chrono à gauche leading: Padding( padding: const EdgeInsets.symmetric(horizontal: 4.0), child: Column( mainAxisAlignment: MainAxisAlignment.center, children: [ Text( _formatTime(state.elapsedSeconds), style: const TextStyle( fontSize: 14, fontWeight: FontWeight.bold, color: Colors.black, ), ), // ✨ Afficher la note seulement si puzzle complet if (state.availablePieces.isEmpty) Text( '⭐ ${notifier.calculateScore(state.elapsedSeconds)}',
 ```
 
 ### TutorialOverlay
@@ -50,6 +80,12 @@ void dispose() {
 
 ```dart
 void initState() {
+```
+
+### didChangeDependencies
+
+```dart
+void didChangeDependencies() {
 ```
 
 ### Row

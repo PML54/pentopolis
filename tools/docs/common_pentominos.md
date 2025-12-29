@@ -10,18 +10,6 @@
 const Pento({
 ```
 
-### getLetter
-
-```dart
-String getLetter(int cellNum) {
-```
-
-### getLetterForPosition
-
-```dart
-String getLetterForPosition(int positionIndex, int cellNum) {
-```
-
 ### findRotation90
 
 Ancien nom : rotation 90° anti-horaire (trigo)
@@ -49,6 +37,27 @@ Ancien nom : symétrie verticale
 int findSymmetryV(int currentPositionIndex) => symmetryV(currentPositionIndex);
 ```
 
+### getLetter
+
+```dart
+String getLetter(int cellNum) {
+```
+
+### getLetterForPosition
+
+```dart
+String getLetterForPosition(int positionIndex, int cellNum) {
+```
+
+### rotate180
+
+Rotation 180° (optionnel)
+
+
+```dart
+int rotate180(int currentPositionIndex) => rotationTW(rotationTW(currentPositionIndex));
+```
+
 ### rotationCW
 
 ```dart
@@ -73,12 +82,12 @@ int symmetryH(int currentPositionIndex) => _applyIso(currentPositionIndex, _flip
 int symmetryV(int currentPositionIndex) => _applyIso(currentPositionIndex, _flipHCoords);
 ```
 
-### rotate180
+### minIsometriesToReach
 
-Rotation 180° (optionnel)
+Retourne le nombre MIN d'isométries pour aller de startPos à endPos
 
 
 ```dart
-int rotate180(int currentPositionIndex) => rotationTW(rotationTW(currentPositionIndex));
+int minIsometriesToReach(int startPos, int endPos) {
 ```
 

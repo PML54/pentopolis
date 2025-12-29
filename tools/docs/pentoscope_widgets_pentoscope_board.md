@@ -44,18 +44,18 @@ Détecte si cette cellule est une pièce solution
 
 
 ```dart
-const SizedBox(height: 8), Text( 'Isométries: ${state.isometryCount}  Translations: ${state.translationCount}',
-```
-
-### SizedBox
-
-```dart
-const SizedBox(height: 12), Row( mainAxisSize: MainAxisSize.min, children: [ TextButton( onPressed: () {
+const SizedBox(height: 8),  Row( mainAxisSize: MainAxisSize.min, children: [ TextButton( onPressed: () {
 ```
 
 ### SizedBox
 
 ```dart
 const SizedBox(width: 8), ElevatedButton( onPressed: () {
+```
+
+### SizedBox
+
+```dart
+const SizedBox(height: 8), ], ), ), ), ), ), );
 ```
 

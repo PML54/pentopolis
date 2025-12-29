@@ -4,6 +4,30 @@
 
 ## Fonctions
 
+### SolutionInfo
+
+Information détaillée sur une solution identifiée.
+
+Permet de retrouver l'origine d'une solution :
+- Son index absolu (0-9355)
+- Sa solution canonique d'origine (0-2338)
+- Le type de variante appliquée
+Index absolu de la solution (0-9355)
+Index de la solution canonique d'origine (0-2338)
+Type de variante : 0=identité, 1=rot180, 2=mirrorH, 3=mirrorV
+Nom lisible de la variante
+
+
+```dart
+const SolutionInfo(this.index);
+```
+
+### toString
+
+```dart
+String toString() => 'Solution #$index (canonique $canonicalIndex, $variantName)';
+```
+
 ### initWithBigIntSolutions
 
 Toutes les solutions utilisées (BigInt 360 bits chacune).
@@ -63,5 +87,25 @@ Retourne la liste des solutions compatibles (pour debug / navigateur).
 
 ```dart
 List<BigInt> getCompatibleSolutionsFromBigInts( BigInt piecesBits, BigInt maskBits, ) {
+```
+
+### getCompatibleSolutionIndices
+
+Retourne les indices des solutions compatibles (0..9355).
+Utile pour stocker/identifier les solutions trouvées.
+
+
+```dart
+List<int> getCompatibleSolutionIndices(BigInt piecesBits, BigInt maskBits) {
+```
+
+### findSolutionIndex
+
+Retourne l'index d'une solution exacte (ou -1 si non trouvée).
+Utile quand le plateau est complet.
+
+
+```dart
+int findSolutionIndex(BigInt completeSolution) {
 ```
 

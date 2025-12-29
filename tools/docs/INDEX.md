@@ -9,6 +9,7 @@
 - **config** (1 fichiers)
 - **data** (1 fichiers)
 - **database** (2 fichiers)
+- **debug** (1 fichiers)
 - **duel** (15 fichiers)
 - **main.dart** (1 fichiers)
 - **models** (1 fichiers)
@@ -27,18 +28,19 @@
 
 **Fonctions :**
 
-- `setViewOrientation()`
-- `Point()`
-- `applyIsometryRotationTW()`
 - `applyIsometryRotationCW()`
+- `applyIsometryRotationTW()`
 - `applyIsometrySymmetryH()`
 - `applyIsometrySymmetryV()`
 - `build()`
+- `calculateScore()`
 - `cancelSelection()`
 - `cancelTutorial()`
+- `onPuzzleCompleted()`
 - `clearBoardHighlight()`
 - `clearCellHighlights()`
 - `clearIsometryIconHighlight()`
+- `incrementSolutionsViewCount()`
 - `clearMastercaseHighlight()`
 - `clearPreview()`
 - `clearSliderHighlight()`
@@ -51,6 +53,7 @@
 - `exitTutorialMode()`
 - `StateError()`
 - `StateError()`
+- `getElapsedSeconds()`
 - `highlightCell()`
 - `ArgumentError()`
 - `highlightCells()`
@@ -79,9 +82,13 @@
 - `selectPlacedPieceWithMastercaseForTutorial()`
 - `StateError()`
 - `ArgumentError()`
+- `setViewOrientation()`
+- `startTimer()`
+- `stopTimer()`
 - `tryPlacePiece()`
 - `undoLastPlacement()`
 - `updatePreview()`
+- `Point()`
 - `Point()`
 
 ### classical/pentomino_game_screen.dart
@@ -91,11 +98,17 @@
 - `PentominoGameScreen()`
 - `createState()`
 - `build()`
+- `SizedBox()`
+- `SizedBox()`
+- `Divider()`
+- `SizedBox()`
+- `SizedBox()`
 - `Scaffold()`
 - `TutorialOverlay()`
 - `TutorialControls()`
 - `dispose()`
 - `initState()`
+- `didChangeDependencies()`
 - `Row()`
 - `Column()`
 - `AnimatedContainer()`
@@ -104,15 +117,15 @@
 
 **Fonctions :**
 
-- `getOccupiedCells()`
-- `copyWith()`
-- `PlacedPiece()`
-- `Point()`
 - `PentominoGameState()`
-- `getPiecePositionIndex()`
 - `canPlacePiece()`
 - `copyWith()`
 - `PentominoGameState()`
+- `getPiecePositionIndex()`
+- `Point()`
+- `copyWith()`
+- `PlacedPiece()`
+- `getOccupiedCells()`
 
 ---
 
@@ -162,16 +175,17 @@
 **Fonctions :**
 
 - `Pento()`
-- `getLetter()`
-- `getLetterForPosition()`
 - `findRotation90()`
 - `findSymmetryH()`
 - `findSymmetryV()`
+- `getLetter()`
+- `getLetterForPosition()`
+- `rotate180()`
 - `rotationCW()`
 - `rotationTW()`
 - `symmetryH()`
 - `symmetryV()`
-- `rotate180()`
+- `minIsometriesToReach()`
 
 ### common/placed_piece.dart
 
@@ -247,14 +261,23 @@
 
 **Fonctions :**
 
+- `LazyDatabase()`
+- `NativeDatabase()`
 - `getSetting()`
 - `setSetting()`
 - `into()`
 - `deleteSetting()`
 - `clearAllSettings()`
 - `delete()`
-- `LazyDatabase()`
-- `NativeDatabase()`
+- `saveGameSession()`
+- `into()`
+- `getFastestCompletion()`
+- `getHighestScore()`
+- `getTotalSessionsCount()`
+- `getUniqueSolutionsCount()`
+- `getSolutionStats()`
+- `update()`
+- `into()`
 
 ### database/settings_database.g.dart
 
@@ -280,11 +303,84 @@
 - `SettingsCompanion()`
 - `toColumns()`
 - `toString()`
+- `VerificationMeta()`
+- `validateIntegrity()`
+- `map()`
+- `GameSession()`
+- `GameSession()`
+- `toColumns()`
+- `toCompanion()`
+- `GameSessionsCompanion()`
+- `GameSession()`
+- `toJson()`
+- `copyWith()`
+- `copyWithCompanion()`
+- `GameSession()`
+- `toString()`
+- `GameSessionsCompanion()`
+- `custom()`
+- `RawValuesInsertable()`
+- `copyWith()`
+- `GameSessionsCompanion()`
+- `toColumns()`
+- `toString()`
+- `validateIntegrity()`
+- `map()`
+- `SolutionStat()`
+- `SolutionStat()`
+- `toColumns()`
+- `toCompanion()`
+- `SolutionStatsCompanion()`
+- `SolutionStat()`
+- `toJson()`
+- `copyWith()`
+- `copyWithCompanion()`
+- `SolutionStat()`
+- `toString()`
+- `SolutionStatsCompanion()`
+- `custom()`
+- `RawValuesInsertable()`
+- `copyWith()`
+- `SolutionStatsCompanion()`
+- `toColumns()`
+- `toString()`
 - `DriftDatabaseOptions()`
 - `Function()`
 - `Function()`
 - `Function()`
 - `Function()`
+- `Function()`
+- `Function()`
+- `Function()`
+- `Function()`
+- `Function()`
+- `Function()`
+- `Function()`
+- `Function()`
+
+---
+
+## Module: debug
+
+### debug/database_debug_screen.dart
+
+**Fonctions :**
+
+- `DatabaseDebugScreen()`
+- `createState()`
+- `build()`
+- `Scaffold()`
+- `Text()`
+- `Column()`
+- `Text()`
+- `Column()`
+- `Container()`
+- `Column()`
+- `SizedBox()`
+- `Row()`
+- `Row()`
+- `SnackBar()`
+- `SnackBar()`
 
 ---
 
@@ -690,9 +786,7 @@
 - `SizedBox()`
 - `Text()`
 - `SizedBox()`
-- `SizedBox()`
 - `Text()`
-- `SizedBox()`
 - `SizedBox()`
 - `SizedBox()`
 - `Text()`
@@ -791,7 +885,6 @@
 - `HomeScreen()`
 - `build()`
 - `Scaffold()`
-- `SizedBox()`
 - `SizedBox()`
 - `SizedBox()`
 - `SizedBox()`
@@ -1010,16 +1103,22 @@
 - `StateError()`
 - `StateError()`
 - `getCompatibleSolutionsBigInt()`
+- `getCompatibleSolutionIndices()`
+- `findExactSolutionIndex()`
 
 ### services/solution_matcher.dart
 
 **Fonctions :**
 
+- `SolutionInfo()`
+- `toString()`
 - `initWithBigIntSolutions()`
 - `StateError()`
 - `ArgumentError()`
 - `countCompatibleFromBigInts()`
 - `getCompatibleSolutionsFromBigInts()`
+- `getCompatibleSolutionIndices()`
+- `findSolutionIndex()`
 
 ---
 
