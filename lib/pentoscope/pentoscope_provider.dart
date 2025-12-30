@@ -97,6 +97,31 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
   }
 
   // ==========================================================================
+  // 📊 NOTE / SCORE
+  // ==========================================================================
+
+  /// Calcule la note de "non-triche" (0-20)
+  /// - 0 hints → 20/20
+  /// - ≥ nbPieces - 1 hints → 0/20
+  /// - Entre les deux → linéaire
+  int calculateNote() {
+    final nbPieces = state.puzzle?.size.numPieces ?? 1;
+    final nbHints = state.hintCount;
+    
+    // Si 0 hint → 20/20
+    if (nbHints == 0) return 20;
+    
+    // Si ≥ nbPieces - 1 hints → 0/20
+    final maxHints = nbPieces - 1;
+    if (nbHints >= maxHints) return 0;
+    
+    // Linéaire entre les deux
+    // note = 20 - (nbHints * 20 / maxHints)
+    final note = 20 - (nbHints * 20 ~/ maxHints);
+    return note.clamp(0, 20);
+  }
+
+  // ==========================================================================
   // 💡 HINT SYSTEM - Vérifier et appliquer un indice
   // ==========================================================================
 
@@ -185,6 +210,7 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
       placedPieces: newPlacedPieces,
       isComplete: isComplete,
       hasPossibleSolution: hasPossibleSolution,
+      hintCount: state.hintCount + 1, // 💡 Incrémenter le compteur de hints
       clearSelectedPiece: true,
       clearSelectedPlacedPiece: true,
       clearPreview: true,
@@ -336,7 +362,8 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
       clearSelectedCellInPiece: true,
       isComplete: false,
       validPlacements: [],
-      hasPossibleSolution: hasPossibleSolution, // 💡 Mise à jour
+      hasPossibleSolution: hasPossibleSolution,
+      deleteCount: state.deleteCount + 1, // 🗑️ Incrémenter le compteur de suppressions
     );
   }
 
@@ -634,19 +661,6 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
         ? state.translationCount + 1
         : state.translationCount;
 
-    // 🎯 NOUVEAU: Calculer le score si victoire
-    int newScore = state.score;
-
-    if (state.currentSolution != null) {}
-
-    if (isComplete && state.currentSolution != null) {
-      newScore = _calculateScore(
-        newPlacedPieces,
-        state.currentSolution!,
-        state.isometryCount,
-      );
-    }
-
     // ⏱️ Arrêter le timer si puzzle complet
     if (isComplete) {
       stopTimer();
@@ -667,7 +681,6 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
       clearPreview: true,
       isComplete: isComplete,
       translationCount: newTranslationCount,
-      score: newScore,
       currentSolution: state.currentSolution,
       validPlacements: [],
       hasPossibleSolution: hasPossibleSolution, // 💡 HINT
@@ -840,44 +853,6 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
     final rawX = (firstCellNum - 1) % 5;
     final rawY = (firstCellNum - 1) ~/ 5;
     return Point(rawX - minX, rawY - minY);
-  }
-
-  // ============================================================================
-  // CALCUL DU SCORE - Efficacité isométries
-  // ============================================================================
-  int _calculateScore(
-    List<PentoscopePlacedPiece> placedPieces,
-    Solution solution,
-    int actualIsometries,
-  ) {
-    if (actualIsometries == 0) {
-      return 20;
-    }
-
-    int totalMinIsometries = 0;
-
-    for (final placed in placedPieces) {
-      final pento = pentominos.firstWhere((p) => p.id == placed.piece.id);
-      final optimalPlacement = solution.firstWhere(
-        (p) => p.pieceId == placed.piece.id,
-      );
-
-      // ✅ BON (ce qu'il faut):
-      final initialPos = state.piecePositionIndices[placed.piece.id] ?? 0;
-      final minIso = pento.minIsometriesToReach(
-        initialPos, // ← Position INITIALE aléatoire!
-        optimalPlacement.positionIndex,
-      );
-
-      totalMinIsometries += minIso;
-    }
-
-    final score = ((totalMinIsometries / actualIsometries) * 20).round().clamp(
-      0,
-      20,
-    );
-
-    return score;
   }
 
   /// Annule le mode "pièce placée en main" (sélection sur plateau) en
@@ -1128,7 +1103,8 @@ class PentoscopeState {
   final bool isComplete;
   final int isometryCount;
   final int translationCount;
-  final int score; // 🎯 NOUVEAU: Score basé sur efficacité (0-20)
+  final int hintCount;   // 💡 Nombre de fois où la lampe a été utilisée
+  final int deleteCount; // 🗑️ Nombre de suppressions de pièces
 
   final bool isSnapped;
   final bool showSolution;
@@ -1158,7 +1134,8 @@ class PentoscopeState {
     this.isComplete = false,
     this.isometryCount = 0,
     this.translationCount = 0,
-    this.score = 0, // 🎯 NOUVEAU
+    this.hintCount = 0,   // 💡
+    this.deleteCount = 0, // 🗑️
     this.isSnapped = false,
     this.showSolution = false,
     this.currentSolution,
@@ -1227,7 +1204,8 @@ class PentoscopeState {
     bool? isComplete,
     int? isometryCount,
     int? translationCount,
-    int? score, // 🎯 NOUVEAU
+    int? hintCount,   // 💡
+    int? deleteCount, // 🗑️
     bool? isSnapped,
     bool? showSolution, // ✅ NOUVEAU
     Solution? currentSolution, // ✅ NOUVEAU
@@ -1262,8 +1240,8 @@ class PentoscopeState {
       isComplete: isComplete ?? this.isComplete,
       isometryCount: isometryCount ?? this.isometryCount,
       translationCount: translationCount ?? this.translationCount,
-      score: score ?? this.score,
-      // 🎯 NOUVEAU
+      hintCount: hintCount ?? this.hintCount,
+      deleteCount: deleteCount ?? this.deleteCount,
       isSnapped: isSnapped ?? this.isSnapped,
       showSolution: showSolution ?? this.showSolution,
       // ✅ NOUVEAU

@@ -397,3 +397,4 @@ Le mode Classical supporte le système de tutoriel :
 | Browser solutions | ✅ Oui | ❌ Non |
 
 
+

@@ -81,17 +81,46 @@ class PentoscopeGameScreen extends ConsumerWidget {
             duration: const Duration(milliseconds: 2500),
             curve: Curves.elasticOut,
             builder: (context, value, child) {
+              final note = notifier.calculateNote();
               return Transform.scale(
                 scale: value,
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                  child: Text(
-                    '${state.score}/20',
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.green,
-                    ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Note principale
+                      Text(
+                        '$note/20',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: note >= 15 ? Colors.green : (note >= 8 ? Colors.orange : Colors.red),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      // Indicateurs
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // Hints (lampes)
+                          Icon(Icons.lightbulb_outline, size: 14, color: Colors.amber.shade700),
+                          Text('${state.hintCount}', style: const TextStyle(fontSize: 12, color: Colors.black54)),
+                          const SizedBox(width: 6),
+                          // Isométries
+                          Icon(Icons.rotate_right, size: 14, color: Colors.blue.shade600),
+                          Text('${state.isometryCount}', style: const TextStyle(fontSize: 12, color: Colors.black54)),
+                          const SizedBox(width: 6),
+                          // Translations
+                          Icon(Icons.open_with, size: 14, color: Colors.purple.shade600),
+                          Text('${state.translationCount}', style: const TextStyle(fontSize: 12, color: Colors.black54)),
+                          const SizedBox(width: 6),
+                          // Deletes
+                          Icon(Icons.delete_outline, size: 14, color: Colors.red.shade600),
+                          Text('${state.deleteCount}', style: const TextStyle(fontSize: 12, color: Colors.black54)),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
               );
