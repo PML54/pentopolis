@@ -1,6 +1,7 @@
 // lib/pentoscope/pentoscope_provider.dart
 // Provider Pentoscope - calqué sur pentomino_game_provider
 // CORRIGÉ: Bug de disparition des pièces (sync plateau/placedPieces)
+import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/cupertino.dart';
@@ -11,7 +12,7 @@ import 'package:pentapol/common/plateau.dart';
 import 'package:pentapol/common/point.dart';
 import 'package:pentapol/pentoscope/pentoscope_generator.dart';
 import 'package:pentapol/pentoscope/pentoscope_solver.dart'
-    show SolverPlacement, Solution;
+    show Solution, PentoscopeSolver;
 
 // ============================================================================
 // ÉTAT
@@ -30,6 +31,11 @@ enum PentoscopeDifficulty { easy, random, hard }
 
 class PentoscopeNotifier extends Notifier<PentoscopeState> {
   late final PentoscopeGenerator _generator;
+  late final PentoscopeSolver _solver;
+  
+  // ⏱️ Timer
+  Timer? _gameTimer;
+  DateTime? _startTime;
 
   void applyIsometryRotationCW() {
     _applyIsoUsingLookup((p, idx) => p.rotationCW(idx));
@@ -58,7 +64,161 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
   @override
   PentoscopeState build() {
     _generator = PentoscopeGenerator();
+    _solver = PentoscopeSolver();
     return PentoscopeState.initial();
+  }
+
+  // ==========================================================================
+  // ⏱️ TIMER
+  // ==========================================================================
+
+  /// Démarre le chronomètre
+  void startTimer() {
+    if (_gameTimer != null) return; // Déjà démarré
+    
+    _startTime = DateTime.now();
+    _gameTimer = Timer.periodic(const Duration(milliseconds: 100), (_) {
+      state = state.copyWith(
+        elapsedSeconds: getElapsedSeconds(),
+      );
+    });
+  }
+
+  /// Arrête le chronomètre
+  void stopTimer() {
+    _gameTimer?.cancel();
+    _gameTimer = null;
+  }
+
+  /// Retourne le temps écoulé en secondes
+  int getElapsedSeconds() {
+    if (_startTime == null) return 0;
+    return DateTime.now().difference(_startTime!).inSeconds;
+  }
+
+  // ==========================================================================
+  // 💡 HINT SYSTEM - Vérifier et appliquer un indice
+  // ==========================================================================
+
+  /// Applique un indice en plaçant une pièce du slider selon une solution possible
+  void applyHint() {
+    if (state.puzzle == null) return;
+    if (state.availablePieces.isEmpty) return;
+    if (!state.hasPossibleSolution) return;
+
+    final width = state.puzzle!.size.width;
+    final height = state.puzzle!.size.height;
+
+    // Récupérer les IDs des pièces non encore placées
+    final remainingPieceIds = state.availablePieces.map((p) => p.id).toList();
+
+    // Créer un plateau temporaire avec les pièces déjà placées
+    final tempPlateau = List<List<int>>.generate(
+      height,
+      (_) => List<int>.filled(width, 0),
+    );
+
+    for (final placed in state.placedPieces) {
+      for (final cell in placed.absoluteCells) {
+        if (cell.x >= 0 && cell.x < width && cell.y >= 0 && cell.y < height) {
+          tempPlateau[cell.y][cell.x] = placed.piece.id;
+        }
+      }
+    }
+
+    // Trouver une solution
+    final solution = _solver.findSolutionFrom(remainingPieceIds, width, height, tempPlateau);
+    if (solution == null || solution.isEmpty) {
+      debugPrint('❌ HINT: Aucune solution trouvée');
+      return;
+    }
+
+    // Prendre le premier placement de la solution (première pièce à placer)
+    final hintPlacement = solution.first;
+    final hintPiece = pentominos.firstWhere((p) => p.id == hintPlacement.pieceId);
+
+    debugPrint('💡 HINT: Placer pièce ${hintPiece.id} à (${hintPlacement.gridX}, ${hintPlacement.gridY}) pos=${hintPlacement.positionIndex}');
+
+    // Créer le nouveau plateau
+    final newPlateau = Plateau.allVisible(width, height);
+
+    // Copier les pièces existantes
+    for (final p in state.placedPieces) {
+      for (final cell in p.absoluteCells) {
+        newPlateau.setCell(cell.x, cell.y, p.piece.id);
+      }
+    }
+
+    // Placer la nouvelle pièce
+    final newPlaced = PentoscopePlacedPiece(
+      piece: hintPiece,
+      positionIndex: hintPlacement.positionIndex,
+      gridX: hintPlacement.gridX,
+      gridY: hintPlacement.gridY,
+    );
+
+    for (final cell in newPlaced.absoluteCells) {
+      newPlateau.setCell(cell.x, cell.y, hintPiece.id);
+    }
+
+    // Mettre à jour les listes
+    final newPlacedPieces = [...state.placedPieces, newPlaced];
+    final newAvailable = state.availablePieces
+        .where((p) => p.id != hintPiece.id)
+        .toList();
+
+    final isComplete = newPlacedPieces.length == state.puzzle!.size.numPieces;
+
+    // ⏱️ Arrêter le timer si puzzle complet
+    if (isComplete) {
+      stopTimer();
+    }
+
+    // Vérifier s'il reste des solutions possibles
+    final hasPossibleSolution = newAvailable.isNotEmpty
+        ? _checkHasPossibleSolutionWith(newPlateau, newAvailable, newPlacedPieces)
+        : false;
+
+    state = state.copyWith(
+      plateau: newPlateau,
+      availablePieces: newAvailable,
+      placedPieces: newPlacedPieces,
+      isComplete: isComplete,
+      hasPossibleSolution: hasPossibleSolution,
+      clearSelectedPiece: true,
+      clearSelectedPlacedPiece: true,
+      clearPreview: true,
+      validPlacements: [],
+    );
+  }
+
+  /// Version interne pour vérifier avec un état spécifique
+  bool _checkHasPossibleSolutionWith(
+    Plateau plateau,
+    List<Pento> availablePieces,
+    List<PentoscopePlacedPiece> placedPieces,
+  ) {
+    if (state.puzzle == null) return false;
+    if (availablePieces.isEmpty) return false;
+
+    final width = state.puzzle!.size.width;
+    final height = state.puzzle!.size.height;
+    final remainingPieceIds = availablePieces.map((p) => p.id).toList();
+
+    final tempPlateau = List<List<int>>.generate(
+      height,
+      (_) => List<int>.filled(width, 0),
+    );
+
+    for (final placed in placedPieces) {
+      for (final cell in placed.absoluteCells) {
+        if (cell.x >= 0 && cell.x < width && cell.y >= 0 && cell.y < height) {
+          tempPlateau[cell.y][cell.x] = placed.piece.id;
+        }
+      }
+    }
+
+    return _solver.canSolveFrom(remainingPieceIds, width, height, tempPlateau);
   }
 
   // ==========================================================================
@@ -160,6 +320,13 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
         .toList();
     final newAvailable = [...state.availablePieces, placed.piece];
 
+    // 💡 HINT: Recalculer si une solution est encore possible
+    final hasPossibleSolution = _checkHasPossibleSolutionWith(
+      newPlateau,
+      newAvailable,
+      newPlaced,
+    );
+
     state = state.copyWith(
       plateau: newPlateau,
       placedPieces: newPlaced,
@@ -168,7 +335,8 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
       clearSelectedPlacedPiece: true,
       clearSelectedCellInPiece: true,
       isComplete: false,
-      validPlacements: [], // ✨ Réinitialiser
+      validPlacements: [],
+      hasPossibleSolution: hasPossibleSolution, // 💡 Mise à jour
     );
   }
 
@@ -194,6 +362,9 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
       firstSolution = newPuzzle.solutions[0];
     }
 
+    // ⏱️ Reset et démarrer le timer
+    stopTimer();
+    
     state = PentoscopeState(
       viewOrientation: state.viewOrientation,
       puzzle: newPuzzle,
@@ -209,7 +380,11 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
       currentSolution: firstSolution,
       // ✅ Stocker la solution
       validPlacements: [], // ✨ NOUVEAU
+      hasPossibleSolution: true, // 💡 Reset
+      elapsedSeconds: 0, // ⏱️ Reset timer
     );
+    
+    startTimer();
   }
 
   // ==========================================================================
@@ -357,6 +532,9 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
       }
     }
 
+    // ⏱️ Démarrer le timer
+    stopTimer();
+    
     state = PentoscopeState(
       viewOrientation: ViewOrientation.portrait,
       puzzle: puzzle,
@@ -372,7 +550,11 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
       currentSolution: firstSolution,
       // ✅ TOUJOURS fournie (pour le SCORE)
       validPlacements: [], // ✨ NOUVEAU
+      hasPossibleSolution: true, // 💡 Au départ, une solution existe forcément
+      elapsedSeconds: 0, // ⏱️ Reset timer
     );
+    
+    startTimer();
   }
 
   // ==========================================================================
@@ -463,7 +645,18 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
         state.currentSolution!,
         state.isometryCount,
       );
-    } else {}
+    }
+
+    // ⏱️ Arrêter le timer si puzzle complet
+    if (isComplete) {
+      stopTimer();
+    }
+
+    // 💡 HINT: Vérifier si une solution est encore possible
+    final hasPossibleSolution = !isComplete && newAvailable.isNotEmpty
+        ? _checkHasPossibleSolutionWith(newPlateau, newAvailable, newPlacedPieces)
+        : false;
+
     state = state.copyWith(
       plateau: newPlateau,
       availablePieces: newAvailable,
@@ -475,10 +668,9 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
       isComplete: isComplete,
       translationCount: newTranslationCount,
       score: newScore,
-      // 🎯 NOUVEAU
       currentSolution: state.currentSolution,
-      // 👈 AJOUTER CETTE LIGNE!
-      validPlacements: [], // ✨ Réinitialiser après placement
+      validPlacements: [],
+      hasPossibleSolution: hasPossibleSolution, // 💡 HINT
     );
 
     return true;
@@ -942,6 +1134,12 @@ class PentoscopeState {
   final bool showSolution;
   final Solution? currentSolution;
 
+  // 💡 HINT: Indique si au moins une solution est encore possible
+  final bool hasPossibleSolution;
+
+  // ⏱️ Timer
+  final int elapsedSeconds;
+
   const PentoscopeState({
     this.viewOrientation = ViewOrientation.portrait,
     this.puzzle,
@@ -964,6 +1162,8 @@ class PentoscopeState {
     this.isSnapped = false,
     this.showSolution = false,
     this.currentSolution,
+    this.hasPossibleSolution = true, // 💡 Par défaut true au démarrage
+    this.elapsedSeconds = 0, // ⏱️ Timer
   });
 
   factory PentoscopeState.initial() {
@@ -1031,6 +1231,8 @@ class PentoscopeState {
     bool? isSnapped,
     bool? showSolution, // ✅ NOUVEAU
     Solution? currentSolution, // ✅ NOUVEAU
+    bool? hasPossibleSolution, // 💡 HINT
+    int? elapsedSeconds, // ⏱️ Timer
   }) {
     return PentoscopeState(
       viewOrientation: viewOrientation ?? this.viewOrientation,
@@ -1066,6 +1268,8 @@ class PentoscopeState {
       showSolution: showSolution ?? this.showSolution,
       // ✅ NOUVEAU
       currentSolution: currentSolution ?? this.currentSolution, // ✅ NOUVEAU
+      hasPossibleSolution: hasPossibleSolution ?? this.hasPossibleSolution, // 💡 HINT
+      elapsedSeconds: elapsedSeconds ?? this.elapsedSeconds, // ⏱️ Timer
     );
   }
 

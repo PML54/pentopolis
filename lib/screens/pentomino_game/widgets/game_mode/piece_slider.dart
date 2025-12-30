@@ -155,7 +155,9 @@ class _PieceSliderState extends ConsumerState<PieceSlider> {
           ]
               : null,
         ),
-        child: DraggablePieceWidget(
+        // ✅ Centrer la pièce dans le container
+        child: Center(
+          child: DraggablePieceWidget(
           piece: piece,
           positionIndex: positionIndex,
           isSelected: isSelected,
@@ -186,6 +188,7 @@ class _PieceSliderState extends ConsumerState<PieceSlider> {
             getPieceColor: (pieceId) => settings.ui.getPieceColor(pieceId),
           ),
         ),
+        ), // Fermer Center
       ),
     );
   }

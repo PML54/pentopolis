@@ -93,12 +93,13 @@ class PentoscopePieceSlider extends ConsumerWidget {
           ]
               : null,
         ),
-        child: Transform.rotate(
-          angle: isLandscape ? -math.pi / 2 : 0.0, // ✅ rotation visuelle du slider en paysage
-          child:
-
-          Transform.scale( scale:1.5 ,
-            child: DraggablePieceWidget(
+        // ✅ Centrer la pièce dans le container
+        child: Center(
+          child: Transform.rotate(
+            angle: isLandscape ? -math.pi / 2 : 0.0, // ✅ rotation visuelle du slider en paysage
+            child: Transform.scale(
+              scale: 1.5,
+              child: DraggablePieceWidget(
               piece: piece,
               positionIndex: displayPositionIndex,
               isSelected: isSelected,
@@ -125,10 +126,9 @@ class PentoscopePieceSlider extends ConsumerWidget {
               ),
             ),
           ),
-          ),
         ),
-
-
+        ), // Fermer Center
+      ),
     );
   }
 }

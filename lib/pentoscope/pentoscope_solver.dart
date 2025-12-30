@@ -176,6 +176,155 @@ class PentoscopeSolver {
   }
 
   // ==========================================================================
+  // 💡 HINT SYSTEM: Vérifier/trouver solution depuis un état partiel
+  // ==========================================================================
+
+  /// Vérifie si au moins une solution existe depuis un état partiel
+  /// [pieceIds] : IDs des pièces restantes à placer
+  /// [plateau] : État actuel du plateau (0 = vide, sinon ID de la pièce)
+  bool canSolveFrom(
+    List<int> pieceIds,
+    int width,
+    int height,
+    List<List<int>> plateau,
+  ) {
+    if (pieceIds.isEmpty) return true;
+
+    final usedPieces = <int>{};
+    final placedPieces = <SolverPlacement>[];
+
+    // Copier le plateau pour ne pas modifier l'original
+    final tempPlateau = List<List<int>>.generate(
+      height,
+      (y) => List<int>.from(plateau[y]),
+    );
+
+    final sortedPieceIds = _sortByConstraint(pieceIds);
+
+    return _backtrackFirst(
+      pieceIds: sortedPieceIds,
+      width: width,
+      height: height,
+      plateau: tempPlateau,
+      usedPieces: usedPieces,
+      placedPieces: placedPieces,
+    );
+  }
+
+  /// Trouve une solution depuis un état partiel et retourne les placements
+  /// [pieceIds] : IDs des pièces restantes à placer
+  /// [plateau] : État actuel du plateau
+  /// Retourne la liste des placements pour les pièces restantes, ou null
+  Solution? findSolutionFrom(
+    List<int> pieceIds,
+    int width,
+    int height,
+    List<List<int>> plateau,
+  ) {
+    if (pieceIds.isEmpty) return [];
+
+    final usedPieces = <int>{};
+    final placedPieces = <SolverPlacement>[];
+
+    // Copier le plateau
+    final tempPlateau = List<List<int>>.generate(
+      height,
+      (y) => List<int>.from(plateau[y]),
+    );
+
+    final sortedPieceIds = _sortByConstraint(pieceIds);
+
+    final found = _backtrackFirstWithResult(
+      pieceIds: sortedPieceIds,
+      width: width,
+      height: height,
+      plateau: tempPlateau,
+      usedPieces: usedPieces,
+      placedPieces: placedPieces,
+    );
+
+    return found ? placedPieces : null;
+  }
+
+  /// Backtrack optimisé qui garde les placements trouvés
+  bool _backtrackFirstWithResult({
+    required List<int> pieceIds,
+    required int width,
+    required int height,
+    required List<List<int>> plateau,
+    required Set<int> usedPieces,
+    required List<SolverPlacement> placedPieces,
+  }) {
+    // Toutes les pièces placées → succès
+    if (usedPieces.length == pieceIds.length) {
+      return true;
+    }
+
+    // Trouver la plus petite case libre
+    final targetCell = _findSmallestFreeCell(plateau, width, height);
+    if (targetCell == null) return false;
+
+    final targetX = targetCell % width;
+    final targetY = targetCell ~/ width;
+
+    // Essayer chaque pièce non utilisée
+    for (final pieceId in pieceIds) {
+      if (usedPieces.contains(pieceId)) continue;
+
+      final pento = _pieceMap[pieceId]!;
+
+      // Essayer chaque orientation
+      for (int posIndex = 0; posIndex < pento.numPositions; posIndex++) {
+        final placement = _findPlacementCoveringCell(
+          pento,
+          posIndex,
+          targetX,
+          targetY,
+          width,
+          height,
+          plateau,
+        );
+
+        if (placement != null) {
+          // Placer la pièce
+          _placePiece(pento, posIndex, placement.$1, placement.$2, pieceId, plateau);
+          usedPieces.add(pieceId);
+          placedPieces.add(
+            SolverPlacement(
+              pieceId: pieceId,
+              gridX: placement.$1,
+              gridY: placement.$2,
+              positionIndex: posIndex,
+            ),
+          );
+
+          // Vérifier les régions isolées
+          if (_areIsolatedRegionsValid(plateau, width, height)) {
+            // Récursion
+            if (_backtrackFirstWithResult(
+              pieceIds: pieceIds,
+              width: width,
+              height: height,
+              plateau: plateau,
+              usedPieces: usedPieces,
+              placedPieces: placedPieces,
+            )) {
+              return true;
+            }
+          }
+
+          // Backtrack
+          _removePiece(pento, posIndex, placement.$1, placement.$2, plateau);
+          usedPieces.remove(pieceId);
+          placedPieces.removeLast();
+        }
+      }
+    }
+
+    return false;
+  }
+
+  // ==========================================================================
   // OPTIMISATION 1: Smallest Free Cell First
   // ==========================================================================
 

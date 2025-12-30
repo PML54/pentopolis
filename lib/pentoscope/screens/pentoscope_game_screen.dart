@@ -14,6 +14,13 @@ import 'package:pentapol/pentoscope/pentoscope_provider.dart';
 import 'package:pentapol/pentoscope/widgets/pentoscope_board.dart';
 import 'package:pentapol/pentoscope/widgets/pentoscope_piece_slider.dart';
 
+/// ⏱️ Formate le temps en MM:SS
+String _formatTime(int seconds) {
+  final minutes = seconds ~/ 60;
+  final secs = seconds % 60;
+  return '${minutes.toString().padLeft(2, '0')}:${secs.toString().padLeft(2, '0')}';
+}
+
 class PentoscopeGameScreen extends ConsumerWidget {
   const PentoscopeGameScreen({super.key});
 
@@ -44,13 +51,28 @@ class PentoscopeGameScreen extends ConsumerWidget {
         child: AppBar(
           toolbarHeight: 56.0,
           backgroundColor: Colors.white,
-          automaticallyImplyLeading: !isPlacedPieceSelected,
+          automaticallyImplyLeading: false,
           leading: isPlacedPieceSelected
               ? null
-              : IconButton(
-            icon: const Icon(Icons.close, color: Colors.red),
-            onPressed: () => Navigator.pop(context),
-          ),
+              : Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.close, color: Colors.red),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                    // ⏱️ Chronomètre
+                    Text(
+                      _formatTime(state.elapsedSeconds),
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
+                      ),
+                    ),
+                  ],
+                ),
+          leadingWidth: 100,
           title: (isPlacedPieceSelected || isSliderPieceSelected)
               ? null
               : state.isComplete
@@ -86,6 +108,21 @@ class PentoscopeGameScreen extends ConsumerWidget {
           )
               : null,
           actions: [
+            // 💡 Bouton Hint (lampe) - visible si solution possible et pièces restantes
+            if (!isSliderPieceSelected && 
+                !isPlacedPieceSelected && 
+                !state.isComplete &&
+                state.hasPossibleSolution &&
+                state.availablePieces.isNotEmpty)
+              IconButton(
+                icon: const Icon(Icons.lightbulb_outline),
+                color: Colors.amber,
+                onPressed: () {
+                  HapticFeedback.mediumImpact();
+                  notifier.applyHint();
+                },
+                tooltip: 'Indice',
+              ),
             if (isSliderPieceSelected || isPlacedPieceSelected)
               _buildIsometryActionsBar(
                 state,
@@ -373,7 +410,19 @@ class PentoscopeGameScreen extends ConsumerWidget {
                   ),
                 ]
                     : [
-                  // Actions générales (reset, close)
+                  // ⏱️ Chronomètre
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                    child: Text(
+                      _formatTime(state.elapsedSeconds),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
+                      ),
+                    ),
+                  ),
+                  // Actions générales (reset, close, hint)
                   IconButton(
                     icon: const Icon(Icons.games),
                     onPressed: () {
@@ -382,6 +431,19 @@ class PentoscopeGameScreen extends ConsumerWidget {
                     },
                     tooltip: 'Recommencer',
                   ),
+                  // 💡 Bouton Hint (lampe)
+                  if (!state.isComplete &&
+                      state.hasPossibleSolution &&
+                      state.availablePieces.isNotEmpty)
+                    IconButton(
+                      icon: const Icon(Icons.lightbulb_outline),
+                      color: Colors.amber,
+                      onPressed: () {
+                        HapticFeedback.mediumImpact();
+                        notifier.applyHint();
+                      },
+                      tooltip: 'Indice',
+                    ),
                   IconButton(
                     icon: const Icon(Icons.close),
                     onPressed: () => Navigator.pop(context),
