@@ -123,15 +123,7 @@ class _DatabaseDebugScreenState extends State<DatabaseDebugScreen> {
               child: Column(
                 spacing: 8,
                 children: [
-                  ElevatedButton.icon(
-                    onPressed: _addTestSession,
-                    icon: const Icon(Icons.add),
-                    label: const Text('➕ Ajouter une session de test'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green,
-                      foregroundColor: Colors.white,
-                    ),
-                  ),
+
                   ElevatedButton.icon(
                     onPressed: () => setState(() {}),
                     icon: const Icon(Icons.refresh),
@@ -225,15 +217,7 @@ class _DatabaseDebugScreenState extends State<DatabaseDebugScreen> {
         solutionsViewCount: 3,
       );
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('✅ Session de test ajoutée!'),
-            backgroundColor: Colors.green,
-          ),
-        );
-        setState(() {});
-      }
+
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

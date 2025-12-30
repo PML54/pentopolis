@@ -53,7 +53,7 @@ class PieceRenderer extends StatelessWidget {
 
     final width = maxX - minX + 1;
     final height = maxY - minY + 1;
-    const cellSize = 16.0; // Taille des petits carrés
+    const cellSize = 22.0; // Taille des petits carrés (augmentée de 16 à 22)
 
     return Container(
       width: width * cellSize + 8,
@@ -98,7 +98,7 @@ class PieceRenderer extends StatelessWidget {
                           piece.id.toString(),
                           style: const TextStyle(
                             color: GameColors.pieceTextColor,
-                            fontSize: 9,
+                            fontSize: 12,
                             fontWeight: FontWeight.bold,
                             shadows: [
                               Shadow(

@@ -168,33 +168,47 @@ class _PentominoGameScreenState extends ConsumerState<PentominoGameScreen> {
           toolbarHeight: 56.0,
           backgroundColor: Colors.white,
 
-          // ✨ NOUVEAU: Chrono à gauche
-          leading: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  _formatTime(state.elapsedSeconds),
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
-                  ),
-                ),
-                // ✨ Afficher la note seulement si puzzle complet
-                if (state.availablePieces.isEmpty)
+          // ✨ Croix rouge + Chrono à gauche
+          leading: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Croix rouge pour quitter
+              IconButton(
+                icon: const Icon(Icons.close),
+                color: Colors.red,
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                tooltip: 'Quitter',
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(minWidth: 36),
+              ),
+              // Chrono
+              Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
                   Text(
-                    '⭐ ${notifier.calculateScore(state.elapsedSeconds)}',
+                    _formatTime(state.elapsedSeconds),
                     style: const TextStyle(
-                      fontSize: 10,
-                      color: Colors.orange,
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
                     ),
                   ),
-              ],
-            ),
+                  // ✨ Afficher la note seulement si puzzle complet
+                  if (state.availablePieces.isEmpty)
+                    Text(
+                      '⭐ ${notifier.calculateScore(state.elapsedSeconds)}',
+                      style: const TextStyle(
+                        fontSize: 10,
+                        color: Colors.orange,
+                      ),
+                    ),
+                ],
+              ),
+            ],
           ),
-          leadingWidth: 60,
+          leadingWidth: 90,
           // TITLE : Bouton Solutions uniquement
           title: state.solutionsCount != null
               ? FittedBox(
@@ -247,15 +261,6 @@ class _PentominoGameScreenState extends ConsumerState<PentominoGameScreen> {
                 HapticFeedback.selectionClick();
                 notifier.applyHint();
               },
-            ),
-            // Bouton fermeture (croix rouge)
-            IconButton(
-              icon: const Icon(Icons.close),
-              color: Colors.red,
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              tooltip: 'Quitter',
             ),
           ],
         ),
@@ -417,8 +422,8 @@ class _PentominoGameScreenState extends ConsumerState<PentominoGameScreen> {
         return AnimatedContainer(
           duration: const Duration(milliseconds: 150),
           curve: Curves.easeOut,
-          height: isLandscape ? null : 140,
-          width: isLandscape ? 120 : null,
+          height: isLandscape ? null : 170,
+          width: isLandscape ? 140 : null,
           decoration: BoxDecoration(
             color: isHovering ? Colors.red.shade50 : Colors.grey.shade100,
             border: isHovering

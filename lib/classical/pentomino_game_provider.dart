@@ -227,11 +227,15 @@ class PentominoGameNotifier extends Notifier<PentominoGameState> {
         .where((p) => p.id != hintPiece.piece.id)
         .toList();
 
-    // 8️⃣ Mettre à jour l'état
+    // 8️⃣ Recalculer le nombre de solutions compatibles
+    final solutionsCount = newPlateau.countPossibleSolutions();
+
+    // 9️⃣ Mettre à jour l'état
     state = state.copyWith(
       plateau: newPlateau,
       placedPieces: newPlaced,
       availablePieces: newAvailable,
+      solutionsCount: solutionsCount,
       clearSelectedPiece: true,
       clearSelectedPlacedPiece: true,
       clearSelectedCellInPiece: true,
@@ -243,6 +247,7 @@ class PentominoGameNotifier extends Notifier<PentominoGameState> {
     debugPrint(
       '✅ HINT: Pièce ${hintPiece.piece.id} placée à (${hintPiece.gridX}, ${hintPiece.gridY}) position ${hintPiece.positionIndex}',
     );
+    debugPrint('🎯 Solutions restantes: $solutionsCount');
   }
   /// Annule le tutoriel (toujours restaurer)
   void cancelTutorial() {

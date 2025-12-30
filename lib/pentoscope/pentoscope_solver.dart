@@ -1,6 +1,9 @@
 // lib/pentoscope/pentoscope_solver.dart
-// Modified: 2512161100
-// Solveur backtracking lazy: cherche première solution vite, puis toutes avec timeout
+// Modified: 2512301200
+// Solveur backtracking OPTIMISÉ avec :
+// - Heuristique "Smallest Free Cell First"
+// - Détection des zones isolées (pruning)
+// - Tri des pièces par contrainte (numPositions croissant)
 
 import 'dart:async';
 import 'package:pentapol/common/pentominos.dart';
@@ -26,6 +29,12 @@ class SolverPlacement {
 
 typedef Solution = List<SolverPlacement>;
 
+/// Solveur de pentominos optimisé pour Pentoscope
+/// 
+/// Utilise plusieurs techniques d'optimisation :
+/// 1. **Smallest Free Cell First** : Cible toujours la plus petite case libre
+/// 2. **Isolated Region Pruning** : Élimine les branches avec des zones impossibles
+/// 3. **Piece Ordering** : Essaie d'abord les pièces les plus contraintes
 class PentoscopeSolver {
   // Map pieceId → Pento object
   late final Map<int, Pento> _pieceMap;
@@ -37,91 +46,128 @@ class PentoscopeSolver {
     }
   }
 
+  // ==========================================================================
+  // API PUBLIQUE
+  // ==========================================================================
+
   /// Cherche la PREMIÈRE solution (rapide, arrête dès trouvée)
   /// Retourne true si elle existe
   bool findFirstSolution(
-      List<int> pieceIds,
-      int width,
-      int height,
-      ) {
+    List<int> pieceIds,
+    int width,
+    int height,
+  ) {
     final plateau = List<List<int>>.generate(
       height,
-          (_) => List<int>.filled(width, 0),
+      (_) => List<int>.filled(width, 0),
     );
-    final placedPieces = <int>[]; // IDs des pièces déjà placées
+    final usedPieces = <int>{}; // Set des IDs utilisés
+    final placedPieces = <SolverPlacement>[];
+
+    // Trier les pièces par contrainte (moins d'orientations = plus contraint)
+    final sortedPieceIds = _sortByConstraint(pieceIds);
 
     return _backtrackFirst(
-      pieceIds: pieceIds,
+      pieceIds: sortedPieceIds,
       width: width,
       height: height,
       plateau: plateau,
+      usedPieces: usedPieces,
       placedPieces: placedPieces,
-      pieceIndex: 0,
     );
   }
 
   /// Cherche TOUTES les solutions avec timeout (2s max)
   /// Retourne {solutionCount, solutions}
   Future<SolverResult> findAllSolutions(
-      List<int> pieceIds,
-      int width,
-      int height, {
-        Duration timeout = const Duration(seconds: 2),
-      }) async {
+    List<int> pieceIds,
+    int width,
+    int height, {
+    Duration timeout = const Duration(seconds: 2),
+  }) async {
     final stopwatch = Stopwatch()..start();
     final solutions = <Solution>[];
 
     final plateau = List<List<int>>.generate(
       height,
-          (_) => List<int>.filled(width, 0),
+      (_) => List<int>.filled(width, 0),
     );
+    final usedPieces = <int>{};
     final placedPieces = <SolverPlacement>[];
 
-    void backtrackAll(int pieceIndex) {
+    // Trier les pièces par contrainte
+    final sortedPieceIds = _sortByConstraint(pieceIds);
+
+    void backtrackAll() {
       // Timeout check
       if (stopwatch.elapsedMilliseconds > timeout.inMilliseconds) {
         return;
       }
 
-      // Tous les pièces placées
-      if (pieceIndex == pieceIds.length) {
+      // Toutes les pièces placées → solution trouvée
+      if (usedPieces.length == sortedPieceIds.length) {
         solutions.add(List<SolverPlacement>.from(placedPieces));
         return;
       }
 
-      final pieceId = pieceIds[pieceIndex];
-      final pento = _pieceMap[pieceId]!;
+      // ✨ OPTIMISATION 1: Trouver la plus petite case libre
+      final targetCell = _findSmallestFreeCell(plateau, width, height);
+      if (targetCell == null) {
+        // Plateau plein mais pas toutes les pièces → impossible
+        return;
+      }
 
-      // Essayer chaque position (rotation/symétrie)
-      for (int posIndex = 0; posIndex < pento.numPositions; posIndex++) {
-        // Essayer chaque (gridX, gridY)
-        for (int gridY = 0; gridY < height; gridY++) {
-          for (int gridX = 0; gridX < width; gridX++) {
-            if (_canPlace(pento, posIndex, gridX, gridY, width, height, plateau)) {
-              // Placer
-              _placePiece(pento, posIndex, gridX, gridY, pieceId, plateau);
-              placedPieces.add(
-                SolverPlacement(
-                  pieceId: pieceId,
-                  gridX: gridX,
-                  gridY: gridY,
-                  positionIndex: posIndex,
-                ),
-              );
+      final targetX = targetCell % width;
+      final targetY = targetCell ~/ width;
 
-              // Récurser
-              backtrackAll(pieceIndex + 1);
+      // Essayer chaque pièce non utilisée
+      for (final pieceId in sortedPieceIds) {
+        if (usedPieces.contains(pieceId)) continue;
+        if (stopwatch.elapsedMilliseconds > timeout.inMilliseconds) return;
 
-              // Backtrack
-              _removePiece(pento, posIndex, gridX, gridY, plateau);
-              placedPieces.removeLast();
+        final pento = _pieceMap[pieceId]!;
+
+        // Essayer chaque orientation
+        for (int posIndex = 0; posIndex < pento.numPositions; posIndex++) {
+          // ✨ OPTIMISATION 1 (suite): Ne tester que les placements qui couvrent targetCell
+          final placement = _findPlacementCoveringCell(
+            pento,
+            posIndex,
+            targetX,
+            targetY,
+            width,
+            height,
+            plateau,
+          );
+
+          if (placement != null) {
+            // Placer la pièce
+            _placePiece(pento, posIndex, placement.$1, placement.$2, pieceId, plateau);
+            usedPieces.add(pieceId);
+            placedPieces.add(
+              SolverPlacement(
+                pieceId: pieceId,
+                gridX: placement.$1,
+                gridY: placement.$2,
+                positionIndex: posIndex,
+              ),
+            );
+
+            // ✨ OPTIMISATION 2: Vérifier les zones isolées
+            if (_areIsolatedRegionsValid(plateau, width, height)) {
+              backtrackAll();
             }
+
+            // Backtrack
+            _removePiece(pento, posIndex, placement.$1, placement.$2, plateau);
+            usedPieces.remove(pieceId);
+            placedPieces.removeLast();
           }
         }
       }
     }
 
-    backtrackAll(0);
+    backtrackAll();
 
     return SolverResult(
       solutionCount: solutions.length,
@@ -129,69 +175,217 @@ class PentoscopeSolver {
     );
   }
 
-  /// ============================================================================
-  /// HELPERS PRIVÉS
-  /// ============================================================================
+  // ==========================================================================
+  // OPTIMISATION 1: Smallest Free Cell First
+  // ==========================================================================
+
+  /// Trouve la plus petite case libre (parcours ligne par ligne)
+  /// Retourne l'index linéaire (y * width + x) ou null si plateau plein
+  int? _findSmallestFreeCell(List<List<int>> plateau, int width, int height) {
+    for (int y = 0; y < height; y++) {
+      for (int x = 0; x < width; x++) {
+        if (plateau[y][x] == 0) {
+          return y * width + x;
+        }
+      }
+    }
+    return null;
+  }
+
+  /// Trouve un placement valide pour la pièce qui couvre la case cible
+  /// Retourne (gridX, gridY) ou null si impossible
+  (int, int)? _findPlacementCoveringCell(
+    Pento pento,
+    int positionIndex,
+    int targetX,
+    int targetY,
+    int width,
+    int height,
+    List<List<int>> plateau,
+  ) {
+    final coords = pento.cartesianCoords[positionIndex];
+
+    // Pour chaque cellule de la pièce, essayer de la placer sur targetCell
+    for (final coord in coords) {
+      final gridX = targetX - coord[0];
+      final gridY = targetY - coord[1];
+
+      if (_canPlace(pento, positionIndex, gridX, gridY, width, height, plateau)) {
+        return (gridX, gridY);
+      }
+    }
+
+    return null;
+  }
+
+  // ==========================================================================
+  // OPTIMISATION 2: Détection des zones isolées (Pruning)
+  // ==========================================================================
+
+  /// Vérifie que toutes les zones vides sont valides :
+  /// - Pas de zone < 5 cases (impossible à remplir)
+  /// - Pas de zone avec un nombre de cases non-multiple de 5
+  bool _areIsolatedRegionsValid(List<List<int>> plateau, int width, int height) {
+    final visited = List.generate(height, (_) => List.filled(width, false));
+
+    for (int y = 0; y < height; y++) {
+      for (int x = 0; x < width; x++) {
+        if (plateau[y][x] == 0 && !visited[y][x]) {
+          final regionSize = _floodFill(x, y, plateau, visited, width, height);
+
+          // Règle 1: Région < 5 → impossible à remplir
+          if (regionSize < 5) {
+            return false;
+          }
+
+          // Règle 2: Non multiple de 5 → impossible
+          if (regionSize % 5 != 0) {
+            return false;
+          }
+        }
+      }
+    }
+
+    return true;
+  }
+
+  /// Flood fill pour compter la taille d'une région connexe
+  int _floodFill(
+    int x,
+    int y,
+    List<List<int>> plateau,
+    List<List<bool>> visited,
+    int width,
+    int height,
+  ) {
+    if (x < 0 || x >= width || y < 0 || y >= height) return 0;
+    if (visited[y][x]) return 0;
+    if (plateau[y][x] != 0) return 0;
+
+    visited[y][x] = true;
+    int size = 1;
+
+    size += _floodFill(x - 1, y, plateau, visited, width, height);
+    size += _floodFill(x + 1, y, plateau, visited, width, height);
+    size += _floodFill(x, y - 1, plateau, visited, width, height);
+    size += _floodFill(x, y + 1, plateau, visited, width, height);
+
+    return size;
+  }
+
+  // ==========================================================================
+  // OPTIMISATION 3: Tri des pièces par contrainte
+  // ==========================================================================
+
+  /// Trie les pièces par nombre d'orientations (croissant)
+  /// Les pièces avec moins d'orientations sont plus contraintes → à placer d'abord
+  List<int> _sortByConstraint(List<int> pieceIds) {
+    final sorted = List<int>.from(pieceIds);
+    sorted.sort((a, b) {
+      final pentoA = _pieceMap[a]!;
+      final pentoB = _pieceMap[b]!;
+      return pentoA.numPositions.compareTo(pentoB.numPositions);
+    });
+    return sorted;
+  }
+
+  // ==========================================================================
+  // BACKTRACKING OPTIMISÉ (findFirstSolution)
+  // ==========================================================================
 
   bool _backtrackFirst({
     required List<int> pieceIds,
     required int width,
     required int height,
     required List<List<int>> plateau,
-    required List<int> placedPieces,
-    required int pieceIndex,
+    required Set<int> usedPieces,
+    required List<SolverPlacement> placedPieces,
   }) {
-    // Tous les pièces placées
-    if (pieceIndex == pieceIds.length) {
-      return true; // Trouvé!
+    // Toutes les pièces placées → solution trouvée
+    if (usedPieces.length == pieceIds.length) {
+      return true;
     }
 
-    final pieceId = pieceIds[pieceIndex];
-    final pento = _pieceMap[pieceId]!;
+    // ✨ OPTIMISATION 1: Trouver la plus petite case libre
+    final targetCell = _findSmallestFreeCell(plateau, width, height);
+    if (targetCell == null) {
+      return false; // Plateau plein mais pas toutes les pièces
+    }
 
-    // Essayer chaque position (rotation/symétrie)
-    for (int posIndex = 0; posIndex < pento.numPositions; posIndex++) {
-      // Essayer chaque (gridX, gridY)
-      for (int gridY = 0; gridY < height; gridY++) {
-        for (int gridX = 0; gridX < width; gridX++) {
-          if (_canPlace(pento, posIndex, gridX, gridY, width, height, plateau)) {
-            // Placer
-            _placePiece(pento, posIndex, gridX, gridY, pieceId, plateau);
-            placedPieces.add(pieceId);
+    final targetX = targetCell % width;
+    final targetY = targetCell ~/ width;
 
-            // Récurser
+    // Essayer chaque pièce non utilisée
+    for (final pieceId in pieceIds) {
+      if (usedPieces.contains(pieceId)) continue;
+
+      final pento = _pieceMap[pieceId]!;
+
+      // Essayer chaque orientation
+      for (int posIndex = 0; posIndex < pento.numPositions; posIndex++) {
+        // ✨ Ne tester que les placements qui couvrent targetCell
+        final placement = _findPlacementCoveringCell(
+          pento,
+          posIndex,
+          targetX,
+          targetY,
+          width,
+          height,
+          plateau,
+        );
+
+        if (placement != null) {
+          // Placer la pièce
+          _placePiece(pento, posIndex, placement.$1, placement.$2, pieceId, plateau);
+          usedPieces.add(pieceId);
+          placedPieces.add(
+            SolverPlacement(
+              pieceId: pieceId,
+              gridX: placement.$1,
+              gridY: placement.$2,
+              positionIndex: posIndex,
+            ),
+          );
+
+          // ✨ OPTIMISATION 2: Vérifier les zones isolées
+          if (_areIsolatedRegionsValid(plateau, width, height)) {
             if (_backtrackFirst(
               pieceIds: pieceIds,
               width: width,
               height: height,
               plateau: plateau,
+              usedPieces: usedPieces,
               placedPieces: placedPieces,
-              pieceIndex: pieceIndex + 1,
             )) {
-              return true; // Trouvé!
+              return true;
             }
-
-            // Backtrack
-            _removePiece(pento, posIndex, gridX, gridY, plateau);
-            placedPieces.removeLast();
           }
+
+          // Backtrack
+          _removePiece(pento, posIndex, placement.$1, placement.$2, plateau);
+          usedPieces.remove(pieceId);
+          placedPieces.removeLast();
         }
       }
     }
 
-    return false; // Pas trouvé pour ce branch
+    return false;
   }
+
+  // ==========================================================================
+  // HELPERS DE BASE
+  // ==========================================================================
 
   /// Vérifier si placement possible (pas collision, dans limites)
   bool _canPlace(
-      Pento pento,
-      int positionIndex,
-      int gridX,
-      int gridY,
-      int width,
-      int height,
-      List<List<int>> plateau,
-      ) {
+    Pento pento,
+    int positionIndex,
+    int gridX,
+    int gridY,
+    int width,
+    int height,
+    List<List<int>> plateau,
+  ) {
     final coords = pento.cartesianCoords[positionIndex];
 
     for (final coord in coords) {
@@ -214,13 +408,13 @@ class PentoscopeSolver {
 
   /// Placer une pièce sur le plateau
   void _placePiece(
-      Pento pento,
-      int positionIndex,
-      int gridX,
-      int gridY,
-      int pieceId,
-      List<List<int>> plateau,
-      ) {
+    Pento pento,
+    int positionIndex,
+    int gridX,
+    int gridY,
+    int pieceId,
+    List<List<int>> plateau,
+  ) {
     final coords = pento.cartesianCoords[positionIndex];
 
     for (final coord in coords) {
@@ -232,12 +426,12 @@ class PentoscopeSolver {
 
   /// Retirer une pièce du plateau
   void _removePiece(
-      Pento pento,
-      int positionIndex,
-      int gridX,
-      int gridY,
-      List<List<int>> plateau,
-      ) {
+    Pento pento,
+    int positionIndex,
+    int gridX,
+    int gridY,
+    List<List<int>> plateau,
+  ) {
     final coords = pento.cartesianCoords[positionIndex];
 
     for (final coord in coords) {

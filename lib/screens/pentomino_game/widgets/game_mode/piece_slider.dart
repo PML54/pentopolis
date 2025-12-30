@@ -133,9 +133,9 @@ class _PieceSliderState extends ConsumerState<PieceSlider> {
     final settings = ref.read(settingsProvider);
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 8),
       child: Container(
-        padding: const EdgeInsets.all(10),
+        padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: isSelected ? Colors.amber.shade100 : Colors.transparent,
           borderRadius: BorderRadius.circular(12),

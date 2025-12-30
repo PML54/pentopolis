@@ -180,14 +180,14 @@ class PentoscopePuzzle {
 
 /// Tailles de plateau disponibles (TRANSPOSÉES pour portrait)
 enum PentoscopeSize {
-  size3x5(0, 3, 5, 3, '3×5'),   // width=3, height=5 (portrait: 3 col × 5 lignes)
-  size4x5(1, 4, 5, 4, '4×5'),   // width=4, height=5
-  size5x5(2, 5, 5, 5, '5×5'),   // width=5, height=5 (carré inchangé)
-  size6x5(3, 5, 6, 6, '6×5'),  // 👈 À AJOUTER: 6 colonnes × 5 lignes = 6 pièces
-  size7x5(4, 5, 7, 7, '7×5'),   // 👈 À AJOUTER: 6 colonnes × 5 lignes =
-  size8x5(5, 5, 8, 8, '8×5'),   // width=5, height=5 (carré inchangé)
-  size9x5(6, 5, 9, 9, '9×5'),  // 👈 À AJOUTER: 6 colonnes × 5 lignes = 6 pièces
-  size10x5(7, 5, 10, 10, '10×5');
+  size3x5(0, 3, 5, 3, '3'),   // width=3, height=5 (portrait: 3 col × 5 lignes)
+  size4x5(1, 4, 5, 4, '4'),   // width=4, height=5
+  size5x5(2, 5, 5, 5, '5'),   // width=5, height=5 (carré inchangé)
+  size6x5(3, 5, 6, 6, '6'),  // 👈 À AJOUTER: 6 colonnes × 5 lignes = 6 pièces
+  size7x5(4, 5, 7, 7, '7'),   // 👈 À AJOUTER: 6 colonnes × 5 lignes =
+  size8x5(5, 5, 8, 8, '8'),   // width=5, height=5 (carré inchangé)
+  size9x5(6, 5, 9, 9, '9'),   // 👈 À AJOUTER: 6 colonnes × 5 lignes =
+  size10x5(7, 5, 10, 10, '10');   // width=5, height=5 (carré inchangé)
   // 👈 À AJOUTER: 6 colonnes × 5 lignes =
   final int dataIndex; // Legacy
   final int width;

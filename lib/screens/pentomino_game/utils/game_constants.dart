@@ -22,7 +22,7 @@ class GameConstants {
   static const double pieceBorderWidthInner = 0.5;
 
   // Slider
-  static const double sliderItemSize = 92.0; // padding + width/height approximative
+  static const double sliderItemSize = 140.0; // padding + width/height approximative (cellSize 22 × 5 + padding)
   static const int sliderItemsPerPage = 1000; // Pour le scroll infini
 
   // Animations et feedback
