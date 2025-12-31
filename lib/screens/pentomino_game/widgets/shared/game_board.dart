@@ -48,7 +48,10 @@ class GameBoard extends ConsumerWidget {
             .clamp(0.0, constraints.maxHeight / visualRows)
             .toDouble();
 
-        return Center(
+        return Align(
+          // En paysage: aligner en haut pour éviter l'espace
+          // En portrait: centrer
+          alignment: isLandscape ? Alignment.topCenter : Alignment.center,
           child: Container(
             width: cellSize * visualCols,
             height: cellSize * visualRows,

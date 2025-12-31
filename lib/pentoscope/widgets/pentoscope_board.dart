@@ -148,7 +148,10 @@ class PentoscopeBoard extends ConsumerWidget {
             notifier.clearPreview();
           },
           builder: (context, candidateData, rejectedData) {
-            return Center(
+            return Align(
+              // En paysage: aligner en haut pour éviter l'espace
+              // En portrait: centrer
+              alignment: isLandscape ? Alignment.topCenter : Alignment.center,
               child: Container(
                 width: gridWidth,
                 height: gridHeight,
