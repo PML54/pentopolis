@@ -69,11 +69,20 @@ class ActionSlider extends ConsumerWidget {
     // Détection automatique du mode
     final isInTransformMode = state.selectedPiece != null || state.selectedPlacedPiece != null;
 
-    if (isInTransformMode) {
-      return _buildTransformActions(context, state, notifier, settings);
-    } else {
-      return _buildGeneralActions(context, state, notifier);
-    }
+    // Adapter les tailles selon l'espace disponible
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Taille adaptative des icônes basée sur la hauteur disponible
+        final availableHeight = constraints.maxHeight;
+        final iconSize = (availableHeight * 0.08).clamp(20.0, 36.0);
+
+        if (isInTransformMode) {
+          return _buildTransformActions(context, state, notifier, settings, iconSize);
+        } else {
+          return _buildGeneralActions(context, state, notifier, iconSize);
+        }
+      },
+    );
   }
 
   /// Actions en mode TRANSFORMATION (pièce sélectionnée)
@@ -82,7 +91,11 @@ class ActionSlider extends ConsumerWidget {
       PentominoGameState state,
       PentominoGameNotifier notifier,
       settings,
+      double iconSize,
       ) {
+    final buttonConstraints = BoxConstraints(minWidth: iconSize + 12, minHeight: iconSize + 12);
+    final buttonPadding = EdgeInsets.all(iconSize * 0.25);
+
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -126,9 +139,9 @@ class ActionSlider extends ConsumerWidget {
 
         // Rotation anti-horaire
         IconButton(
-          icon: Icon(GameIcons.isometryRotationTW.icon, size: 28),
-          padding: const EdgeInsets.all(8),
-          constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+          icon: Icon(GameIcons.isometryRotationTW.icon, size: iconSize),
+          padding: buttonPadding,
+          constraints: buttonConstraints,
           onPressed: () {
             HapticFeedback.selectionClick();
             notifier.applyIsometryRotationTW();
@@ -136,13 +149,13 @@ class ActionSlider extends ConsumerWidget {
           tooltip: GameIcons.isometryRotationTW.tooltip,
           color: GameIcons.isometryRotationTW.color,
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: iconSize * 0.3),
 
         // Rotation horaire
         IconButton(
-          icon: Icon(GameIcons.isometryRotationCW.icon, size: 28),
-          padding: const EdgeInsets.all(8),
-          constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+          icon: Icon(GameIcons.isometryRotationCW.icon, size: iconSize),
+          padding: buttonPadding,
+          constraints: buttonConstraints,
           onPressed: () {
             HapticFeedback.selectionClick();
             notifier.applyIsometryRotationCW();
@@ -150,14 +163,14 @@ class ActionSlider extends ConsumerWidget {
           tooltip: GameIcons.isometryRotationCW.tooltip,
           color: GameIcons.isometryRotationCW.color,
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: iconSize * 0.3),
 
         // Symétrie Horizontale (visuelle)
         // ✅ En mode paysage : H visuel = V logique (à cause de la rotation du plateau)
         IconButton(
-          icon: Icon(GameIcons.isometrySymmetryH.icon, size: 28),
-          padding: const EdgeInsets.all(8),
-          constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+          icon: Icon(GameIcons.isometrySymmetryH.icon, size: iconSize),
+          padding: buttonPadding,
+          constraints: buttonConstraints,
           onPressed: () {
             HapticFeedback.selectionClick();
             if (isLandscape) {
@@ -169,14 +182,14 @@ class ActionSlider extends ConsumerWidget {
           tooltip: GameIcons.isometrySymmetryH.tooltip,
           color: GameIcons.isometrySymmetryH.color,
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: iconSize * 0.3),
 
         // Symétrie Verticale (visuelle)
         // ✅ En mode paysage : V visuel = H logique (à cause de la rotation du plateau)
         IconButton(
-          icon: Icon(GameIcons.isometrySymmetryV.icon, size: 28),
-          padding: const EdgeInsets.all(8),
-          constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+          icon: Icon(GameIcons.isometrySymmetryV.icon, size: iconSize),
+          padding: buttonPadding,
+          constraints: buttonConstraints,
           onPressed: () {
             HapticFeedback.selectionClick();
             if (isLandscape) {
@@ -191,11 +204,11 @@ class ActionSlider extends ConsumerWidget {
 
         // Delete (uniquement si pièce placée sélectionnée)
         if (state.selectedPlacedPiece != null) ...[
-          const SizedBox(height: 8),
+          SizedBox(height: iconSize * 0.3),
           IconButton(
-            icon: Icon(GameIcons.removePiece.icon, size: 28),
-            padding: const EdgeInsets.all(8),
-            constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+            icon: Icon(GameIcons.removePiece.icon, size: iconSize),
+            padding: buttonPadding,
+            constraints: buttonConstraints,
             onPressed: () {
               HapticFeedback.mediumImpact();
               notifier.removePlacedPiece(state.selectedPlacedPiece!);
@@ -213,7 +226,12 @@ class ActionSlider extends ConsumerWidget {
       BuildContext context,
       PentominoGameState state,
       PentominoGameNotifier notifier,
+      double iconSize,
       ) {
+    final buttonSize = iconSize + 16;
+    final buttonConstraints = BoxConstraints(minWidth: buttonSize, minHeight: buttonSize);
+    final buttonPadding = EdgeInsets.all(iconSize * 0.25);
+
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -229,28 +247,28 @@ class ActionSlider extends ConsumerWidget {
               );
             },
             child: Container(
-              width: 44,
-              height: 44,
+              width: buttonSize,
+              height: buttonSize,
               decoration: BoxDecoration(
                 color: Colors.indigo.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               alignment: Alignment.center,
-              child: const Icon(
+              child: Icon(
                 Icons.settings,
-                size: 22,
+                size: iconSize,
                 color: Colors.indigo,
               ),
             ),
           ),
         ),
 
-        const SizedBox(height: 12),
+        SizedBox(height: iconSize * 0.5),
 
         // Compteur de solutions
         if (state.solutionsCount != null && state.solutionsCount! > 0 && state.placedPieces.isNotEmpty)
           Padding(
-            padding: const EdgeInsets.only(bottom: 8),
+            padding: EdgeInsets.only(bottom: iconSize * 0.3),
             child: ElevatedButton(
               onPressed: () {
                 HapticFeedback.selectionClick();
@@ -285,13 +303,13 @@ class ActionSlider extends ConsumerWidget {
             ),
           ),
 
-        const SizedBox(height: 8),
+        SizedBox(height: iconSize * 0.3),
 
         // Bouton Undo
         IconButton(
-          icon: Icon(GameIcons.undo.icon, size: 22),
-          padding: const EdgeInsets.all(8),
-          constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+          icon: Icon(GameIcons.undo.icon, size: iconSize),
+          padding: buttonPadding,
+          constraints: buttonConstraints,
           onPressed: state.placedPieces.isNotEmpty
               ? () {
             HapticFeedback.mediumImpact();

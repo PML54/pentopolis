@@ -55,7 +55,7 @@ class GameBoard extends ConsumerWidget {
           child: Container(
             width: cellSize * visualCols,
             height: cellSize * visualRows,
-              decoration: BoxDecoration(
+            decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,

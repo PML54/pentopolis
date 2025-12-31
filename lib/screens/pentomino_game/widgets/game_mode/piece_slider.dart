@@ -44,6 +44,7 @@ class _PieceSliderState extends ConsumerState<PieceSlider> {
   Widget build(BuildContext context) {
     final state = ref.watch(pentominoGameProvider);
     final notifier = ref.read(pentominoGameProvider.notifier);
+    
 
     // ← AJOUTER : Écouter les changements de sliderOffset
     if (state.sliderOffset != _lastSliderOffset && _sliderController.hasClients) {

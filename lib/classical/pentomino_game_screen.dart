@@ -161,8 +161,8 @@ class _PentominoGameScreenState extends ConsumerState<PentominoGameScreen> {
 
     return Scaffold(
       backgroundColor: Colors.white,
-      // AppBar uniquement en mode portrait
-      appBar: isLandscape ? null : PreferredSize(
+        // AppBar uniquement en mode portrait
+        appBar: isLandscape ? null : PreferredSize(
         preferredSize: const Size.fromHeight(56.0),
         child: AppBar(
           toolbarHeight: 56.0,
@@ -333,37 +333,46 @@ class _PentominoGameScreenState extends ConsumerState<PentominoGameScreen> {
   {
     final settings = ref.watch(settingsProvider);
 
-    return Row(
-      children: [
-        // Plateau de jeu (10×6 visuel)
-        Expanded(
-          child: GameBoard(isLandscape: true),
-        ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Adapter les tailles selon l'espace disponible (iPad vs iPhone)
+        final screenHeight = constraints.maxHeight;
+        final actionColumnWidth = (screenHeight * 0.08).clamp(44.0, 70.0);
+        final sliderWidth = (screenHeight * 0.22).clamp(120.0, 200.0);
 
-        // Colonne de droite : actions + slider
-        Row(
+        return Row(
           children: [
-            // Slider d'actions verticales (même logique que l'AppBar)
-            Container(
-              width: 44,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 2,
-                    offset: const Offset(-1, 0),
-                  ),
-                ],
-              ),
-              child: const ActionSlider(isLandscape: true),
+            // Plateau de jeu (10×6 visuel)
+            Expanded(
+              child: GameBoard(isLandscape: true),
             ),
 
-            // Slider de pièces vertical AVEC DragTarget
-            _buildSliderWithDragTarget(ref: ref, isLandscape: true),
+            // Colonne de droite : actions + slider
+            Row(
+              children: [
+                // Slider d'actions verticales (même logique que l'AppBar)
+                Container(
+                  width: actionColumnWidth,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 2,
+                        offset: const Offset(-1, 0),
+                      ),
+                    ],
+                  ),
+                  child: const ActionSlider(isLandscape: true),
+                ),
+
+                // Slider de pièces vertical AVEC DragTarget
+                _buildSliderWithDragTarget(ref: ref, isLandscape: true, width: sliderWidth),
+              ],
+            ),
           ],
-        ),
-      ],
+        );
+      },
     );
   }
 
@@ -399,6 +408,7 @@ class _PentominoGameScreenState extends ConsumerState<PentominoGameScreen> {
   Widget _buildSliderWithDragTarget({
     required WidgetRef ref,
     required bool isLandscape,
+    double? width,
   }) {
     final state = ref.watch(pentominoGameProvider);
     final notifier = ref.read(pentominoGameProvider.notifier);
@@ -423,7 +433,7 @@ class _PentominoGameScreenState extends ConsumerState<PentominoGameScreen> {
           duration: const Duration(milliseconds: 150),
           curve: Curves.easeOut,
           height: isLandscape ? null : 170,
-          width: isLandscape ? 140 : null,
+          width: isLandscape ? (width ?? 140) : null,
           decoration: BoxDecoration(
             color: isHovering ? Colors.red.shade50 : Colors.grey.shade100,
             border: isHovering

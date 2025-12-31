@@ -1,7 +1,6 @@
 // lib/pentapol/pentoscope/widgets/pentoscope_piece_slider.dart
 // Modified: 2512100457
 // FIX: Adopter _getDisplayPositionIndex() d'isopento pour rotation paysage stable (-90° compensation)
-// CHANGEMENTS: (1) Ajout fonction _getDisplayPositionIndex() ligne 50, (2) Utilisation ligne 68 au lieu de code inline
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -28,6 +27,7 @@ class PentoscopePieceSlider extends ConsumerWidget {
     final state = ref.watch(pentoscopeProvider);
     final notifier = ref.read(pentoscopeProvider.notifier);
     final settings = ref.read(settingsProvider);
+    
 
     final pieces = state.availablePieces;
 
@@ -64,6 +64,8 @@ class PentoscopePieceSlider extends ConsumerWidget {
       settings,
       bool isLandscape,
       ) {
+    // Taille fixe 5x5 pour éviter les chevauchements (cellSize=22, 5*22+8=118)
+    const double fixedSize = 118;
     int positionIndex = state.selectedPiece?.id == piece.id
         ? state.selectedPositionIndex
         : state.getPiecePositionIndex(piece.id);
@@ -72,9 +74,6 @@ class PentoscopePieceSlider extends ConsumerWidget {
     int displayPositionIndex = _getDisplayPositionIndex(positionIndex, piece, isLandscape);
 
     final isSelected = state.selectedPiece?.id == piece.id;
-
-    // Taille fixe 5x5 pour éviter les chevauchements (cellSize=22, 5*22+8=118)
-    const double fixedSize = 118;
 
     return SizedBox(
       width: fixedSize,
