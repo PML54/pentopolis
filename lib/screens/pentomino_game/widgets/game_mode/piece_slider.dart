@@ -132,63 +132,57 @@ class _PieceSliderState extends ConsumerState<PieceSlider> {
     final isSelected = state.selectedPiece?.id == piece.id;
     final settings = ref.read(settingsProvider);
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8),
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: isSelected ? Colors.amber.shade100 : Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
-          border: isSelected
-              ? Border.all(
-            color: Colors.amber.shade700,
-            width: 3,
-          )
-              : null,
-          boxShadow: isSelected
-              ? [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.2),
-              blurRadius: 8,
-              offset: const Offset(0, 4),
-            ),
-          ]
-              : null,
-        ),
-        // ✅ Centrer la pièce dans le container
-        child: Center(
+    // Taille fixe 5x5 pour éviter les chevauchements (cellSize=22, 5*22+8=118)
+    const double fixedSize = 118;
+
+    return SizedBox(
+      width: fixedSize,
+      height: fixedSize,
+      child: Center(
+        child: Container(
+          decoration: BoxDecoration(
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: Colors.amber.withOpacity(0.7),
+                      blurRadius: 14,
+                      spreadRadius: 2,
+                    ),
+                  ]
+                : null,
+          ),
           child: DraggablePieceWidget(
-          piece: piece,
-          positionIndex: positionIndex,
-          isSelected: isSelected,
-          selectedPositionIndex: state.selectedPositionIndex,
-          longPressDuration: Duration(milliseconds: settings.game.longPressDuration),
-          onSelect: () {
-            if (settings.game.enableHaptics) {
-              HapticFeedback.selectionClick();
-            }
-            notifier.selectPiece(piece);
-          },
-          onCycle: () {
-            if (settings.game.enableHaptics) {
-              HapticFeedback.selectionClick();
-            }
-            notifier.cycleToNextOrientation();
-          },
-          onCancel: () {
-            if (settings.game.enableHaptics) {
-              HapticFeedback.lightImpact();
-            }
-            notifier.cancelSelection();
-          },
-          childBuilder: (isDragging) => PieceRenderer(
             piece: piece,
-            positionIndex: displayPositionIndex, // ✅ Utiliser displayPositionIndex pour l'affichage
-            isDragging: isDragging,
-            getPieceColor: (pieceId) => settings.ui.getPieceColor(pieceId),
+            positionIndex: positionIndex,
+            isSelected: isSelected,
+            selectedPositionIndex: state.selectedPositionIndex,
+            longPressDuration: Duration(milliseconds: settings.game.longPressDuration),
+            onSelect: () {
+              if (settings.game.enableHaptics) {
+                HapticFeedback.selectionClick();
+              }
+              notifier.selectPiece(piece);
+            },
+            onCycle: () {
+              if (settings.game.enableHaptics) {
+                HapticFeedback.selectionClick();
+              }
+              notifier.cycleToNextOrientation();
+            },
+            onCancel: () {
+              if (settings.game.enableHaptics) {
+                HapticFeedback.lightImpact();
+              }
+              notifier.cancelSelection();
+            },
+            childBuilder: (isDragging) => PieceRenderer(
+              piece: piece,
+              positionIndex: displayPositionIndex,
+              isDragging: isDragging,
+              getPieceColor: (pieceId) => settings.ui.getPieceColor(pieceId),
+            ),
           ),
         ),
-        ), // Fermer Center
       ),
     );
   }

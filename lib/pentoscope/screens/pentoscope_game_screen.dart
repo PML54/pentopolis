@@ -247,8 +247,12 @@ class PentoscopeGameScreen extends ConsumerWidget {
       dynamic settings,
       VoidCallback onPressed,
       ) {
+    // Taille réduite pour éviter le dépassement en mode paysage (colonne 44px)
+    const double iconSize = 24;
     return IconButton(
-      icon: Icon(icon.icon, size: settings.ui.iconSize),
+      icon: Icon(icon.icon, size: iconSize),
+      padding: const EdgeInsets.all(6),
+      constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
       onPressed: () {
         HapticFeedback.selectionClick();
         onPressed();

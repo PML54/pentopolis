@@ -41,8 +41,9 @@ class GameBoard extends ConsumerWidget {
         final visualCols = isLandscape ? 10 : 6;
         final visualRows = isLandscape ? 6 : 10;
 
-        // Réserver 8px de marge horizontale (4px de chaque côté)
-        final availableWidth = constraints.maxWidth - 8;
+        // Réserver 8px de marge uniquement en portrait (largeur limitée)
+        // En paysage, pas besoin de marge car le plateau a plus d'espace
+        final availableWidth = isLandscape ? constraints.maxWidth : constraints.maxWidth - 8;
         final cellSize = (availableWidth / visualCols)
             .clamp(0.0, constraints.maxHeight / visualRows)
             .toDouble();
