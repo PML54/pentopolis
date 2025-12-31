@@ -78,10 +78,9 @@ class PentoscopeGameScreen extends ConsumerWidget {
               : state.isComplete
               ? TweenAnimationBuilder<double>(
             tween: Tween(begin: 0.0, end: 1.0),
-            duration: const Duration(milliseconds: 2500),
+            duration: const Duration(milliseconds: 800),
             curve: Curves.elasticOut,
             builder: (context, value, child) {
-              final note = notifier.calculateNote();
               return Transform.scale(
                 scale: value,
                 child: Padding(
@@ -89,24 +88,26 @@ class PentoscopeGameScreen extends ConsumerWidget {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // Note principale
-                      Text(
-                        '$note/20',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: note >= 15 ? Colors.green : (note >= 8 ? Colors.orange : Colors.red),
+                      // 🎮 Manette pour rejouer
+                      IconButton(
+                        icon: const Icon(
+                          Icons.sports_esports,
+                          size: 28,
+                          color: Colors.green,
                         ),
+                        onPressed: () {
+                          HapticFeedback.mediumImpact();
+                          notifier.reset();
+                        },
+                        tooltip: 'Nouvelle partie',
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(minWidth: 36),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: 8),
                       // Indicateurs
                       Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          // Hints (lampes)
-                          Icon(Icons.lightbulb_outline, size: 14, color: Colors.amber.shade700),
-                          Text('${state.hintCount}', style: const TextStyle(fontSize: 12, color: Colors.black54)),
-                          const SizedBox(width: 6),
                           // Isométries
                           Icon(Icons.rotate_right, size: 14, color: Colors.blue.shade600),
                           Text('${state.isometryCount}', style: const TextStyle(fontSize: 12, color: Colors.black54)),
@@ -125,15 +126,6 @@ class PentoscopeGameScreen extends ConsumerWidget {
                 ),
               );
             },
-          )
-              : !state.showSolution
-              ? IconButton(
-            icon: const Icon(Icons.games),
-            onPressed: () {
-              HapticFeedback.mediumImpact();
-              notifier.reset();
-            },
-            tooltip: 'Recommencer',
           )
               : null,
           actions: [

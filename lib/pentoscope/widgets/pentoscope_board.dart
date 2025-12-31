@@ -44,7 +44,9 @@ class PentoscopeBoard extends ConsumerWidget {
         final visualCols = isLandscape ? boardHeight : boardWidth;
         final visualRows = isLandscape ? boardWidth : boardHeight;
 
-        final cellSize = (constraints.maxWidth / visualCols)
+        // Réserver 8px de marge horizontale (4px de chaque côté)
+        final availableWidth = constraints.maxWidth - 8;
+        final cellSize = (availableWidth / visualCols)
             .clamp(0.0, constraints.maxHeight / visualRows)
             .toDouble();
 
@@ -149,17 +151,22 @@ class PentoscopeBoard extends ConsumerWidget {
               child: Container(
                 width: gridWidth,
                 height: gridHeight,
-                decoration: BoxDecoration(
+                  decoration: BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: [Colors.grey.shade50, Colors.grey.shade100],
                   ),
+                  border: Border.all(
+                    color: Colors.grey.shade700,
+                    width: 3,
+                  ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.1),
-                      blurRadius: 20,
+                      color: Colors.black.withValues(alpha: 0.2),
+                      blurRadius: 12,
                       offset: const Offset(0, 4),
+                      spreadRadius: 2,
                     ),
                   ],
                   borderRadius: BorderRadius.circular(16),

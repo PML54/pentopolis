@@ -60,17 +60,17 @@ class _PentominoGameScreenState extends ConsumerState<PentominoGameScreen> {
     // ✨ AJOUT: Détecter la complétion du puzzle (12 pièces placées)
     // Vérifier aussi que le timer a tourné (elapsedSeconds > 0) pour éviter
     // les faux positifs lors de la réinitialisation
-    if (state.placedPieces.length == 12 && 
-        !_completionProcessed && 
+    if (state.placedPieces.length == 12 &&
+        !_completionProcessed &&
         state.elapsedSeconds > 0 &&
         _timerStarted) {
       _completionProcessed = true;
       debugPrint('🎉 PUZZLE COMPLÉTÉ! 12 pièces placées');
-      
+
       // Capturer les valeurs avant le callback
       final elapsedSeconds = state.elapsedSeconds;
       final score = notifier.calculateScore(elapsedSeconds);
-      
+
       WidgetsBinding.instance.addPostFrameCallback((_) {
         notifier.onPuzzleCompleted();
 
@@ -208,7 +208,7 @@ class _PentominoGameScreenState extends ConsumerState<PentominoGameScreen> {
               ),
             ],
           ),
-          leadingWidth: 90,
+          leadingWidth: 100,
           // TITLE : Bouton Solutions uniquement
           title: state.solutionsCount != null
               ? FittedBox(

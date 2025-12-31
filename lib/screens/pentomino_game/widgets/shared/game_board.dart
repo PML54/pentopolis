@@ -41,7 +41,9 @@ class GameBoard extends ConsumerWidget {
         final visualCols = isLandscape ? 10 : 6;
         final visualRows = isLandscape ? 6 : 10;
 
-        final cellSize = (constraints.maxWidth / visualCols)
+        // Réserver 8px de marge horizontale (4px de chaque côté)
+        final availableWidth = constraints.maxWidth - 8;
+        final cellSize = (availableWidth / visualCols)
             .clamp(0.0, constraints.maxHeight / visualRows)
             .toDouble();
 
@@ -49,7 +51,7 @@ class GameBoard extends ConsumerWidget {
           child: Container(
             width: cellSize * visualCols,
             height: cellSize * visualRows,
-            decoration: BoxDecoration(
+              decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
@@ -58,11 +60,16 @@ class GameBoard extends ConsumerWidget {
                   Colors.grey.shade100,
                 ],
               ),
+              border: Border.all(
+                color: Colors.grey.shade700,
+                width: 3,
+              ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.1),
-                  blurRadius: 20,
+                  color: Colors.black.withValues(alpha: 0.2),
+                  blurRadius: 12,
                   offset: const Offset(0, 4),
+                  spreadRadius: 2,
                 ),
               ],
               borderRadius: BorderRadius.circular(16),
