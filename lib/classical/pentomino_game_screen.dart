@@ -8,8 +8,11 @@ import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pentapol/classical/pentomino_game_provider.dart';
+import 'package:pentapol/classical/pentomino_game_screen_spec.dart';
+
 import 'package:pentapol/common/pentominos.dart';
 import 'package:pentapol/config/game_icons_config.dart';
+import 'package:pentapol/config/ui_sizes_config.dart';
 import 'package:pentapol/providers/settings_provider.dart';
 import 'package:pentapol/screens/pentomino_game/widgets/game_mode/piece_slider.dart';
 import 'package:pentapol/screens/pentomino_game/widgets/shared/action_slider.dart'
@@ -36,10 +39,10 @@ class _PentominoGameScreenState extends ConsumerState<PentominoGameScreen> {
   late bool _timerStarted;
   bool _completionProcessed = false;  // ✨ Flag pour ne pas répéter
 
-  String _formatTime(int seconds) {
-    int minutes = seconds ~/ 60;
-    int secs = seconds % 60;
-    return '${minutes.toString().padLeft(2, '0')}:${secs.toString().padLeft(2, '0')}';
+  /// Formate le temps en secondes (max 999s) - compact pour l'UI
+  String _formatTimeCompact(int seconds) {
+    final clamped = seconds.clamp(0, 999);
+    return '${clamped}s';
   }
 
 
@@ -65,7 +68,7 @@ class _PentominoGameScreenState extends ConsumerState<PentominoGameScreen> {
         state.elapsedSeconds > 0 &&
         _timerStarted) {
       _completionProcessed = true;
-      debugPrint('🎉 PUZZLE COMPLÉTÉ! 12 pièces placées');
+
 
       // Capturer les valeurs avant le callback
       final elapsedSeconds = state.elapsedSeconds;
@@ -90,7 +93,7 @@ class _PentominoGameScreenState extends ConsumerState<PentominoGameScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Puzzle complété en ${_formatTime(elapsedSeconds)}!',
+                  'Puzzle complété en ${_formatTimeCompact(elapsedSeconds)}!',
                   style: const TextStyle(fontSize: 16),
                 ),
                 const SizedBox(height: 8),
@@ -162,107 +165,123 @@ class _PentominoGameScreenState extends ConsumerState<PentominoGameScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
         // AppBar uniquement en mode portrait
-        appBar: isLandscape ? null : PreferredSize(
+        appBar: isLandscape ? null :
+        PreferredSize(
         preferredSize: const Size.fromHeight(56.0),
-        child: AppBar(
-          toolbarHeight: 56.0,
+        child:
+        AppBar(
+          toolbarHeight: UISizes.appBarHeight,
           backgroundColor: Colors.white,
+          automaticallyImplyLeading: false,  // ✨ Pas de flèche retour automatique
 
-          // ✨ Croix rouge + Chrono à gauche
-          leading: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Croix rouge pour quitter
-              IconButton(
-                icon: const Icon(Icons.close),
-                color: Colors.red,
-                onPressed: () {
-                  Navigator.pop(context);
-                },
-                tooltip: 'Quitter',
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(minWidth: 36),
-              ),
-              // Chrono
-              Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    _formatTime(state.elapsedSeconds),
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
+          // ✨ Croix rouge + Chrono à gauche (masqués si pièce sélectionnée)
+          leading: isInTransformMode
+              ? null  // Pas de leading en mode transformation
+              : Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Croix rouge pour quitter
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      color: Colors.red,
+                      iconSize: UISizes.appBarIconSize,
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                      tooltip: 'Quitter',
+                      padding: UISizes.compactIconPadding,
+                      constraints: UISizes.compactIconConstraints,
                     ),
-                  ),
-                  // ✨ Afficher la note seulement si puzzle complet
-                  if (state.availablePieces.isEmpty)
-                    Text(
-                      '⭐ ${notifier.calculateScore(state.elapsedSeconds)}',
-                      style: const TextStyle(
-                        fontSize: 10,
-                        color: Colors.orange,
+                    // Chrono
+                    Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          _formatTimeCompact(state.elapsedSeconds),
+                          style: const TextStyle(
+                            fontSize: UISizes.timerFontSize,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black,
+                          ),
+                        ),
+                        // ✨ Afficher la note seulement si puzzle complet
+                        if (state.availablePieces.isEmpty)
+                          Text(
+                            '⭐ ${notifier.calculateScore(state.elapsedSeconds)}',
+                            style: const TextStyle(
+                              fontSize: UISizes.scoreFontSize,
+                              color: Colors.orange,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
+          leadingWidth: isInTransformMode ? 0 : UISizes.appBarLeadingWidth,
+          
+          // ✨ TITLE : Icônes centrées en mode transformation, bouton solutions sinon
+          centerTitle: true,
+          title: isInTransformMode
+              ? Row(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: _buildTransformActions(state, notifier, settings),
+                )
+              : (state.solutionsCount != null
+                  ? FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          HapticFeedback.selectionClick();
+                          notifier.incrementSolutionsViewCount();
+                          final solutions = getCompatibleSolutionsIncludingSelected(state);
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => SolutionsBrowserScreen.forSolutions(
+                                solutions: solutions,
+                                title: 'Solutions',
+                              ),
+                            ),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                          minimumSize: const Size(45, 30),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(15),
+                          ),
+                          elevation: 3,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                        child: Text(
+                          '${state.solutionsCount}',
+                          style: const TextStyle(
+                            fontSize: UISizes.solutionsCountFontSize,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ),
-                    ),
-                ],
-              ),
-            ],
-          ),
-          leadingWidth: 100,
-          // TITLE : Bouton Solutions uniquement
-          title: state.solutionsCount != null
-              ? FittedBox(
-            fit: BoxFit.scaleDown,
-            child: ElevatedButton(
-              onPressed: () {
-                HapticFeedback.selectionClick();
-                // 🆕 Incrémenter le compteur de consultations
-                notifier.incrementSolutionsViewCount();
-                final solutions = getCompatibleSolutionsIncludingSelected(state);
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) => SolutionsBrowserScreen.forSolutions(
-                      solutions: solutions,
-                      title: 'Solutions',
-                    ),
-                  ),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-                minimumSize: const Size(45, 30),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(15),
-                ),
-                elevation: 3,
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              ),
-              child: Text(
-                '${state.solutionsCount}',
-                style: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          )
-              : const SizedBox.shrink(),
+                    )
+                  : null),
+          
+          // ✨ ACTIONS : Hint uniquement en mode normal (pas en transformation)
           actions: isInTransformMode
-              ? _buildTransformActions(state, notifier, settings)
+              ? null  // Pas d'actions à droite, tout est dans title
               : [
-            // 💡 Bouton hint (ampoule)
-            IconButton(
-              icon: const Icon(Icons.lightbulb),
-              color: Colors.amber.shade700,
-              tooltip: 'Indice aléatoire',
-              onPressed: () {
-                HapticFeedback.selectionClick();
-                notifier.applyHint();
-              },
-            ),
-          ],
+                  // 💡 Bouton hint (ampoule)
+                  IconButton(
+                    icon: const Icon(Icons.lightbulb),
+                    color: Colors.amber.shade700,
+                    tooltip: 'Indice aléatoire',
+                    iconSize: UISizes.appBarIconSize,
+                    onPressed: () {
+                      HapticFeedback.selectionClick();
+                      notifier.applyHint();
+                    },
+                  ),
+                ],
         ),
       ),
       body: Stack(
@@ -501,19 +520,22 @@ class _PentominoGameScreenState extends ConsumerState<PentominoGameScreen> {
   }
 
   /// Actions en mode TRANSFORMATION (pièce sélectionnée)
+  /// Icônes centrées dans l'AppBar avec tailles de UISizes
   List<Widget> _buildTransformActions(state, notifier, settings) {
     return [
       // Rotation anti-horaire
       HighlightedIconButton(
         isHighlighted: state.highlightedIsometryIcon == 'rotation',
         child: IconButton(
-          icon: Icon(GameIcons.isometryRotationTW.icon, size: settings.ui.iconSize),
+          icon: Icon(GameIcons.isometryRotationTW.icon, size: UISizes.isometryIconSize),
           onPressed: () {
             HapticFeedback.selectionClick();
             notifier.applyIsometryRotationTW();
           },
           tooltip: GameIcons.isometryRotationTW.tooltip,
           color: GameIcons.isometryRotationTW.color,
+          padding: UISizes.isometryIconPadding,
+          constraints: UISizes.isometryIconConstraints,
         ),
       ),
 
@@ -521,13 +543,15 @@ class _PentominoGameScreenState extends ConsumerState<PentominoGameScreen> {
       HighlightedIconButton(
         isHighlighted: state.highlightedIsometryIcon == 'rotation_cw',
         child: IconButton(
-          icon: Icon(GameIcons.isometryRotationCW.icon, size: settings.ui.iconSize),
+          icon: Icon(GameIcons.isometryRotationCW.icon, size: UISizes.isometryIconSize),
           onPressed: () {
             HapticFeedback.selectionClick();
             notifier.applyIsometryRotationCW();
           },
           tooltip: GameIcons.isometryRotationCW.tooltip,
           color: GameIcons.isometryRotationCW.color,
+          padding: UISizes.isometryIconPadding,
+          constraints: UISizes.isometryIconConstraints,
         ),
       ),
 
@@ -535,13 +559,15 @@ class _PentominoGameScreenState extends ConsumerState<PentominoGameScreen> {
       HighlightedIconButton(
         isHighlighted: state.highlightedIsometryIcon == 'symmetry_h',
         child: IconButton(
-          icon: Icon(GameIcons.isometrySymmetryH.icon, size: settings.ui.iconSize),
+          icon: Icon(GameIcons.isometrySymmetryH.icon, size: UISizes.isometryIconSize),
           onPressed: () {
             HapticFeedback.selectionClick();
             notifier.applyIsometrySymmetryH();
           },
           tooltip: GameIcons.isometrySymmetryH.tooltip,
           color: GameIcons.isometrySymmetryH.color,
+          padding: UISizes.isometryIconPadding,
+          constraints: UISizes.isometryIconConstraints,
         ),
       ),
 
@@ -549,26 +575,30 @@ class _PentominoGameScreenState extends ConsumerState<PentominoGameScreen> {
       HighlightedIconButton(
         isHighlighted: state.highlightedIsometryIcon == 'symmetry_v',
         child: IconButton(
-          icon: Icon(GameIcons.isometrySymmetryV.icon, size: settings.ui.iconSize),
+          icon: Icon(GameIcons.isometrySymmetryV.icon, size: UISizes.isometryIconSize),
           onPressed: () {
             HapticFeedback.selectionClick();
             notifier.applyIsometrySymmetryV();
           },
           tooltip: GameIcons.isometrySymmetryV.tooltip,
           color: GameIcons.isometrySymmetryV.color,
+          padding: UISizes.isometryIconPadding,
+          constraints: UISizes.isometryIconConstraints,
         ),
       ),
 
       // Delete (uniquement si pièce placée sélectionnée)
       if (state.selectedPlacedPiece != null)
         IconButton(
-          icon: Icon(GameIcons.removePiece.icon, size: settings.ui.iconSize),
+          icon: Icon(GameIcons.removePiece.icon, size: UISizes.deleteIconSize),
           onPressed: () {
             HapticFeedback.mediumImpact();
             notifier.removePlacedPiece(state.selectedPlacedPiece!);
           },
           tooltip: GameIcons.removePiece.tooltip,
           color: GameIcons.removePiece.color,
+          padding: UISizes.isometryIconPadding,
+          constraints: UISizes.isometryIconConstraints,
         ),
     ];
   }
