@@ -20,8 +20,8 @@ import 'package:pentapol/screens/pentomino_game/widgets/shared/action_slider.dar
 import 'package:pentapol/screens/pentomino_game/widgets/shared/game_board.dart';
 import 'package:pentapol/screens/solutions_browser_screen.dart';
 
-import 'package:pentapol/tutorial/tutorial.dart';
-import 'package:pentapol/tutorial/widgets/highlighted_icon_button.dart';
+
+import 'package:pentapol/screens/pentomino_game/widgets/shared/highlighted_icon_button.dart';
 import 'package:pentapol/services/solution_matcher.dart' show SolutionInfo;
 
 
@@ -299,9 +299,7 @@ class _PentominoGameScreenState extends ConsumerState<PentominoGameScreen> {
             },
           ),
 
-          // Tutorial overlay
-          const TutorialOverlay(),
-          const TutorialControls(),
+
         ],
       ),
     );
