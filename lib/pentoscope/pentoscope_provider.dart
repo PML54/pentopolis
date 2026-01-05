@@ -494,10 +494,16 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
     );
 
     // ✨ PUIS générer les placements valides avec le NOUVEAU plateau
-    final validPlacements = _generateValidPlacements(
+    var validPlacements = _generateValidPlacements(
       placed.piece,
       placed.positionIndex,
     );
+
+    // 🔑 EXCLURE la position actuelle pour faciliter les translations
+    // Sinon le snapping ramène toujours à la position d'origine
+    validPlacements = validPlacements
+        .where((p) => p.x != placed.gridX || p.y != placed.gridY)
+        .toList();
 
     state = state.copyWith(validPlacements: validPlacements);
   }
