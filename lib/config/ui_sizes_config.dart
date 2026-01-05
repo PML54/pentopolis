@@ -16,7 +16,7 @@ class UISizes {
   static const double appBarIconSize = 35.0;
 
   /// Taille des icônes d'isométrie (rotation, symétrie)
-  static const double isometryIconSize = 45.0;
+  static const double isometryIconSize = 55.0;
 
   /// Taille de l'icône poubelle (delete)
   static const double deleteIconSize = 26.0;
@@ -82,4 +82,6 @@ class UISizes {
   /// Padding des icônes d'isométrie
   static const EdgeInsets isometryIconPadding = EdgeInsets.symmetric(horizontal: 2);
 }
+
+
 

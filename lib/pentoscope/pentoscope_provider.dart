@@ -822,7 +822,24 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
       return p;
     }).toList();
 
+    // 🔄 Reconstruire le plateau avec les pièces mises à jour
+    final newPlateau = Plateau.allVisible(
+      state.plateau.width,
+      state.plateau.height,
+    );
+    for (final p in updatedPlacedPieces) {
+      for (final cell in p.absoluteCells) {
+        newPlateau.setCell(cell.x, cell.y, p.piece.id);
+      }
+    }
+
+    // 💡 Recalculer si une solution est encore possible
+    final hasPossibleSolution = state.availablePieces.isNotEmpty
+        ? _checkHasPossibleSolutionWith(newPlateau, state.availablePieces, updatedPlacedPieces)
+        : false;
+
     state = state.copyWith(
+      plateau: newPlateau,
       selectedPlacedPiece: finalPiece,  // ← Mettre à jour!
       placedPieces: updatedPlacedPieces,
       selectedPositionIndex: newIdx,
@@ -834,6 +851,7 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
       ),
       clearPreview: true,
       isometryCount: state.isometryCount + 1,
+      hasPossibleSolution: hasPossibleSolution, // 💡 Mise à jour!
     );
   }
 

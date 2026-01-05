@@ -13,6 +13,7 @@ import 'package:pentapol/config/game_icons_config.dart';
 import 'package:pentapol/pentoscope/pentoscope_provider.dart';
 import 'package:pentapol/pentoscope/widgets/pentoscope_board.dart';
 import 'package:pentapol/pentoscope/widgets/pentoscope_piece_slider.dart';
+import 'package:pentapol/config/ui_sizes_config.dart';
 
 /// ⏱️ Formate le temps en MM:SS
 String _formatTime(int seconds) {
@@ -52,7 +53,8 @@ class PentoscopeGameScreen extends ConsumerWidget {
           toolbarHeight: 56.0,
           backgroundColor: Colors.white,
           automaticallyImplyLeading: false,
-          leading: isPlacedPieceSelected
+          // 🔑 En mode transformation: pas de leading, les icônes prennent toute la place
+          leading: (isPlacedPieceSelected || isSliderPieceSelected)
               ? null
               : Row(
                   mainAxisSize: MainAxisSize.min,
@@ -72,9 +74,10 @@ class PentoscopeGameScreen extends ConsumerWidget {
                     ),
                   ],
                 ),
-          leadingWidth: 100,
+          leadingWidth: (isPlacedPieceSelected || isSliderPieceSelected) ? 0 : 100,
+          // 🔑 En mode transformation: icônes isométrie pleine largeur
           title: (isPlacedPieceSelected || isSliderPieceSelected)
-              ? null
+              ? _buildFullWidthIsometryBar(state, notifier)
               : state.isComplete
               ? TweenAnimationBuilder<double>(
             tween: Tween(begin: 0.0, end: 1.0),
@@ -83,56 +86,43 @@ class PentoscopeGameScreen extends ConsumerWidget {
             builder: (context, value, child) {
               return Transform.scale(
                 scale: value,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // 🎮 Manette pour rejouer
-                      IconButton(
-                        icon: const Icon(
-                          Icons.sports_esports,
-                          size: 28,
-                          color: Colors.green,
-                        ),
-                        onPressed: () {
-                          HapticFeedback.mediumImpact();
-                          notifier.reset();
-                        },
-                        tooltip: 'Nouvelle partie',
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(minWidth: 36),
-                      ),
-                      const SizedBox(width: 8),
-                      // Indicateurs
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          // Isométries
-                          Icon(Icons.rotate_right, size: 14, color: Colors.blue.shade600),
-                          Text('${state.isometryCount}', style: const TextStyle(fontSize: 12, color: Colors.black54)),
-                          const SizedBox(width: 6),
-                          // Translations
-                          Icon(Icons.open_with, size: 14, color: Colors.purple.shade600),
-                          Text('${state.translationCount}', style: const TextStyle(fontSize: 12, color: Colors.black54)),
-                          const SizedBox(width: 6),
-                          // Deletes
-                          Icon(Icons.delete_outline, size: 14, color: Colors.red.shade600),
-                          Text('${state.deleteCount}', style: const TextStyle(fontSize: 12, color: Colors.black54)),
-                        ],
-                      ),
-                    ],
-                  ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Indicateurs de performance
+                    Icon(Icons.rotate_right, size: 14, color: Colors.blue.shade600),
+                    Text('${state.isometryCount}', style: const TextStyle(fontSize: 12, color: Colors.black54)),
+                    const SizedBox(width: 6),
+                    Icon(Icons.open_with, size: 14, color: Colors.purple.shade600),
+                    Text('${state.translationCount}', style: const TextStyle(fontSize: 12, color: Colors.black54)),
+                    const SizedBox(width: 6),
+                    Icon(Icons.delete_outline, size: 14, color: Colors.red.shade600),
+                    Text('${state.deleteCount}', style: const TextStyle(fontSize: 12, color: Colors.black54)),
+                  ],
                 ),
               );
             },
           )
               : null,
-          actions: [
-            // 💡 Bouton Hint (lampe) - visible si solution possible et pièces restantes
-            if (!isSliderPieceSelected && 
-                !isPlacedPieceSelected && 
-                !state.isComplete &&
+          centerTitle: true,
+          // 🔑 En mode transformation: pas d'actions, tout est dans le title
+          actions: (isPlacedPieceSelected || isSliderPieceSelected)
+              ? null
+              : [
+            // 🎮 Manette pour réinitialiser
+            IconButton(
+              icon: Icon(
+                Icons.sports_esports,
+                color: state.isComplete ? Colors.green : Colors.indigo,
+              ),
+              onPressed: () {
+                HapticFeedback.mediumImpact();
+                notifier.reset();
+              },
+              tooltip: 'Nouvelle partie',
+            ),
+            // 💡 Bouton Hint (lampe)
+            if (!state.isComplete &&
                 state.hasPossibleSolution &&
                 state.availablePieces.isNotEmpty)
               IconButton(
@@ -143,13 +133,6 @@ class PentoscopeGameScreen extends ConsumerWidget {
                   notifier.applyHint();
                 },
                 tooltip: 'Indice',
-              ),
-            if (isSliderPieceSelected || isPlacedPieceSelected)
-              _buildIsometryActionsBar(
-                state,
-                ref.read(pentoscopeProvider.notifier),
-                settings,
-                Axis.horizontal,
               ),
           ],
         ),
@@ -239,6 +222,162 @@ class PentoscopeGameScreen extends ConsumerWidget {
     return direction == Axis.horizontal
         ? Row(mainAxisSize: MainAxisSize.min, children: children)
         : Column(mainAxisSize: MainAxisSize.min, children: children);
+  }
+
+  /// 🔑 Barre d'isométries pleine largeur avec icônes grandes et réparties uniformément
+  Widget _buildFullWidthIsometryBar(
+      PentoscopeState state,
+      PentoscopeNotifier notifier,
+      ) {
+    // Hauteur AppBar = 56, on prend ~75% pour les icônes
+    const double iconSize = 42.0;
+    
+    final hasDeleteButton = state.selectedPlacedPiece != null;
+    
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: [
+        // Rotation anti-horaire
+        IconButton(
+          icon: Icon(GameIcons.isometryRotationTW.icon, size: iconSize),
+          padding: EdgeInsets.zero,
+          constraints: const BoxConstraints(),
+          onPressed: () {
+            HapticFeedback.selectionClick();
+            notifier.applyIsometryRotationTW();
+          },
+          tooltip: GameIcons.isometryRotationTW.tooltip,
+          color: GameIcons.isometryRotationTW.color,
+        ),
+        // Rotation horaire
+        IconButton(
+          icon: Icon(GameIcons.isometryRotationCW.icon, size: iconSize),
+          padding: EdgeInsets.zero,
+          constraints: const BoxConstraints(),
+          onPressed: () {
+            HapticFeedback.selectionClick();
+            notifier.applyIsometryRotationCW();
+          },
+          tooltip: GameIcons.isometryRotationCW.tooltip,
+          color: GameIcons.isometryRotationCW.color,
+        ),
+        // Symétrie horizontale
+        IconButton(
+          icon: Icon(GameIcons.isometrySymmetryH.icon, size: iconSize),
+          padding: EdgeInsets.zero,
+          constraints: const BoxConstraints(),
+          onPressed: () {
+            HapticFeedback.selectionClick();
+            notifier.applyIsometrySymmetryH();
+          },
+          tooltip: GameIcons.isometrySymmetryH.tooltip,
+          color: GameIcons.isometrySymmetryH.color,
+        ),
+        // Symétrie verticale
+        IconButton(
+          icon: Icon(GameIcons.isometrySymmetryV.icon, size: iconSize),
+          padding: EdgeInsets.zero,
+          constraints: const BoxConstraints(),
+          onPressed: () {
+            HapticFeedback.selectionClick();
+            notifier.applyIsometrySymmetryV();
+          },
+          tooltip: GameIcons.isometrySymmetryV.tooltip,
+          color: GameIcons.isometrySymmetryV.color,
+        ),
+        // Supprimer (si pièce placée)
+        if (hasDeleteButton)
+          IconButton(
+            icon: Icon(GameIcons.removePiece.icon, size: iconSize),
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+            onPressed: () {
+              HapticFeedback.selectionClick();
+              notifier.removePlacedPiece(state.selectedPlacedPiece!);
+            },
+            tooltip: GameIcons.removePiece.tooltip,
+            color: GameIcons.removePiece.color,
+          ),
+      ],
+    );
+  }
+
+  /// 🔑 Barre d'isométries pleine hauteur (mode paysage) avec icônes grandes et réparties
+  Widget _buildFullHeightIsometryBar(
+      PentoscopeState state,
+      PentoscopeNotifier notifier,
+      double columnWidth,
+      ) {
+    // Icônes ~80% de la largeur de la colonne
+    final iconSize = (columnWidth * 0.75).clamp(28.0, 50.0);
+    final hasDeleteButton = state.selectedPlacedPiece != null;
+    
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: [
+        // Rotation anti-horaire
+        IconButton(
+          icon: Icon(GameIcons.isometryRotationTW.icon, size: iconSize),
+          padding: EdgeInsets.zero,
+          constraints: const BoxConstraints(),
+          onPressed: () {
+            HapticFeedback.selectionClick();
+            notifier.applyIsometryRotationTW();
+          },
+          tooltip: GameIcons.isometryRotationTW.tooltip,
+          color: GameIcons.isometryRotationTW.color,
+        ),
+        // Rotation horaire
+        IconButton(
+          icon: Icon(GameIcons.isometryRotationCW.icon, size: iconSize),
+          padding: EdgeInsets.zero,
+          constraints: const BoxConstraints(),
+          onPressed: () {
+            HapticFeedback.selectionClick();
+            notifier.applyIsometryRotationCW();
+          },
+          tooltip: GameIcons.isometryRotationCW.tooltip,
+          color: GameIcons.isometryRotationCW.color,
+        ),
+        // Symétrie horizontale
+        IconButton(
+          icon: Icon(GameIcons.isometrySymmetryH.icon, size: iconSize),
+          padding: EdgeInsets.zero,
+          constraints: const BoxConstraints(),
+          onPressed: () {
+            HapticFeedback.selectionClick();
+            notifier.applyIsometrySymmetryH();
+          },
+          tooltip: GameIcons.isometrySymmetryH.tooltip,
+          color: GameIcons.isometrySymmetryH.color,
+        ),
+        // Symétrie verticale
+        IconButton(
+          icon: Icon(GameIcons.isometrySymmetryV.icon, size: iconSize),
+          padding: EdgeInsets.zero,
+          constraints: const BoxConstraints(),
+          onPressed: () {
+            HapticFeedback.selectionClick();
+            notifier.applyIsometrySymmetryV();
+          },
+          tooltip: GameIcons.isometrySymmetryV.tooltip,
+          color: GameIcons.isometrySymmetryV.color,
+        ),
+        // Supprimer (si pièce placée)
+        if (hasDeleteButton)
+          IconButton(
+            icon: Icon(GameIcons.removePiece.icon, size: iconSize),
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+            onPressed: () {
+              HapticFeedback.selectionClick();
+              notifier.removePlacedPiece(state.selectedPlacedPiece!);
+            },
+            tooltip: GameIcons.removePiece.tooltip,
+            color: GameIcons.removePiece.color,
+          ),
+      ],
+    );
   }
 
   /// Helper: bouton d'action isométrie
@@ -430,18 +569,13 @@ class PentoscopeGameScreen extends ConsumerWidget {
                       ),
                     ],
                   ),
-                  child: Column(
+                  child: (isPlacedPieceSelected || isSliderPieceSelected)
+                      // 🔑 Mode transformation: icônes pleine hauteur, réparties uniformément
+                      ? _buildFullHeightIsometryBar(state, notifier, actionColumnWidth)
+                      // Mode normal: actions centrées
+                      : Column(
                     mainAxisAlignment: MainAxisAlignment.center,
-                    children: isPlacedPieceSelected || isSliderPieceSelected
-                        ? [
-                      // ✨ Isométries si pièce sélectionnée (slider OU plateau)
-                      _buildIsometryActionsBarAdaptive(
-                        state,
-                        notifier,
-                        iconSize,
-                      ),
-                    ]
-                        : [
+                    children: [
                       // ⏱️ Chronomètre
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 8.0),
