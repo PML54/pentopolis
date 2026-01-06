@@ -178,7 +178,9 @@ class PentoscopeBoard extends ConsumerWidget {
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(16),
                   child: GridView.builder(
+                    padding: EdgeInsets.zero,
                     physics: const NeverScrollableScrollPhysics(),
+                    shrinkWrap: true,
                     gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: visualCols,
                       childAspectRatio: 1.0,

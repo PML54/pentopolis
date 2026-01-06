@@ -15,18 +15,28 @@ import 'package:pentapol/pentoscope/widgets/pentoscope_board.dart';
 import 'package:pentapol/pentoscope/widgets/pentoscope_piece_slider.dart';
 import 'package:pentapol/config/ui_sizes_config.dart';
 
-/// ⏱️ Formate le temps en MM:SS
+/// ⏱️ Formate le temps en secondes (max 999s) - format compact
 String _formatTime(int seconds) {
-  final minutes = seconds ~/ 60;
-  final secs = seconds % 60;
-  return '${minutes.toString().padLeft(2, '0')}:${secs.toString().padLeft(2, '0')}';
+  final clamped = seconds.clamp(0, 999);
+  return '${clamped}s';
 }
 
-class PentoscopeGameScreen extends ConsumerWidget {
+class PentoscopeGameScreen extends ConsumerStatefulWidget {
   const PentoscopeGameScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<PentoscopeGameScreen> createState() => _PentoscopeGameScreenState();
+}
+
+class _PentoscopeGameScreenState extends ConsumerState<PentoscopeGameScreen> {
+  // 👁️ État du mini-plateau adversaire
+  bool _showOpponentOverlay = false;
+  
+  // 📍 Position du mini-plateau (draggable)
+  Offset? _overlayPosition; // null = position par défaut (coin bas-droit)
+
+  @override
+  Widget build(BuildContext context) {
     final state = ref.watch(pentoscopeProvider);
     final notifier = ref.read(pentoscopeProvider.notifier);
     final settings = ref.watch(settingsProvider);
@@ -109,6 +119,20 @@ class PentoscopeGameScreen extends ConsumerWidget {
           actions: (isPlacedPieceSelected || isSliderPieceSelected)
               ? null
               : [
+            // 👁️ Bouton voir adversaire
+            IconButton(
+              icon: Icon(
+                _showOpponentOverlay ? Icons.visibility : Icons.visibility_outlined,
+                color: _showOpponentOverlay ? Colors.blue : Colors.grey,
+              ),
+              onPressed: () {
+                HapticFeedback.selectionClick();
+                setState(() {
+                  _showOpponentOverlay = !_showOpponentOverlay;
+                });
+              },
+              tooltip: 'Voir adversaire',
+            ),
             // 🎮 Manette pour réinitialiser
             IconButton(
               icon: Icon(
@@ -165,9 +189,235 @@ class PentoscopeGameScreen extends ConsumerWidget {
               }
             },
           ),
+          
+          // 👁️ Mini-plateau adversaire (overlay)
+          if (_showOpponentOverlay)
+            _buildOpponentOverlay(context, state, settings),
         ],
       ),
     );
+  }
+
+  // ============================================================================
+  // 👁️ MINI-PLATEAU ADVERSAIRE (OVERLAY)
+  // ============================================================================
+
+  Widget _buildOpponentOverlay(
+      BuildContext context,
+      PentoscopeState state,
+      dynamic settings,
+      ) {
+    final screenSize = MediaQuery.of(context).size;
+    final isLandscape = screenSize.width > screenSize.height;
+    
+    // Taille du mini-plateau (35% de l'écran)
+    final overlaySize = isLandscape 
+        ? screenSize.height * 0.35 
+        : screenSize.width * 0.35;
+    
+    // Position par défaut : coin bas-droit avec marge
+    final defaultX = screenSize.width - overlaySize - 12;
+    final defaultY = isLandscape 
+        ? screenSize.height - overlaySize - 12 
+        : screenSize.height - overlaySize - 170; // Au-dessus du slider en portrait
+    
+    // Utiliser la position custom ou la position par défaut
+    final currentX = _overlayPosition?.dx ?? defaultX;
+    final currentY = _overlayPosition?.dy ?? defaultY;
+
+    return Positioned(
+      left: currentX,
+      top: currentY,
+      child: GestureDetector(
+        // 🖐️ Drag pour déplacer
+        onPanUpdate: (details) {
+          setState(() {
+            final newX = (currentX + details.delta.dx)
+                .clamp(0.0, screenSize.width - overlaySize);
+            final newY = (currentY + details.delta.dy)
+                .clamp(0.0, screenSize.height - overlaySize - 60); // Marge pour ne pas sortir
+            _overlayPosition = Offset(newX, newY);
+          });
+        },
+        // 🔄 Double-tap pour reset la position
+        onDoubleTap: () {
+          HapticFeedback.selectionClick();
+          setState(() {
+            _overlayPosition = null; // Reset à la position par défaut
+          });
+        },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          width: overlaySize,
+          height: overlaySize,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.blue.shade300, width: 2),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.3),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(10),
+            child: Stack(
+              children: [
+                // 🎮 Mini-plateau (simulation adversaire)
+                _buildMiniBoard(state, settings, overlaySize),
+                
+                // 📊 Bandeau info adversaire (aussi zone de drag)
+                Positioned(
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [Colors.blue.shade600, Colors.blue.shade400],
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        // 🖐️ Icône drag
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.drag_indicator, color: Colors.white.withOpacity(0.7), size: 12),
+                            const SizedBox(width: 4),
+                            const Text(
+                              '👤 Adversaire',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                        Text(
+                          '${_simulateOpponentProgress(state)}/${state.puzzle?.size.numPieces ?? 0}',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                
+                // ❌ Bouton fermer
+                Positioned(
+                  top: 2,
+                  right: 2,
+                  child: GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _showOpponentOverlay = false;
+                      });
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(2),
+                      decoration: BoxDecoration(
+                        color: Colors.red.shade400,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.close,
+                        color: Colors.white,
+                        size: 12,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Simule la progression de l'adversaire (pour démo)
+  int _simulateOpponentProgress(PentoscopeState state) {
+    // Simulation miroir : même progression que nous
+    return state.placedPieces.length;
+  }
+
+  /// Construit le mini-plateau (vue simplifiée)
+  Widget _buildMiniBoard(PentoscopeState state, dynamic settings, double size) {
+    final puzzle = state.puzzle;
+    if (puzzle == null) return const SizedBox();
+
+    final boardWidth = puzzle.size.width;
+    final boardHeight = puzzle.size.height;
+    
+    // Calculer la taille des cellules pour le mini-plateau
+    final availableSize = size - 24; // Marge pour le bandeau
+    final maxDimension = boardWidth > boardHeight ? boardWidth : boardHeight;
+    final cellSize = availableSize / maxDimension;
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 22), // Espace pour le bandeau
+      child: Center(
+        child: SizedBox(
+          width: cellSize * boardWidth,
+          height: cellSize * boardHeight,
+          child: GridView.builder(
+            physics: const NeverScrollableScrollPhysics(),
+            padding: EdgeInsets.zero,
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: boardWidth,
+              childAspectRatio: 1.0,
+            ),
+            itemCount: boardWidth * boardHeight,
+            itemBuilder: (context, index) {
+              final x = index % boardWidth;
+              final y = index ~/ boardWidth;
+              
+              // Simuler le plateau adversaire (quelques pièces placées)
+              final opponentPieces = _getSimulatedOpponentPieces(state);
+              final pieceId = _getPieceAtPosition(opponentPieces, x, y);
+              
+              return Container(
+                decoration: BoxDecoration(
+                  color: pieceId != null 
+                      ? settings.ui.getPieceColor(pieceId).withOpacity(0.8)
+                      : Colors.grey.shade200,
+                  border: Border.all(color: Colors.grey.shade400, width: 0.5),
+                ),
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Simule les pièces de l'adversaire (pour démo)
+  /// En mode miroir : affiche les mêmes pièces que nous
+  List<PentoscopePlacedPiece> _getSimulatedOpponentPieces(PentoscopeState state) {
+    // Simulation miroir : mêmes pièces que nous
+    return state.placedPieces.toList();
+  }
+
+  /// Récupère l'ID de la pièce à une position donnée
+  int? _getPieceAtPosition(List<PentoscopePlacedPiece> pieces, int x, int y) {
+    for (final placed in pieces) {
+      for (final cell in placed.absoluteCells) {
+        if (cell.x == x && cell.y == y) {
+          return placed.piece.id;
+        }
+      }
+    }
+    return null;
   }
 
   // ============================================================================
@@ -502,8 +752,6 @@ class PentoscopeGameScreen extends ConsumerWidget {
       bool isSliderPieceSelected,
       bool isPlacedPieceSelected,
       ) {
-    final settings = ref.read(settingsProvider);
-
     return Column(
       children: [
         // Plateau de jeu
