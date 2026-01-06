@@ -7,12 +7,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:pentapol/common/pentominos.dart';
 import 'package:pentapol/providers/settings_provider.dart';
 import 'package:pentapol/config/game_icons_config.dart';
 import 'package:pentapol/pentoscope/pentoscope_provider.dart';
 import 'package:pentapol/pentoscope/widgets/pentoscope_board.dart';
 import 'package:pentapol/pentoscope/widgets/pentoscope_piece_slider.dart';
 import 'package:pentapol/pentoscope_multiplayer/models/pentoscope_mp_state.dart';
+import 'package:pentapol/pentoscope_multiplayer/models/pentoscope_mp_messages.dart';
 import 'package:pentapol/pentoscope_multiplayer/providers/pentoscope_mp_provider.dart';
 import 'package:pentapol/pentoscope_multiplayer/screens/pentoscope_mp_result_screen.dart';
 
@@ -79,8 +81,17 @@ class _PentoscopeMPGameScreenState extends ConsumerState<PentoscopeMPGameScreen>
     // Sync progression vers le serveur
     ref.listen<PentoscopeState>(pentoscopeProvider, (prev, next) {
       if (prev?.placedPieces.length != next.placedPieces.length) {
+        // Convertir les pièces placées en PlacedPieceSummary
+        final placedPieces = next.placedPieces.map((p) => PlacedPieceSummary(
+          pieceId: p.piece.id,
+          x: p.gridX,
+          y: p.gridY,
+          positionIndex: p.positionIndex,
+        )).toList();
+        
         ref.read(pentoscopeMPProvider.notifier).updateProgress(
           next.placedPieces.length,
+          placedPieces: placedPieces,
         );
         
         // Si puzzle terminé, notifier le serveur
@@ -110,19 +121,24 @@ class _PentoscopeMPGameScreenState extends ConsumerState<PentoscopeMPGameScreen>
                     : Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
+                          // ❌ Bouton quitter
+                          IconButton(
+                            icon: const Icon(Icons.close, color: Colors.red),
+                            onPressed: () => _showQuitDialog(context, ref),
+                            tooltip: 'Quitter',
+                          ),
                           // ⏱️ Chronomètre
-                          const SizedBox(width: 12),
                           Text(
                             _formatTime(mpState.elapsedSeconds),
                             style: const TextStyle(
-                              fontSize: 16,
+                              fontSize: 14,
                               fontWeight: FontWeight.bold,
                               color: Colors.black,
                             ),
                           ),
                         ],
                       ),
-                leadingWidth: (isPlacedPieceSelected || isSliderPieceSelected) ? 0 : 80,
+                leadingWidth: (isPlacedPieceSelected || isSliderPieceSelected) ? 0 : 100,
                 title: (isPlacedPieceSelected || isSliderPieceSelected)
                     ? _buildFullWidthIsometryBar(localState, localNotifier)
                     : _buildPlayersProgress(mpState),
@@ -130,6 +146,20 @@ class _PentoscopeMPGameScreenState extends ConsumerState<PentoscopeMPGameScreen>
                 actions: (isPlacedPieceSelected || isSliderPieceSelected)
                     ? null
                     : [
+                        // 💡 Indicateur solution possible (lampe)
+                        if (!localState.isComplete && localState.availablePieces.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(right: 4),
+                            child: Icon(
+                              localState.hasPossibleSolution 
+                                  ? Icons.lightbulb 
+                                  : Icons.lightbulb_outline,
+                              color: localState.hasPossibleSolution 
+                                  ? Colors.amber 
+                                  : Colors.grey.shade400,
+                              size: 24,
+                            ),
+                          ),
                         // 👁️ Toggle adversaires
                         IconButton(
                           icon: Icon(
@@ -356,7 +386,7 @@ class _PentoscopeMPGameScreenState extends ConsumerState<PentoscopeMPGameScreen>
         borderRadius: BorderRadius.circular(10),
         child: Stack(
           children: [
-            // Grille (vide pour l'instant - TODO: sync avec serveur)
+            // Grille avec les vraies pièces de l'adversaire
             Padding(
               padding: const EdgeInsets.only(top: 22),
               child: Center(
@@ -372,12 +402,16 @@ class _PentoscopeMPGameScreenState extends ConsumerState<PentoscopeMPGameScreen>
                     ),
                     itemCount: boardWidth * boardHeight,
                     itemBuilder: (context, index) {
-                      // Simulation visuelle basée sur le nombre de pièces
-                      final filled = index < (opponent.placedCount * 5);
+                      final x = index % boardWidth;
+                      final y = index ~/ boardWidth;
+                      
+                      // Chercher si une pièce occupe cette cellule
+                      final pieceId = _getPieceAtPosition(opponent.placedPieces, x, y);
+                      
                       return Container(
                         decoration: BoxDecoration(
-                          color: filled 
-                              ? Colors.orange.withOpacity(0.6)
+                          color: pieceId != null 
+                              ? settings.ui.getPieceColor(pieceId).withOpacity(0.8)
                               : Colors.grey.shade200,
                           border: Border.all(color: Colors.grey.shade400, width: 0.5),
                         ),
@@ -454,6 +488,66 @@ class _PentoscopeMPGameScreenState extends ConsumerState<PentoscopeMPGameScreen>
   }
 
   // ==========================================================================
+  // HELPERS
+  // ==========================================================================
+
+  /// Affiche une dialog de confirmation pour quitter
+  Future<void> _showQuitDialog(BuildContext context, WidgetRef ref) async {
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Quitter la partie ?'),
+        content: const Text(
+          'Tu vas abandonner la partie en cours.\nLes autres joueurs continueront sans toi.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Annuler'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Quitter'),
+          ),
+        ],
+      ),
+    );
+
+    if (result == true && context.mounted) {
+      await ref.read(pentoscopeMPProvider.notifier).leaveRoom();
+      if (context.mounted) {
+        Navigator.popUntil(context, (route) => route.isFirst);
+      }
+    }
+  }
+
+  /// Récupère l'ID de la pièce à une position donnée sur le mini-plateau
+  int? _getPieceAtPosition(List<MPPlacedPiece> placedPieces, int x, int y) {
+    for (final placed in placedPieces) {
+      // Récupérer le pentomino
+      final pento = pentominos.firstWhere(
+        (p) => p.id == placed.pieceId,
+        orElse: () => pentominos.first,
+      );
+      
+      // Récupérer les cellules de la pièce dans cette orientation (cartesianCoords)
+      final posIndex = placed.positionIndex.clamp(0, pento.cartesianCoords.length - 1);
+      final cells = pento.cartesianCoords[posIndex];
+      
+      // Vérifier si (x, y) est dans les cellules absolues
+      for (final cell in cells) {
+        final absX = placed.x + cell[0];
+        final absY = placed.y + cell[1];
+        if (absX == x && absY == y) {
+          return placed.pieceId;
+        }
+      }
+    }
+    return null;
+  }
+
+  // ==========================================================================
   // LAYOUTS (adaptés de pentoscope_game_screen.dart)
   // ==========================================================================
 
@@ -520,6 +614,20 @@ class _PentoscopeMPGameScreenState extends ConsumerState<PentoscopeMPGameScreen>
               ),
               const SizedBox(height: 8),
               
+              // 💡 Indicateur solution possible
+              if (!state.isComplete && state.availablePieces.isNotEmpty)
+                Icon(
+                  state.hasPossibleSolution 
+                      ? Icons.lightbulb 
+                      : Icons.lightbulb_outline,
+                  color: state.hasPossibleSolution 
+                      ? Colors.amber 
+                      : Colors.grey.shade400,
+                  size: 20,
+                ),
+              
+              const SizedBox(height: 8),
+              
               // Toggle adversaires
               IconButton(
                 icon: Icon(
@@ -539,6 +647,13 @@ class _PentoscopeMPGameScreenState extends ConsumerState<PentoscopeMPGameScreen>
                 _buildFullHeightIsometryBar(state, notifier, 50),
               
               const Spacer(),
+              
+              // ❌ Bouton quitter
+              IconButton(
+                icon: const Icon(Icons.close, color: Colors.red, size: 20),
+                onPressed: () => _showQuitDialog(context, ref),
+                tooltip: 'Quitter',
+              ),
             ],
           ),
         ),

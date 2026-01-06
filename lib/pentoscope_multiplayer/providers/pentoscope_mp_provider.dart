@@ -3,14 +3,12 @@
 
 import 'dart:async';
 import 'dart:convert';
-import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'package:web_socket_channel/web_socket_channel.dart';
 
-import 'package:pentapol/common/pentominos.dart';
 import 'package:pentapol/pentoscope/pentoscope_generator.dart';
 import 'package:pentapol/pentoscope_multiplayer/models/pentoscope_mp_state.dart';
 import 'package:pentapol/pentoscope_multiplayer/models/pentoscope_mp_messages.dart';
@@ -80,7 +78,7 @@ class PentoscopeMPNotifier extends Notifier<PentoscopeMPState> {
 
     try {
       // 1. Créer la room via HTTP POST
-      debugPrint('[MP] 📡 Création de la room...');
+      debugPrint('[MP] 📡 Création de la room: format=${state.config!.format}, ${size.width}x${size.height}, ${size.numPieces} pièces');
       final createResponse = await http.post(
         Uri.parse('$_serverHttpUrl/room/create'),
         headers: {'Content-Type': 'application/json'},
@@ -231,7 +229,7 @@ class PentoscopeMPNotifier extends Notifier<PentoscopeMPState> {
   // ==========================================================================
 
   /// Lancer la partie (Host uniquement)
-  void startGame() {
+  Future<void> startGame() async {
     if (!state.isHost || !state.canStart) {
       debugPrint('[MP] ⚠️ Impossible de lancer la partie');
       return;
@@ -239,11 +237,17 @@ class PentoscopeMPNotifier extends Notifier<PentoscopeMPState> {
 
     debugPrint('[MP] 🎮 Lancement de la partie...');
 
-    // Générer le puzzle
+    // Générer un puzzle VALIDE (avec au moins une solution)
+    final generator = PentoscopeGenerator();
+    final size = state.config!.toPentoscopeSize();
+    
+    debugPrint('[MP] 🔍 Génération d\'un puzzle valide pour ${size.label}...');
+    final puzzle = await generator.generate(size);
+    
     final seed = DateTime.now().millisecondsSinceEpoch;
-    final pieceIds = _generatePieceIds(seed, state.config!.pieceCount);
+    final pieceIds = puzzle.pieceIds;
 
-    debugPrint('[MP] 🧩 Seed: $seed, Pièces: $pieceIds');
+    debugPrint('[MP] ✅ Puzzle trouvé: seed=$seed, pièces=$pieceIds, solutions=${puzzle.solutionCount}');
 
     // Envoyer au serveur
     _send(StartGameMessage(
@@ -298,6 +302,11 @@ class PentoscopeMPNotifier extends Notifier<PentoscopeMPState> {
 
   void _onMessage(dynamic data) {
     if (data is! String) return;
+    
+    // Ignorer silencieusement les pongs
+    if (data.contains('"type":"pong"')) {
+      return;
+    }
     
     debugPrint('[MP] 📥 Reçu: $data');
     
@@ -397,13 +406,23 @@ class PentoscopeMPNotifier extends Notifier<PentoscopeMPState> {
   }
 
   void _handlePuzzleReady(PuzzleReadyMessage msg) {
-    debugPrint('[MP] 🧩 Puzzle prêt: seed=${msg.seed}, pièces=${msg.pieceIds}');
+    debugPrint('[MP] 🧩 Puzzle prêt: seed=${msg.seed}, pièces=${msg.pieceIds}, format=${msg.format}, ${msg.width}x${msg.height}');
+    
+    // Utiliser les dimensions exactes du serveur
+    final config = MPGameConfig(
+      format: msg.format,
+      width: msg.width,
+      height: msg.height,
+      pieceCount: msg.pieceCount,
+      timeLimit: msg.timeLimit,
+    );
+    debugPrint('[MP] 📐 Config: ${config.width}x${config.height}, ${config.pieceCount} pièces');
     
     state = state.copyWith(
       gameState: PentoscopeMPGameState.countdown,
       seed: msg.seed,
       pieceIds: msg.pieceIds,
-      config: MPGameConfig.fromFormat(msg.format, timeLimit: msg.timeLimit),
+      config: config,
     );
   }
 
@@ -431,7 +450,18 @@ class PentoscopeMPNotifier extends Notifier<PentoscopeMPState> {
   void _handleOpponentProgress(OpponentProgressMessage msg) {
     final updatedPlayers = state.players.map((p) {
       if (p.id == msg.playerId) {
-        return p.copyWith(placedCount: msg.placedCount);
+        // Convertir les PlacedPieceSummary en MPPlacedPiece
+        final pieces = msg.placedPieces?.map((ps) => MPPlacedPiece(
+          pieceId: ps.pieceId,
+          x: ps.x,
+          y: ps.y,
+          positionIndex: ps.positionIndex,
+        )).toList() ?? p.placedPieces;
+        
+        return p.copyWith(
+          placedCount: msg.placedCount,
+          placedPieces: pieces,
+        );
       }
       return p;
     }).toList();
@@ -440,12 +470,12 @@ class PentoscopeMPNotifier extends Notifier<PentoscopeMPState> {
   }
 
   void _handlePlayerCompleted(PlayerCompletedMessage msg) {
-    debugPrint('[MP] 🏆 ${msg.playerId} a terminé en ${msg.time}s (rang ${msg.rank})');
+    debugPrint('[MP] 🏆 ${msg.playerName} a terminé en ${msg.timeMs ~/ 1000}s (rang ${msg.rank})');
     
     final updatedPlayers = state.players.map((p) {
       if (p.id == msg.playerId) {
         return p.copyWith(
-          completionTime: msg.time,
+          completionTime: msg.timeMs ~/ 1000,
           rank: msg.rank,
         );
       }
@@ -464,7 +494,7 @@ class PentoscopeMPNotifier extends Notifier<PentoscopeMPState> {
       if (ranking != null) {
         return p.copyWith(
           rank: ranking.rank,
-          completionTime: ranking.time,
+          completionTime: ranking.timeMs != null ? ranking.timeMs! ~/ 1000 : null,
         );
       }
       return p;
@@ -525,13 +555,6 @@ class PentoscopeMPNotifier extends Notifier<PentoscopeMPState> {
     
     debugPrint('[MP] 📤 Envoi: ${message.type}');
     _channel!.sink.add(message.encode());
-  }
-
-  List<int> _generatePieceIds(int seed, int count) {
-    final random = Random(seed);
-    final allPieceIds = pentominos.map((p) => p.id).toList();
-    allPieceIds.shuffle(random);
-    return allPieceIds.take(count).toList();
   }
 
   void _startPingTimer() {

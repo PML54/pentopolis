@@ -27,6 +27,30 @@ enum PentoscopeMPGameState {
   error,
 }
 
+/// Résumé d'une pièce placée (pour affichage mini-plateau)
+class MPPlacedPiece {
+  final int pieceId;
+  final int x;
+  final int y;
+  final int positionIndex;
+
+  const MPPlacedPiece({
+    required this.pieceId,
+    required this.x,
+    required this.y,
+    required this.positionIndex,
+  });
+
+  factory MPPlacedPiece.fromJson(Map<String, dynamic> json) {
+    return MPPlacedPiece(
+      pieceId: json['pieceId'] as int,
+      x: (json['x'] ?? json['gridX']) as int,
+      y: (json['y'] ?? json['gridY']) as int,
+      positionIndex: json['positionIndex'] as int,
+    );
+  }
+}
+
 /// Informations sur un joueur
 class MPPlayer {
   final String id;
@@ -36,6 +60,9 @@ class MPPlayer {
   
   /// Nombre de pièces placées (progression)
   final int placedCount;
+  
+  /// Détails des pièces placées (pour affichage mini-plateau)
+  final List<MPPlacedPiece> placedPieces;
   
   /// Temps de complétion (null si pas terminé)
   final int? completionTime;
@@ -52,6 +79,7 @@ class MPPlayer {
     this.isMe = false,
     this.isHost = false,
     this.placedCount = 0,
+    this.placedPieces = const [],
     this.completionTime,
     this.rank,
     this.isConnected = true,
@@ -66,6 +94,7 @@ class MPPlayer {
     bool? isMe,
     bool? isHost,
     int? placedCount,
+    List<MPPlacedPiece>? placedPieces,
     int? completionTime,
     bool clearCompletionTime = false,
     int? rank,
@@ -78,6 +107,7 @@ class MPPlayer {
       isMe: isMe ?? this.isMe,
       isHost: isHost ?? this.isHost,
       placedCount: placedCount ?? this.placedCount,
+      placedPieces: placedPieces ?? this.placedPieces,
       completionTime: clearCompletionTime ? null : (completionTime ?? this.completionTime),
       rank: clearRank ? null : (rank ?? this.rank),
       isConnected: isConnected ?? this.isConnected,

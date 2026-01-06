@@ -353,21 +353,33 @@ class PuzzleReadyMessage extends MPServerMessage {
   final int seed;
   final List<int> pieceIds;
   final String format;
+  final int width;
+  final int height;
+  final int pieceCount;
   final int timeLimit;
 
   PuzzleReadyMessage({
     required this.seed,
     required this.pieceIds,
     required this.format,
+    required this.width,
+    required this.height,
+    required this.pieceCount,
     required this.timeLimit,
   });
 
   factory PuzzleReadyMessage.fromJson(Map<String, dynamic> json) {
+    // Config peut être dans json['config'] ou directement dans json
+    final config = json['config'] as Map<String, dynamic>? ?? json;
+    
     return PuzzleReadyMessage(
-      seed: json['seed'] as int,
-      pieceIds: (json['pieceIds'] as List).cast<int>(),
-      format: json['format'] as String? ?? '5x5',
-      timeLimit: json['timeLimit'] as int? ?? 0,
+      seed: json['seed'] as int? ?? 0,
+      pieceIds: (json['pieceIds'] as List?)?.cast<int>() ?? [],
+      format: config['format'] as String? ?? '5x5',
+      width: config['width'] as int? ?? 5,
+      height: config['height'] as int? ?? 5,
+      pieceCount: config['pieceCount'] as int? ?? 5,
+      timeLimit: config['timeLimit'] as int? ?? 0,
     );
   }
 }
@@ -425,19 +437,22 @@ class OpponentProgressMessage extends MPServerMessage {
 /// Un joueur a terminé
 class PlayerCompletedMessage extends MPServerMessage {
   final String playerId;
-  final int time;
+  final String playerName;
+  final int timeMs;
   final int rank;
 
   PlayerCompletedMessage({
     required this.playerId,
-    required this.time,
+    required this.playerName,
+    required this.timeMs,
     required this.rank,
   });
 
   factory PlayerCompletedMessage.fromJson(Map<String, dynamic> json) {
     return PlayerCompletedMessage(
       playerId: json['playerId'] as String,
-      time: json['time'] as int,
+      playerName: json['playerName'] as String? ?? '',
+      timeMs: json['timeMs'] as int? ?? json['time'] as int? ?? 0,
       rank: json['rank'] as int,
     );
   }
@@ -461,23 +476,29 @@ class GameEndMessage extends MPServerMessage {
 /// Entrée de classement
 class RankingEntry {
   final String playerId;
-  final String name;
-  final int? time; // null si pas terminé
+  final String playerName;
+  final int? timeMs; // null si pas terminé
   final int rank;
+  final bool isComplete;
+  final int placedCount;
 
   RankingEntry({
     required this.playerId,
-    required this.name,
-    this.time,
+    required this.playerName,
+    this.timeMs,
     required this.rank,
+    this.isComplete = false,
+    this.placedCount = 0,
   });
 
   factory RankingEntry.fromJson(Map<String, dynamic> json) {
     return RankingEntry(
       playerId: json['playerId'] as String,
-      name: json['name'] as String,
-      time: json['time'] as int?,
+      playerName: json['playerName'] as String? ?? json['name'] as String? ?? '',
+      timeMs: json['timeMs'] as int? ?? json['time'] as int?,
       rank: json['rank'] as int,
+      isComplete: json['isComplete'] as bool? ?? false,
+      placedCount: json['placedCount'] as int? ?? 0,
     );
   }
 }

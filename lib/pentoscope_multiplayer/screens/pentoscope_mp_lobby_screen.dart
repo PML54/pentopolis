@@ -9,6 +9,10 @@ import 'package:pentapol/pentoscope/pentoscope_generator.dart';
 import 'package:pentapol/pentoscope_multiplayer/models/pentoscope_mp_state.dart';
 import 'package:pentapol/pentoscope_multiplayer/providers/pentoscope_mp_provider.dart';
 import 'package:pentapol/pentoscope_multiplayer/screens/pentoscope_mp_game_screen.dart';
+import 'package:pentapol/database/settings_database.dart';
+
+// Clé pour stocker le nom du joueur
+const String _playerNameKey = 'multiplayer_player_name';
 
 class PentoscopeMPLobbyScreen extends ConsumerStatefulWidget {
   const PentoscopeMPLobbyScreen({super.key});
@@ -18,11 +22,34 @@ class PentoscopeMPLobbyScreen extends ConsumerStatefulWidget {
 }
 
 class _PentoscopeMPLobbyScreenState extends ConsumerState<PentoscopeMPLobbyScreen> {
-  final _playerNameController = TextEditingController(text: 'Joueur');
+  final _playerNameController = TextEditingController();
   final _roomCodeController = TextEditingController();
+  final _db = SettingsDatabase();
   
   PentoscopeSize _selectedSize = PentoscopeSize.size5x5;
-  bool _isCreating = false; // true = créer, false = rejoindre
+  bool _isCreating = true; // true = créer, false = rejoindre
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedPlayerName();
+  }
+
+  Future<void> _loadSavedPlayerName() async {
+    final savedName = await _db.getSetting(_playerNameKey);
+    if (savedName != null && savedName.isNotEmpty) {
+      _playerNameController.text = savedName;
+    } else {
+      _playerNameController.text = 'Joueur';
+    }
+    if (mounted) setState(() {});
+  }
+
+  Future<void> _savePlayerName(String name) async {
+    if (name.isNotEmpty) {
+      await _db.setSetting(_playerNameKey, name);
+    }
+  }
 
   @override
   void dispose() {
@@ -569,6 +596,9 @@ class _PentoscopeMPLobbyScreenState extends ConsumerState<PentoscopeMPLobbyScree
       return;
     }
 
+    // Sauvegarder le nom pour la prochaine fois
+    await _savePlayerName(name);
+
     await ref.read(pentoscopeMPProvider.notifier).createRoom(
       playerName: name,
       size: _selectedSize,
@@ -592,6 +622,9 @@ class _PentoscopeMPLobbyScreenState extends ConsumerState<PentoscopeMPLobbyScree
       );
       return;
     }
+
+    // Sauvegarder le nom pour la prochaine fois
+    await _savePlayerName(name);
 
     await ref.read(pentoscopeMPProvider.notifier).joinRoom(
       roomCode: code,
