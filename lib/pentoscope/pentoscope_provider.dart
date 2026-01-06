@@ -590,6 +590,53 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
     startTimer();
   }
 
+  /// 🎮 Démarre un puzzle avec un seed et des pièces spécifiques (mode multiplayer)
+  Future<void> startPuzzleFromSeed(
+    PentoscopeSize size,
+    int seed,
+    List<int> pieceIds,
+  ) async {
+    // Générer le puzzle avec les paramètres fournis
+    final puzzle = await _generator.generateFromSeed(size, seed, pieceIds);
+
+    final pieces = pieceIds
+        .map((id) => pentominos.firstWhere((p) => p.id == id))
+        .toList();
+
+    final plateau = Plateau.allVisible(size.width, size.height);
+
+    // Initialiser les positions avec le même seed (pour cohérence)
+    final Random random = Random(seed);
+    final piecePositionIndices = <int, int>{};
+
+    for (final piece in pieces) {
+      final randomPos = random.nextInt(piece.numPositions);
+      piecePositionIndices[piece.id] = randomPos;
+    }
+
+    // Reset timer
+    stopTimer();
+    
+    state = PentoscopeState(
+      viewOrientation: ViewOrientation.portrait,
+      puzzle: puzzle,
+      plateau: plateau,
+      availablePieces: pieces,
+      placedPieces: [],
+      piecePositionIndices: piecePositionIndices,
+      isComplete: false,
+      isometryCount: 0,
+      translationCount: 0,
+      showSolution: false,
+      currentSolution: null,
+      validPlacements: [],
+      hasPossibleSolution: true,
+      elapsedSeconds: 0,
+    );
+    
+    startTimer();
+  }
+
   // ==========================================================================
   // PLACEMENT
   // ==========================================================================

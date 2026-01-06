@@ -4,7 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pentapol/pentoscope/pentoscope_generator.dart';
 import 'package:pentapol/pentoscope/pentoscope_provider.dart';
-import 'package:pentapol/pentoscope/screens/pentoscope_game_screen.dart'; // ← Absolu
+import 'package:pentapol/pentoscope/screens/pentoscope_game_screen.dart';
+import 'package:pentapol/pentoscope_multiplayer/screens/pentoscope_mp_lobby_screen.dart';
 
 class PentoscopeMenuScreen extends ConsumerStatefulWidget {
   const PentoscopeMenuScreen({super.key});
@@ -81,7 +82,7 @@ class _PentoscopeMenuScreenState extends ConsumerState<PentoscopeMenuScreen> {
 
                 const SizedBox(height: 24),
 
-                // Bouton Jouer
+                // Bouton Jouer Solo
                 ElevatedButton(
                   onPressed: _startGame,
                   style: ElevatedButton.styleFrom(
@@ -91,8 +92,26 @@ class _PentoscopeMenuScreenState extends ConsumerState<PentoscopeMenuScreen> {
                     ),
                   ),
                   child: const Text(
-                    'Jouer',
+                    'Jouer Solo',
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                
+                // Bouton Multiplayer
+                OutlinedButton.icon(
+                  onPressed: _startMultiplayer,
+                  icon: const Icon(Icons.people),
+                  label: const Text(
+                    'Multiplayer (1-4)',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    side: BorderSide(color: Theme.of(context).primaryColor, width: 2),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -153,12 +172,19 @@ class _PentoscopeMenuScreenState extends ConsumerState<PentoscopeMenuScreen> {
         .startPuzzle(
           _selectedSize,
           difficulty: _selectedDifficulty,
-          showSolution: _showSolution, // ✅ NOUVEAU
+          showSolution: _showSolution,
         );
 
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => const PentoscopeGameScreen()),
+    );
+  }
+
+  void _startMultiplayer() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const PentoscopeMPLobbyScreen()),
     );
   }
 }

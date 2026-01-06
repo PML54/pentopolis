@@ -134,6 +134,29 @@ class PentoscopeGenerator {
     all.shuffle(_random);
     return all.sublist(0, count);
   }
+
+  /// 🎮 Génère un puzzle avec un seed et des pièces spécifiques (mode multiplayer)
+  /// Ne vérifie pas les solutions - on fait confiance aux paramètres fournis
+  Future<PentoscopePuzzle> generateFromSeed(
+    PentoscopeSize size,
+    int seed,
+    List<int> pieceIds,
+  ) async {
+    // Chercher les solutions (optionnel, pour le scoring)
+    final result = await _solver.findAllSolutions(
+      pieceIds,
+      size.width,
+      size.height,
+      timeout: const Duration(seconds: 2),
+    );
+
+    return PentoscopePuzzle(
+      size: size,
+      pieceIds: pieceIds,
+      solutionCount: result.solutionCount,
+      solutions: result.solutions,
+    );
+  }
 }
 
 /// Configuration d'un puzzle Pentoscope

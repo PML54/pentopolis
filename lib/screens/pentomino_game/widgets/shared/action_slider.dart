@@ -82,11 +82,11 @@ class ActionSlider extends ConsumerWidget {
         final availableHeight = constraints.maxHeight;
         final iconSize = (availableHeight * 0.08).clamp(20.0, 36.0);
 
-        if (isInTransformMode) {
+    if (isInTransformMode) {
           return _buildTransformActions(context, state, notifier, settings, iconSize);
-        } else {
+    } else {
           return _buildGeneralActions(context, state, notifier, iconSize);
-        }
+    }
       },
     );
   }
@@ -260,9 +260,9 @@ class ActionSlider extends ConsumerWidget {
           constraints: buttonConstraints,
           onPressed: state.placedPieces.isNotEmpty
               ? () {
-                  HapticFeedback.mediumImpact();
-                  notifier.undoLastPlacement();
-                }
+            HapticFeedback.mediumImpact();
+            notifier.undoLastPlacement();
+          }
               : null,
           tooltip: GameIcons.undo.tooltip,
         ),

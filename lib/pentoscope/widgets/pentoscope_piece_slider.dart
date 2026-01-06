@@ -81,19 +81,19 @@ class PentoscopePieceSlider extends ConsumerWidget {
       child: Center(
         child: Transform.rotate(
           angle: isLandscape ? -math.pi / 2 : 0.0,
-          child: Container(
-            decoration: BoxDecoration(
-              boxShadow: isSelected
-                  ? [
-                      BoxShadow(
+      child: Container(
+        decoration: BoxDecoration(
+          boxShadow: isSelected
+              ? [
+            BoxShadow(
                         color: Colors.amber.withOpacity(0.7),
                         blurRadius: 14,
                         spreadRadius: 2,
-                      ),
-                    ]
-                  : null,
             ),
-            child: DraggablePieceWidget(
+          ]
+              : null,
+        ),
+              child: DraggablePieceWidget(
               piece: piece,
               positionIndex: displayPositionIndex,
               isSelected: isSelected,

@@ -44,7 +44,7 @@ class _PieceSliderState extends ConsumerState<PieceSlider> {
   Widget build(BuildContext context) {
     final state = ref.watch(pentominoGameProvider);
     final notifier = ref.read(pentominoGameProvider.notifier);
-    
+
 
     // ← AJOUTER : Écouter les changements de sliderOffset
     if (state.sliderOffset != _lastSliderOffset && _sliderController.hasClients) {
@@ -140,47 +140,47 @@ class _PieceSliderState extends ConsumerState<PieceSlider> {
       width: fixedSize,
       height: fixedSize,
       child: Center(
-        child: Container(
-          decoration: BoxDecoration(
-            boxShadow: isSelected
-                ? [
-                    BoxShadow(
+      child: Container(
+        decoration: BoxDecoration(
+          boxShadow: isSelected
+              ? [
+            BoxShadow(
                       color: Colors.amber.withOpacity(0.7),
                       blurRadius: 14,
                       spreadRadius: 2,
-                    ),
-                  ]
-                : null,
-          ),
+            ),
+          ]
+              : null,
+        ),
           child: DraggablePieceWidget(
+          piece: piece,
+          positionIndex: positionIndex,
+          isSelected: isSelected,
+          selectedPositionIndex: state.selectedPositionIndex,
+          longPressDuration: Duration(milliseconds: settings.game.longPressDuration),
+          onSelect: () {
+            if (settings.game.enableHaptics) {
+              HapticFeedback.selectionClick();
+            }
+            notifier.selectPiece(piece);
+          },
+          onCycle: () {
+            if (settings.game.enableHaptics) {
+              HapticFeedback.selectionClick();
+            }
+            notifier.cycleToNextOrientation();
+          },
+          onCancel: () {
+            if (settings.game.enableHaptics) {
+              HapticFeedback.lightImpact();
+            }
+            notifier.cancelSelection();
+          },
+          childBuilder: (isDragging) => PieceRenderer(
             piece: piece,
-            positionIndex: positionIndex,
-            isSelected: isSelected,
-            selectedPositionIndex: state.selectedPositionIndex,
-            longPressDuration: Duration(milliseconds: settings.game.longPressDuration),
-            onSelect: () {
-              if (settings.game.enableHaptics) {
-                HapticFeedback.selectionClick();
-              }
-              notifier.selectPiece(piece);
-            },
-            onCycle: () {
-              if (settings.game.enableHaptics) {
-                HapticFeedback.selectionClick();
-              }
-              notifier.cycleToNextOrientation();
-            },
-            onCancel: () {
-              if (settings.game.enableHaptics) {
-                HapticFeedback.lightImpact();
-              }
-              notifier.cancelSelection();
-            },
-            childBuilder: (isDragging) => PieceRenderer(
-              piece: piece,
               positionIndex: displayPositionIndex,
-              isDragging: isDragging,
-              getPieceColor: (pieceId) => settings.ui.getPieceColor(pieceId),
+            isDragging: isDragging,
+            getPieceColor: (pieceId) => settings.ui.getPieceColor(pieceId),
             ),
           ),
         ),
