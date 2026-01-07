@@ -971,34 +971,62 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
     return true;
   }
 
-  /// Trouve la position valide la plus proche du doigt (en tenant compte de la mastercase)
-  /// dragGridX/Y = position du doigt
+  /// Trouve la position valide la plus proche du doigt
+  /// dragGridX/Y = position du doigt sur le plateau
   /// Retourne la position d'ancre valide la plus proche
+  /// 
+  /// 🔧 FIX: On cherche la position où N'IMPORTE QUELLE cellule de la pièce
+  /// serait la plus proche du doigt, pas seulement la mastercase.
+  /// Cela permet de déplacer la pièce dans toutes les directions même si
+  /// la mastercase est sur un bord de la pièce.
   Point? _findClosestValidPlacement(int dragGridX, int dragGridY) {
     if (state.validPlacements.isEmpty) return null;
+    if (state.selectedPiece == null) return null;
 
-    // 🔑 CRUCIAL: Appliquer la mastercase pour trouver l'ancre théorique
-    int theoreticalAnchorX = dragGridX;
-    int theoreticalAnchorY = dragGridY;
-
-    if (state.selectedCellInPiece != null) {
-      theoreticalAnchorX -= state.selectedCellInPiece!.x;
-      theoreticalAnchorY -= state.selectedCellInPiece!.y;
+    final piece = state.selectedPiece!;
+    final positionIndex = state.selectedPositionIndex;
+    
+    // Calculer les offsets normalisés des cellules de la pièce
+    final position = piece.positions[positionIndex];
+    int normMinX = 5, normMinY = 5;
+    for (final cellNum in position) {
+      final x = (cellNum - 1) % 5;
+      final y = (cellNum - 1) ~/ 5;
+      if (x < normMinX) normMinX = x;
+      if (y < normMinY) normMinY = y;
+    }
+    
+    final cellOffsets = <Point>[];
+    for (final cellNum in position) {
+      final localX = (cellNum - 1) % 5 - normMinX;
+      final localY = (cellNum - 1) ~/ 5 - normMinY;
+      cellOffsets.add(Point(localX, localY));
     }
 
-    // Chercher le placement valide le plus proche de cette ancre théorique
+    // Chercher le placement valide où UNE cellule est la plus proche du doigt
     Point closest = state.validPlacements[0];
     double minDistance = double.infinity;
 
     for (final placement in state.validPlacements) {
-      final dx = (theoreticalAnchorX - placement.x).toDouble();
-      final dy = (theoreticalAnchorY - placement.y).toDouble();
-      final distance = dx * dx + dy * dy;
+      // Pour ce placement, calculer la distance minimale entre le doigt
+      // et n'importe quelle cellule de la pièce
+      for (final offset in cellOffsets) {
+        final cellX = placement.x + offset.x;
+        final cellY = placement.y + offset.y;
+        final dx = (dragGridX - cellX).toDouble();
+        final dy = (dragGridY - cellY).toDouble();
+        final distance = dx * dx + dy * dy;
 
-      if (distance < minDistance) {
-        minDistance = distance;
-        closest = placement;
+        if (distance < minDistance) {
+          minDistance = distance;
+          closest = placement;
+        }
       }
+    }
+
+    // Log pour pièce 12 verticale seulement
+    if (piece.id == 12 && positionIndex == 0) {
+      debugPrint('🎯 Snap pièce 12 verticale: doigt=($dragGridX,$dragGridY) → ancre=(${closest.x},${closest.y}) dist=${minDistance.toStringAsFixed(1)}');
     }
 
     return closest;
@@ -1008,16 +1036,53 @@ class PentoscopeNotifier extends Notifier<PentoscopeState> {
   /// Retourne une liste de Point (gridX, gridY) où la pièce peut être placée
   List<Point> _generateValidPlacements(Pento piece, int positionIndex) {
     final validPlacements = <Point>[];
+    
 
-    // Balayer tout le plateau
-    for (int gridX = 0; gridX < state.plateau.width; gridX++) {
-      for (int gridY = 0; gridY < state.plateau.height; gridY++) {
+    // 🔧 FIX: Calculer les offsets de la pièce pour étendre le balayage
+    // Certaines pièces ont des cellules avec des offsets positifs par rapport à l'ancre,
+    // donc l'ancre peut être négative pour placer la pièce aux bords gauche/haut
+    final position = piece.positions[positionIndex];
+    
+    // Trouver les offsets min/max de la forme normalisée
+    int minOffsetX = 5, minOffsetY = 5;
+    int maxOffsetX = 0, maxOffsetY = 0;
+    
+    // D'abord calculer le min pour la normalisation (comme dans absoluteCells)
+    int normMinX = 5, normMinY = 5;
+    for (final cellNum in position) {
+      final x = (cellNum - 1) % 5;
+      final y = (cellNum - 1) ~/ 5;
+      if (x < normMinX) normMinX = x;
+      if (y < normMinY) normMinY = y;
+    }
+    
+    // Puis calculer les offsets normalisés
+    for (final cellNum in position) {
+      final localX = (cellNum - 1) % 5 - normMinX;
+      final localY = (cellNum - 1) ~/ 5 - normMinY;
+      if (localX < minOffsetX) minOffsetX = localX;
+      if (localY < minOffsetY) minOffsetY = localY;
+      if (localX > maxOffsetX) maxOffsetX = localX;
+      if (localY > maxOffsetY) maxOffsetY = localY;
+    }
+
+    // 🔧 FIX: Étendre le balayage pour inclure les positions d'ancre négatives
+    // si nécessaire pour atteindre les bords du plateau
+    // L'ancre peut aller de -maxOffset à (plateauSize - 1)
+    final startX = -maxOffsetX;
+    final startY = -maxOffsetY;
+    final endX = state.plateau.width;
+    final endY = state.plateau.height;
+
+    for (int gridX = startX; gridX < endX; gridX++) {
+      for (int gridY = startY; gridY < endY; gridY++) {
         if (state.canPlacePiece(piece, positionIndex, gridX, gridY)) {
           validPlacements.add(Point(gridX, gridY));
         }
       }
     }
 
+    debugPrint('   → ${validPlacements.length} positions valides: $validPlacements');
     return validPlacements;
   }
 

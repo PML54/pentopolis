@@ -60,7 +60,10 @@ class PentoscopeBoard extends ConsumerWidget {
 
         // DragTarget englobe TOUT l'espace pour capturer le drag partout
         return DragTarget<Pento>(
-          onWillAcceptWithDetails: (details) => true,
+          onWillAcceptWithDetails: (details) {
+            debugPrint('🎯 DragTarget: pièce acceptée depuis slider');
+            return true;
+          },
           onMove: (details) {
             final renderBox = context.findRenderObject() as RenderBox?;
             if (renderBox == null) return;
@@ -71,14 +74,20 @@ class PentoscopeBoard extends ConsumerWidget {
             final plateauX = localOffset.dx - offsetX;
             final plateauY = localOffset.dy - offsetY;
 
-            // Hors du plateau ?
-            if (plateauX < 0 ||
-                plateauX >= gridWidth ||
-                plateauY < 0 ||
-                plateauY >= gridHeight) {
-              // ✨ OPTION 1: Garder le dernier preview même quand on sort
-              // La pièce reste affichée à sa dernière position valide
-              return;  // ← Ne pas appeler clearPreview()
+            // TEST: Agrandir drastiquement la zone pour device réel
+            const double margin = 100.0; // Marge GIGANTESQUE pour test
+            if (plateauX < -margin ||
+                plateauX >= gridWidth + margin ||
+                plateauY < -margin ||
+                plateauY >= gridHeight + margin) {
+              debugPrint('❌ LOIN du plateau: plateau=(${plateauX.toInt()},${plateauY.toInt()})');
+              return;
+            }
+
+            // Debug seulement si on est proche des bords (pour éviter spam)
+            if (plateauX < 20 || plateauX > gridWidth - 20 ||
+                plateauY < 20 || plateauY > gridHeight - 20) {
+              debugPrint('🎯 Drag près bord: plateau=(${plateauX.toInt()},${plateauY.toInt()}) gridSize=${gridWidth}x${gridHeight}');
             }
 
             final visualX = (plateauX / cellSize).floor().clamp(
@@ -97,6 +106,11 @@ class PentoscopeBoard extends ConsumerWidget {
             } else {
               logicalX = visualX;
               logicalY = visualY;
+            }
+
+            // Log pour pièce 12 verticale seulement (pour éviter spam)
+            if (state.selectedPiece?.id == 12 && state.selectedPositionIndex == 0) {
+              debugPrint('🎯 Drag pièce 12 verticale: plateau=(${plateauX.toInt()},${plateauY.toInt()}) visual=(${visualX},${visualY}) logical=(${logicalX},${logicalY})');
             }
 
             notifier.updatePreview(logicalX, logicalY);
